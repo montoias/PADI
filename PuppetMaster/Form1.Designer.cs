@@ -36,11 +36,12 @@
             this.FilenameBox = new System.Windows.Forms.TextBox();
             this.FilenameLabel = new System.Windows.Forms.Label();
             this.DeleteFileButton = new System.Windows.Forms.Button();
+            this.CloseFileButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // LaunchClientButton
             // 
-            this.LaunchClientButton.Location = new System.Drawing.Point(179, 404);
+            this.LaunchClientButton.Location = new System.Drawing.Point(163, 203);
             this.LaunchClientButton.Name = "LaunchClientButton";
             this.LaunchClientButton.Size = new System.Drawing.Size(93, 28);
             this.LaunchClientButton.TabIndex = 0;
@@ -50,7 +51,7 @@
             // 
             // OpenFileButton
             // 
-            this.OpenFileButton.Location = new System.Drawing.Point(575, 247);
+            this.OpenFileButton.Location = new System.Drawing.Point(21, 62);
             this.OpenFileButton.Name = "OpenFileButton";
             this.OpenFileButton.Size = new System.Drawing.Size(85, 30);
             this.OpenFileButton.TabIndex = 1;
@@ -60,15 +61,15 @@
             // 
             // EventBox
             // 
-            this.EventBox.Location = new System.Drawing.Point(746, 40);
+            this.EventBox.Location = new System.Drawing.Point(270, 12);
             this.EventBox.Multiline = true;
             this.EventBox.Name = "EventBox";
-            this.EventBox.Size = new System.Drawing.Size(113, 168);
+            this.EventBox.Size = new System.Drawing.Size(369, 168);
             this.EventBox.TabIndex = 2;
             // 
             // LaunchMetadataButton
             // 
-            this.LaunchMetadataButton.Location = new System.Drawing.Point(48, 404);
+            this.LaunchMetadataButton.Location = new System.Drawing.Point(21, 203);
             this.LaunchMetadataButton.Name = "LaunchMetadataButton";
             this.LaunchMetadataButton.Size = new System.Drawing.Size(103, 28);
             this.LaunchMetadataButton.TabIndex = 3;
@@ -78,7 +79,7 @@
             // 
             // CreateFileButton
             // 
-            this.CreateFileButton.Location = new System.Drawing.Point(695, 247);
+            this.CreateFileButton.Location = new System.Drawing.Point(129, 62);
             this.CreateFileButton.Name = "CreateFileButton";
             this.CreateFileButton.Size = new System.Drawing.Size(85, 30);
             this.CreateFileButton.TabIndex = 4;
@@ -88,7 +89,7 @@
             // 
             // FilenameBox
             // 
-            this.FilenameBox.Location = new System.Drawing.Point(497, 74);
+            this.FilenameBox.Location = new System.Drawing.Point(73, 12);
             this.FilenameBox.Multiline = true;
             this.FilenameBox.Name = "FilenameBox";
             this.FilenameBox.Size = new System.Drawing.Size(124, 26);
@@ -97,7 +98,7 @@
             // FilenameLabel
             // 
             this.FilenameLabel.AutoSize = true;
-            this.FilenameLabel.Location = new System.Drawing.Point(442, 77);
+            this.FilenameLabel.Location = new System.Drawing.Point(18, 15);
             this.FilenameLabel.Name = "FilenameLabel";
             this.FilenameLabel.Size = new System.Drawing.Size(49, 13);
             this.FilenameLabel.TabIndex = 6;
@@ -105,7 +106,7 @@
             // 
             // DeleteFileButton
             // 
-            this.DeleteFileButton.Location = new System.Drawing.Point(575, 292);
+            this.DeleteFileButton.Location = new System.Drawing.Point(129, 112);
             this.DeleteFileButton.Name = "DeleteFileButton";
             this.DeleteFileButton.Size = new System.Drawing.Size(85, 30);
             this.DeleteFileButton.TabIndex = 7;
@@ -113,11 +114,22 @@
             this.DeleteFileButton.UseVisualStyleBackColor = true;
             this.DeleteFileButton.Click += new System.EventHandler(this.DeleteFileButton_Click);
             // 
+            // CloseFileButton
+            // 
+            this.CloseFileButton.Location = new System.Drawing.Point(25, 116);
+            this.CloseFileButton.Name = "CloseFileButton";
+            this.CloseFileButton.Size = new System.Drawing.Size(81, 26);
+            this.CloseFileButton.TabIndex = 8;
+            this.CloseFileButton.Text = "Close File";
+            this.CloseFileButton.UseVisualStyleBackColor = true;
+            this.CloseFileButton.Click += new System.EventHandler(this.CloseFileButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(909, 472);
+            this.ClientSize = new System.Drawing.Size(693, 261);
+            this.Controls.Add(this.CloseFileButton);
             this.Controls.Add(this.DeleteFileButton);
             this.Controls.Add(this.FilenameLabel);
             this.Controls.Add(this.FilenameBox);
@@ -143,6 +155,7 @@
         private System.Windows.Forms.TextBox FilenameBox;
         private System.Windows.Forms.Label FilenameLabel;
         private System.Windows.Forms.Button DeleteFileButton;
+        private System.Windows.Forms.Button CloseFileButton;
     }
 }
 

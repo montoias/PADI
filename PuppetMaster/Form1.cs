@@ -12,6 +12,7 @@ using CommonInterfaces;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Diagnostics;
+using System.IO;
 
 namespace PuppetMaster
 {
@@ -20,7 +21,7 @@ namespace PuppetMaster
         TcpChannel channel;
         private List<IPuppetClient> clientsList = new List<IPuppetClient>();
         private List<MetadataInfo> metadataInfoList = new List<MetadataInfo>(); // TODO: replace by bounded list
-
+        private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
         //TODO: Replace by dictionary filename->metadata with boundaries
         private List<IPuppetMetadata> metadataList = new List<IPuppetMetadata>(); 
 
@@ -35,7 +36,7 @@ namespace PuppetMaster
         private void LaunchClient_Click(object sender, EventArgs e)
         {
             //TODO: Implement remote starting -> use WMI
-            Process.Start("C:\\Users\\Manuel\\Documents\\visual studio 2012\\Projects\\PADI\\Client\\bin\\Debug\\Client.exe");
+            Process.Start(Path.Combine(projectFolder, "Client\\bin\\Debug\\Client.exe"));
             IPuppetClient newClient = (IPuppetClient)Activator.GetObject(
                typeof(IPuppetClient),
                "tcp://localhost:8086/Client");
@@ -45,7 +46,7 @@ namespace PuppetMaster
         private void LaunchMetadataButton_Click(object sender, EventArgs e)
         {
             //TODO: Implement remote starting -> use WMI
-            Process.Start("C:\\Users\\Manuel\\Documents\\visual studio 2012\\Projects\\PADI\\Metadata\\bin\\Debug\\Metadata.exe");
+            Process.Start(Path.Combine(projectFolder, "Metadata\\bin\\Debug\\Metadata.exe"));
             IPuppetMetadata newMetadata = (IPuppetMetadata)Activator.GetObject(
                typeof(IPuppetMetadata),
                "tcp://localhost:8081/Metadata");
@@ -73,6 +74,11 @@ namespace PuppetMaster
         {
             clientsList[0].pdelete(FilenameBox.Text);
 
+        }
+
+        private void CloseFileButton_Click(object sender, EventArgs e)
+        {
+           clientsList[0].pclose(FilenameBox.Text);
         }
 
         private void showMetadata(MetadataInfo newMetadata)
