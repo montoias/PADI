@@ -113,16 +113,6 @@ namespace Metadata
             //TODO: throw new exception
         }
 
-        public void freeze()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void unfreeze()
-        {
-            throw new NotImplementedException();
-        }
-
         public void fail()
         {
             throw new NotImplementedException();

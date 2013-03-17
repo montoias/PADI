@@ -9,8 +9,6 @@ namespace CommonInterfaces
 {
     public interface IPuppetMetadata
     {
-        void freeze();
-        void unfreeze();
         void fail();
         void recover();
     }
