@@ -9,7 +9,7 @@ using System.IO;
 
 namespace CommonInterfaces
 {
-    public interface IPuppetClient
+    public interface IPuppetClientServer
     {
         MetadataInfo pcreate(string filename, int numDataServers, int readQuorum, int writeQuorum);
         MetadataInfo popen(string filename);

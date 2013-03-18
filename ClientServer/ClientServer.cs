@@ -10,10 +10,10 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.IO;
 
-namespace Client
+namespace ClientServer
 {
     //TODO:Store information from method calls
-    class Client : MarshalByRefObject, IPuppetClient, IClientMetadata
+    class ClientServer : MarshalByRefObject, IPuppetClientServer, IClientMetadata
     {
         //TODO: Replace by bounded list
         MetadataInfo[] metadataInfo = new MetadataInfo[10];
@@ -25,19 +25,20 @@ namespace Client
 
         static void Main(string[] args)
         {
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(8086, true);
+            //TODO: throw exception advising that port is already in use
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
             ChannelServices.RegisterChannel(channel, true);
 
             //Registering the client object
             RemotingConfiguration.RegisterWellKnownServiceType(
-                typeof(Client),
-                "Client",
+                typeof(ClientServer),
+                "ClientServer",
                 WellKnownObjectMode.Singleton);
 
             //TODO: Get location of the MetadataServer
             primaryMetadata = (IClientMetadata)Activator.GetObject(
                typeof(IClientMetadata),
-               "tcp://localhost:8081/Metadata");
+               "tcp://localhost:8081/MetadataServer");
 
             System.Console.WriteLine("press <enter> to exit...");
             System.Console.ReadLine();

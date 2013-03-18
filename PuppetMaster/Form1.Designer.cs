@@ -37,11 +37,15 @@
             this.FilenameLabel = new System.Windows.Forms.Label();
             this.DeleteFileButton = new System.Windows.Forms.Button();
             this.CloseFileButton = new System.Windows.Forms.Button();
+            this.PortBox = new System.Windows.Forms.TextBox();
+            this.ObjectNameBox = new System.Windows.Forms.TextBox();
+            this.PortLabel = new System.Windows.Forms.Label();
+            this.ObjectNameLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // LaunchClientButton
             // 
-            this.LaunchClientButton.Location = new System.Drawing.Point(163, 203);
+            this.LaunchClientButton.Location = new System.Drawing.Point(519, 320);
             this.LaunchClientButton.Name = "LaunchClientButton";
             this.LaunchClientButton.Size = new System.Drawing.Size(93, 28);
             this.LaunchClientButton.TabIndex = 0;
@@ -69,7 +73,7 @@
             // 
             // LaunchMetadataButton
             // 
-            this.LaunchMetadataButton.Location = new System.Drawing.Point(21, 203);
+            this.LaunchMetadataButton.Location = new System.Drawing.Point(519, 278);
             this.LaunchMetadataButton.Name = "LaunchMetadataButton";
             this.LaunchMetadataButton.Size = new System.Drawing.Size(103, 28);
             this.LaunchMetadataButton.TabIndex = 3;
@@ -124,11 +128,47 @@
             this.CloseFileButton.UseVisualStyleBackColor = true;
             this.CloseFileButton.Click += new System.EventHandler(this.CloseFileButton_Click);
             // 
+            // PortBox
+            // 
+            this.PortBox.Location = new System.Drawing.Point(342, 283);
+            this.PortBox.Name = "PortBox";
+            this.PortBox.Size = new System.Drawing.Size(133, 20);
+            this.PortBox.TabIndex = 9;
+            // 
+            // ObjectNameBox
+            // 
+            this.ObjectNameBox.Location = new System.Drawing.Point(342, 325);
+            this.ObjectNameBox.Name = "ObjectNameBox";
+            this.ObjectNameBox.Size = new System.Drawing.Size(131, 20);
+            this.ObjectNameBox.TabIndex = 10;
+            // 
+            // PortLabel
+            // 
+            this.PortLabel.AutoSize = true;
+            this.PortLabel.Location = new System.Drawing.Point(299, 286);
+            this.PortLabel.Name = "PortLabel";
+            this.PortLabel.Size = new System.Drawing.Size(26, 13);
+            this.PortLabel.TabIndex = 11;
+            this.PortLabel.Text = "Port";
+            // 
+            // ObjectNameLabel
+            // 
+            this.ObjectNameLabel.AutoSize = true;
+            this.ObjectNameLabel.Location = new System.Drawing.Point(267, 328);
+            this.ObjectNameLabel.Name = "ObjectNameLabel";
+            this.ObjectNameLabel.Size = new System.Drawing.Size(69, 13);
+            this.ObjectNameLabel.TabIndex = 12;
+            this.ObjectNameLabel.Text = "Object Name";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(693, 261);
+            this.ClientSize = new System.Drawing.Size(693, 401);
+            this.Controls.Add(this.ObjectNameLabel);
+            this.Controls.Add(this.PortLabel);
+            this.Controls.Add(this.ObjectNameBox);
+            this.Controls.Add(this.PortBox);
             this.Controls.Add(this.CloseFileButton);
             this.Controls.Add(this.DeleteFileButton);
             this.Controls.Add(this.FilenameLabel);
@@ -156,6 +196,10 @@
         private System.Windows.Forms.Label FilenameLabel;
         private System.Windows.Forms.Button DeleteFileButton;
         private System.Windows.Forms.Button CloseFileButton;
+        private System.Windows.Forms.TextBox PortBox;
+        private System.Windows.Forms.TextBox ObjectNameBox;
+        private System.Windows.Forms.Label PortLabel;
+        private System.Windows.Forms.Label ObjectNameLabel;
     }
 }
 

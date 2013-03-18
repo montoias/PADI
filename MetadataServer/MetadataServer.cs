@@ -12,13 +12,13 @@ using System.IO;
 using System.Collections;
 using System.Windows.Forms;
 
-namespace Metadata
+namespace MetadataServer
 {
 
     //TODO: Check for concurrency in all operations!!!
     //http://msdn.microsoft.com/en-us/library/6ka1wd3w.aspx
 
-    class Metadata : MarshalByRefObject, IClientMetadata, IPuppetMetadata
+    class MetadataServer : MarshalByRefObject, IClientMetadata, IPuppetMetadataServer
     {
         private static string fileFolder = Path.Combine(Application.StartupPath, "Files");
         private Dictionary<string, int> fileCounter = new Dictionary<string, int>();
@@ -30,8 +30,8 @@ namespace Metadata
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
-                typeof(Metadata),
-                "Metadata",
+                typeof(MetadataServer),
+                "MetadataServer",
                 WellKnownObjectMode.Singleton);
 
             createFolderFile();

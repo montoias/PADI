@@ -19,11 +19,11 @@ namespace PuppetMaster
     public partial class Form1 : Form
     {
         TcpChannel channel;
-        private List<IPuppetClient> clientsList = new List<IPuppetClient>();
+        private List<IPuppetClientServer> clientsList = new List<IPuppetClientServer>();
         private List<MetadataInfo> metadataInfoList = new List<MetadataInfo>(); // TODO: replace by bounded list
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
         //TODO: Replace by dictionary filename->metadata with boundaries
-        private List<IPuppetMetadata> metadataList = new List<IPuppetMetadata>(); 
+        private List<IPuppetMetadataServer> metadataList = new List<IPuppetMetadataServer>(); 
 
         public Form1()
         {
@@ -35,21 +35,24 @@ namespace PuppetMaster
 
         private void LaunchClient_Click(object sender, EventArgs e)
         {
+            string port = PortBox.Text;
+            string objectName = ObjectNameBox.Text;
+
             //TODO: Implement remote starting -> use WMI
-            Process.Start(Path.Combine(projectFolder, "Client\\bin\\Debug\\Client.exe"));
-            IPuppetClient newClient = (IPuppetClient)Activator.GetObject(
-               typeof(IPuppetClient),
-               "tcp://localhost:8086/Client");
+            Process.Start(Path.Combine(projectFolder, "ClientServer\\bin\\Debug\\ClientServer.exe"), port);
+            IPuppetClientServer newClient = (IPuppetClientServer)Activator.GetObject(
+               typeof(IPuppetClientServer),
+               "tcp://localhost:" + PortBox.Text + "/ClientServer");
             clientsList.Add(newClient);
         }
 
         private void LaunchMetadataButton_Click(object sender, EventArgs e)
         {
             //TODO: Implement remote starting -> use WMI
-            Process.Start(Path.Combine(projectFolder, "Metadata\\bin\\Debug\\Metadata.exe"));
-            IPuppetMetadata newMetadata = (IPuppetMetadata)Activator.GetObject(
-               typeof(IPuppetMetadata),
-               "tcp://localhost:8081/Metadata");
+            Process.Start(Path.Combine(projectFolder, "MetadataServer\\bin\\Debug\\MetadataServer.exe"));
+            IPuppetMetadataServer newMetadata = (IPuppetMetadataServer)Activator.GetObject(
+               typeof(IPuppetMetadataServer),
+               "tcp://localhost:8081/MetadataServer");
             metadataList.Add(newMetadata);
         }
 
