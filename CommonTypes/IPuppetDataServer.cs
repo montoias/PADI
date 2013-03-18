@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommonInterfaces
+namespace CommonTypes
 {
-    interface IPuppetDataServer
+    public interface IPuppetDataServer
     {
         void freeze();
         void unfreeze();

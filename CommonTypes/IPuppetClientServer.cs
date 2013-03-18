@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using CommonTypes;
 using System.IO;
 
-namespace CommonInterfaces
+namespace CommonTypes
 {
     public interface IPuppetClientServer
     {

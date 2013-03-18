@@ -49,10 +49,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CommonInterfaces\CommonInterfaces.csproj">
-      <Project>{dd04f2ec-6264-49d3-8519-8651a5d49bac}</Project>
-      <Name>CommonInterfaces</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CommonTypes\CommonTypes.csproj">
       <Project>{24bb1981-6c26-4fa7-9bdb-6328b65949da}</Project>
       <Name>CommonTypes</Name>

@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommonInterfaces
+namespace CommonTypes
 {
-    interface IClientServerDataServer
+    public interface IPuppetMetadataServer
     {
+        void fail();
+        void recover();
     }
 }

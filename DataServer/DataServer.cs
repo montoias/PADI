@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CommonInterfaces;
+using CommonTypes;
 
 namespace DataServer
 {
@@ -11,6 +11,26 @@ namespace DataServer
     {
         static void Main(string[] args)
         {
+        }
+
+        public void freeze()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void unfreeze()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void fail()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void recover()
+        {
+            throw new NotImplementedException();
         }
     }
 }

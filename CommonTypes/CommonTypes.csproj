@@ -47,6 +47,12 @@
   <ItemGroup>
     <Compile Include="Helper.cs" />
     <Compile Include="FileData.cs" />
+    <Compile Include="IClientMetadata.cs" />
+    <Compile Include="IClientServerDataServer.cs" />
+    <Compile Include="IMetadataServerDataServer.cs" />
+    <Compile Include="IPuppetClientServer.cs" />
+    <Compile Include="IPuppetDataServer.cs" />
+    <Compile Include="IPuppetMetadataServer.cs" />
     <Compile Include="MetadataInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
