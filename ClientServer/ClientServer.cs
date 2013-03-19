@@ -43,6 +43,7 @@ namespace ClientServer
             metadataServer[0] = (IClientMetadata)Activator.GetObject(
                typeof(IClientMetadata),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
+            primaryMetadata = metadataServer[0];
 
             System.Console.WriteLine("press <enter> to exit...");
             System.Console.ReadLine();

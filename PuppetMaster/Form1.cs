@@ -21,7 +21,6 @@ namespace PuppetMaster
     //TODO : read from config file
     public partial class Form1 : Form
     {
-        TcpChannel channel;
         private List<IPuppetClientServer> clientsList = new List<IPuppetClientServer>();
 
         private List<Dictionary<string, MetadataInfo>> metadataInfoList = new List<Dictionary<string, MetadataInfo>>(); 
@@ -40,7 +39,7 @@ namespace PuppetMaster
 
         public Form1()
         {
-            channel = (TcpChannel)Helper.GetChannel(8080, true);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(8080, true);
             ChannelServices.RegisterChannel(channel, true);
 
             InitializeComponent();
