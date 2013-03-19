@@ -25,7 +25,7 @@ namespace MetadataServer
 
         static void Main(string[] args)
         {
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(8081, true);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(

@@ -15,9 +15,10 @@ namespace ClientServer
     class ClientServer : MarshalByRefObject, IPuppetClientServer, IClientMetadata
     {
         //TODO: Replace by bounded list
-        MetadataInfo[] metadataInfo = new MetadataInfo[10];
-        FileData[] fileInfo = new FileData[10];
-        List<string> metadataLocations = new List<string>();
+        private MetadataInfo[] metadataInfo = new MetadataInfo[10];
+        private FileData[] fileInfo = new FileData[10];
+        private static IClientMetadata[] metadataServer = new IClientMetadata[3];
+        private static string[] metadataLocation = new string[3];
 
         //FIXME: is this suppose to be static?
         static IClientMetadata primaryMetadata;
@@ -27,6 +28,7 @@ namespace ClientServer
             //TODO: throw exception advising that port is already in use
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
             ChannelServices.RegisterChannel(channel, true);
+            setMetadataLocation(args);
 
             //Registering the client object
             RemotingConfiguration.RegisterWellKnownServiceType(
@@ -34,13 +36,41 @@ namespace ClientServer
                 "ClientServer",
                 WellKnownObjectMode.Singleton);
 
-            //TODO: Get location of the MetadataServer
-            primaryMetadata = (IClientMetadata)Activator.GetObject(
+            //TODO: Get current location of the MetadataServer
+            //Function that check if 0 is up and is the primary server
+            //If it isn't up, iterate list
+            //If it's not primary, access variable to get primary
+            metadataServer[0] = (IClientMetadata)Activator.GetObject(
                typeof(IClientMetadata),
-               "tcp://localhost:8081/MetadataServer");
+               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
 
             System.Console.WriteLine("press <enter> to exit...");
             System.Console.ReadLine();
+
+        }
+
+        private static void setMetadataLocation(string[] args)
+        {
+            metadataLocation[0] = args[1];
+            metadataLocation[1] = args[2];
+            metadataLocation[2] = args[3];
+        }
+
+        //TODO: Implement algorithm that'll work in case of failure
+        private void getMetadataServer()
+        {
+            metadataServer[0] = (IClientMetadata)Activator.GetObject(
+               typeof(IClientMetadata),
+               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
+
+            metadataServer[1] = (IClientMetadata)Activator.GetObject(
+               typeof(IClientMetadata),
+               "tcp://localhost:" + metadataLocation[1] + "/MetadataServer");
+
+            metadataServer[2] = (IClientMetadata)Activator.GetObject(
+               typeof(IClientMetadata),
+               "tcp://localhost:" + metadataLocation[2] + "/MetadataServer");
+
         }
 
         public MetadataInfo pcreate(string filename, int numDataServers, int readQuorum, int writeQuorum)

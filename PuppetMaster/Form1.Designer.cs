@@ -28,30 +28,34 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.LaunchClientButton = new System.Windows.Forms.Button();
+            this.LaunchClientServerButton = new System.Windows.Forms.Button();
             this.OpenFileButton = new System.Windows.Forms.Button();
             this.EventBox = new System.Windows.Forms.TextBox();
-            this.LaunchMetadataButton = new System.Windows.Forms.Button();
+            this.LaunchMetadataServerButton = new System.Windows.Forms.Button();
             this.CreateFileButton = new System.Windows.Forms.Button();
             this.FilenameBox = new System.Windows.Forms.TextBox();
             this.FilenameLabel = new System.Windows.Forms.Label();
             this.DeleteFileButton = new System.Windows.Forms.Button();
             this.CloseFileButton = new System.Windows.Forms.Button();
             this.PortBox = new System.Windows.Forms.TextBox();
-            this.ObjectNameBox = new System.Windows.Forms.TextBox();
             this.PortLabel = new System.Windows.Forms.Label();
-            this.ObjectNameLabel = new System.Windows.Forms.Label();
+            this.MetadataOption1 = new System.Windows.Forms.RadioButton();
+            this.MetadataOption2 = new System.Windows.Forms.RadioButton();
+            this.MetadataOption3 = new System.Windows.Forms.RadioButton();
+            this.FailMetadataButton = new System.Windows.Forms.Button();
+            this.RecoverMetadataServerButton = new System.Windows.Forms.Button();
+            this.ClientListBox = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
-            // LaunchClientButton
+            // LaunchClientServerButton
             // 
-            this.LaunchClientButton.Location = new System.Drawing.Point(519, 320);
-            this.LaunchClientButton.Name = "LaunchClientButton";
-            this.LaunchClientButton.Size = new System.Drawing.Size(93, 28);
-            this.LaunchClientButton.TabIndex = 0;
-            this.LaunchClientButton.Text = "Launch Client";
-            this.LaunchClientButton.UseVisualStyleBackColor = true;
-            this.LaunchClientButton.Click += new System.EventHandler(this.LaunchClient_Click);
+            this.LaunchClientServerButton.Location = new System.Drawing.Point(25, 347);
+            this.LaunchClientServerButton.Name = "LaunchClientServerButton";
+            this.LaunchClientServerButton.Size = new System.Drawing.Size(93, 28);
+            this.LaunchClientServerButton.TabIndex = 0;
+            this.LaunchClientServerButton.Text = "Launch Client";
+            this.LaunchClientServerButton.UseVisualStyleBackColor = true;
+            this.LaunchClientServerButton.Click += new System.EventHandler(this.LaunchClient_Click);
             // 
             // OpenFileButton
             // 
@@ -68,18 +72,19 @@
             this.EventBox.Location = new System.Drawing.Point(270, 12);
             this.EventBox.Multiline = true;
             this.EventBox.Name = "EventBox";
+            this.EventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.EventBox.Size = new System.Drawing.Size(369, 168);
             this.EventBox.TabIndex = 2;
             // 
-            // LaunchMetadataButton
+            // LaunchMetadataServerButton
             // 
-            this.LaunchMetadataButton.Location = new System.Drawing.Point(519, 278);
-            this.LaunchMetadataButton.Name = "LaunchMetadataButton";
-            this.LaunchMetadataButton.Size = new System.Drawing.Size(103, 28);
-            this.LaunchMetadataButton.TabIndex = 3;
-            this.LaunchMetadataButton.Text = "Launch Metadata";
-            this.LaunchMetadataButton.UseVisualStyleBackColor = true;
-            this.LaunchMetadataButton.Click += new System.EventHandler(this.LaunchMetadataButton_Click);
+            this.LaunchMetadataServerButton.Location = new System.Drawing.Point(414, 220);
+            this.LaunchMetadataServerButton.Name = "LaunchMetadataServerButton";
+            this.LaunchMetadataServerButton.Size = new System.Drawing.Size(105, 40);
+            this.LaunchMetadataServerButton.TabIndex = 3;
+            this.LaunchMetadataServerButton.Text = "Launch Metadata Server";
+            this.LaunchMetadataServerButton.UseVisualStyleBackColor = true;
+            this.LaunchMetadataServerButton.Click += new System.EventHandler(this.LaunchMetadataButton_Click);
             // 
             // CreateFileButton
             // 
@@ -130,54 +135,105 @@
             // 
             // PortBox
             // 
-            this.PortBox.Location = new System.Drawing.Point(342, 283);
+            this.PortBox.Location = new System.Drawing.Point(207, 347);
             this.PortBox.Name = "PortBox";
             this.PortBox.Size = new System.Drawing.Size(133, 20);
             this.PortBox.TabIndex = 9;
             // 
-            // ObjectNameBox
-            // 
-            this.ObjectNameBox.Location = new System.Drawing.Point(342, 325);
-            this.ObjectNameBox.Name = "ObjectNameBox";
-            this.ObjectNameBox.Size = new System.Drawing.Size(131, 20);
-            this.ObjectNameBox.TabIndex = 10;
-            // 
             // PortLabel
             // 
             this.PortLabel.AutoSize = true;
-            this.PortLabel.Location = new System.Drawing.Point(299, 286);
+            this.PortLabel.Location = new System.Drawing.Point(164, 350);
             this.PortLabel.Name = "PortLabel";
             this.PortLabel.Size = new System.Drawing.Size(26, 13);
             this.PortLabel.TabIndex = 11;
             this.PortLabel.Text = "Port";
             // 
-            // ObjectNameLabel
+            // MetadataOption1
             // 
-            this.ObjectNameLabel.AutoSize = true;
-            this.ObjectNameLabel.Location = new System.Drawing.Point(267, 328);
-            this.ObjectNameLabel.Name = "ObjectNameLabel";
-            this.ObjectNameLabel.Size = new System.Drawing.Size(69, 13);
-            this.ObjectNameLabel.TabIndex = 12;
-            this.ObjectNameLabel.Text = "Object Name";
+            this.MetadataOption1.AutoSize = true;
+            this.MetadataOption1.Checked = true;
+            this.MetadataOption1.Location = new System.Drawing.Point(543, 268);
+            this.MetadataOption1.Name = "MetadataOption1";
+            this.MetadataOption1.Size = new System.Drawing.Size(113, 17);
+            this.MetadataOption1.TabIndex = 13;
+            this.MetadataOption1.TabStop = true;
+            this.MetadataOption1.Text = "Metadata Server 0";
+            this.MetadataOption1.UseVisualStyleBackColor = true;
+            this.MetadataOption1.CheckedChanged += new System.EventHandler(this.MetadataOption1_CheckedChanged);
+            // 
+            // MetadataOption2
+            // 
+            this.MetadataOption2.AutoSize = true;
+            this.MetadataOption2.Location = new System.Drawing.Point(543, 302);
+            this.MetadataOption2.Name = "MetadataOption2";
+            this.MetadataOption2.Size = new System.Drawing.Size(113, 17);
+            this.MetadataOption2.TabIndex = 14;
+            this.MetadataOption2.Text = "Metadata Server 1";
+            this.MetadataOption2.UseVisualStyleBackColor = true;
+            this.MetadataOption2.CheckedChanged += new System.EventHandler(this.MetadataOption2_CheckedChanged);
+            // 
+            // MetadataOption3
+            // 
+            this.MetadataOption3.AutoSize = true;
+            this.MetadataOption3.Location = new System.Drawing.Point(543, 337);
+            this.MetadataOption3.Name = "MetadataOption3";
+            this.MetadataOption3.Size = new System.Drawing.Size(113, 17);
+            this.MetadataOption3.TabIndex = 15;
+            this.MetadataOption3.Text = "Metadata Server 2";
+            this.MetadataOption3.UseVisualStyleBackColor = true;
+            this.MetadataOption3.CheckedChanged += new System.EventHandler(this.MetadataOption3_CheckedChanged);
+            // 
+            // FailMetadataButton
+            // 
+            this.FailMetadataButton.Location = new System.Drawing.Point(414, 280);
+            this.FailMetadataButton.Name = "FailMetadataButton";
+            this.FailMetadataButton.Size = new System.Drawing.Size(105, 39);
+            this.FailMetadataButton.TabIndex = 16;
+            this.FailMetadataButton.Text = "Metadata Server Fail";
+            this.FailMetadataButton.UseVisualStyleBackColor = true;
+            this.FailMetadataButton.Click += new System.EventHandler(this.FailMetadataButton_Click);
+            // 
+            // RecoverMetadataServerButton
+            // 
+            this.RecoverMetadataServerButton.Location = new System.Drawing.Point(417, 337);
+            this.RecoverMetadataServerButton.Name = "RecoverMetadataServerButton";
+            this.RecoverMetadataServerButton.Size = new System.Drawing.Size(101, 38);
+            this.RecoverMetadataServerButton.TabIndex = 17;
+            this.RecoverMetadataServerButton.Text = "Metadata Server Recover";
+            this.RecoverMetadataServerButton.UseVisualStyleBackColor = true;
+            this.RecoverMetadataServerButton.Click += new System.EventHandler(this.RecoverMetadataServerButton_Click);
+            // 
+            // ClientListBox
+            // 
+            this.ClientListBox.FormattingEnabled = true;
+            this.ClientListBox.Location = new System.Drawing.Point(25, 163);
+            this.ClientListBox.Name = "ClientListBox";
+            this.ClientListBox.Size = new System.Drawing.Size(81, 134);
+            this.ClientListBox.TabIndex = 18;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(693, 401);
-            this.Controls.Add(this.ObjectNameLabel);
+            this.Controls.Add(this.ClientListBox);
+            this.Controls.Add(this.RecoverMetadataServerButton);
+            this.Controls.Add(this.FailMetadataButton);
+            this.Controls.Add(this.MetadataOption3);
+            this.Controls.Add(this.MetadataOption2);
+            this.Controls.Add(this.MetadataOption1);
             this.Controls.Add(this.PortLabel);
-            this.Controls.Add(this.ObjectNameBox);
             this.Controls.Add(this.PortBox);
             this.Controls.Add(this.CloseFileButton);
             this.Controls.Add(this.DeleteFileButton);
             this.Controls.Add(this.FilenameLabel);
             this.Controls.Add(this.FilenameBox);
             this.Controls.Add(this.CreateFileButton);
-            this.Controls.Add(this.LaunchMetadataButton);
+            this.Controls.Add(this.LaunchMetadataServerButton);
             this.Controls.Add(this.EventBox);
             this.Controls.Add(this.OpenFileButton);
-            this.Controls.Add(this.LaunchClientButton);
+            this.Controls.Add(this.LaunchClientServerButton);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -187,19 +243,23 @@
 
         #endregion
 
-        private System.Windows.Forms.Button LaunchClientButton;
+        private System.Windows.Forms.Button LaunchClientServerButton;
         private System.Windows.Forms.Button OpenFileButton;
         private System.Windows.Forms.TextBox EventBox;
-        private System.Windows.Forms.Button LaunchMetadataButton;
+        private System.Windows.Forms.Button LaunchMetadataServerButton;
         private System.Windows.Forms.Button CreateFileButton;
         private System.Windows.Forms.TextBox FilenameBox;
         private System.Windows.Forms.Label FilenameLabel;
         private System.Windows.Forms.Button DeleteFileButton;
         private System.Windows.Forms.Button CloseFileButton;
         private System.Windows.Forms.TextBox PortBox;
-        private System.Windows.Forms.TextBox ObjectNameBox;
         private System.Windows.Forms.Label PortLabel;
-        private System.Windows.Forms.Label ObjectNameLabel;
+        private System.Windows.Forms.RadioButton MetadataOption1;
+        private System.Windows.Forms.RadioButton MetadataOption2;
+        private System.Windows.Forms.RadioButton MetadataOption3;
+        private System.Windows.Forms.Button FailMetadataButton;
+        private System.Windows.Forms.Button RecoverMetadataServerButton;
+        private System.Windows.Forms.ListBox ClientListBox;
     }
 }
 
