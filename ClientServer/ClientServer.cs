@@ -14,9 +14,7 @@ namespace ClientServer
     //TODO:Store information from method calls
     class ClientServer : MarshalByRefObject, IPuppetClientServer, IClientMetadata
     {
-        //TODO: Replace by bounded list
-        private MetadataInfo[] metadataInfo = new MetadataInfo[10];
-        private FileData[] fileInfo = new FileData[10];
+        private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
         private static IClientMetadata[] metadataServer = new IClientMetadata[3];
         private static string[] metadataLocation = new string[3];
 
@@ -25,12 +23,10 @@ namespace ClientServer
 
         static void Main(string[] args)
         {
-            //TODO: throw exception advising that port is already in use
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
             ChannelServices.RegisterChannel(channel, true);
             setMetadataLocation(args);
 
-            //Registering the client object
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(ClientServer),
                 "ClientServer",
@@ -74,28 +70,85 @@ namespace ClientServer
 
         }
 
-        public MetadataInfo pcreate(string filename, int numDataServers, int readQuorum, int writeQuorum)
+        public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
         {
             System.Console.WriteLine("Creating the file:" + filename);
+            if (!metadataTable.ContainsKey(filename))
+            {
+                if (metadataTable.Count == 10) //TODO: Exception
+                {
+
+                }
+                MetadataInfo info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
+                metadataTable.Add(filename, info);
+                return info;
+            }
+            else //TODO: Exception
+            {
+                return primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
+            }
+        }
+
+        public void delete(string filename)
+        {
+            System.Console.WriteLine("Deleting the file: " + filename);
+            primaryMetadata.delete(filename);
+        }
+
+        public MetadataInfo open(string filename)
+        {
+            System.Console.WriteLine("Opening the file: " + filename);
+            if (!metadataTable.ContainsKey(filename))
+            {
+                if (metadataTable.Count == 10) //TODO: Exception
+                {
+
+                }
+                MetadataInfo info = primaryMetadata.open(filename);
+                metadataTable.Add(filename, info);
+                return info;
+            }
+            else //TODO: Exception
+            {
+                return primaryMetadata.open(filename);
+            }
+        }
+
+        public void close(string filename)
+        {
+            System.Console.WriteLine("Closing the file: " + filename);
+            if (metadataTable.ContainsKey(filename))
+            {
+                primaryMetadata.close(filename);
+                metadataTable.Remove(filename);
+            }
+            else //TODO: Exception
+            {
+                primaryMetadata.close(filename);
+            }
+        }
+
+        /*
+         * Puppet Master Logic
+         */
+        public MetadataInfo pcreate(string filename, int numDataServers, int readQuorum, int writeQuorum)
+        {
             return create(filename, numDataServers, readQuorum, writeQuorum);
+        }
+
+        public void pdelete(string filename)
+        {
+            delete(filename);
         }
 
         public MetadataInfo popen(string filename)
         {
-            System.Console.WriteLine("Opening the file: " + filename);
             return open(filename);
         }
 
         public void pclose(string filename)
         {
-            System.Console.WriteLine("Closing the file: " + filename);
             close(filename);
-        }
-
-        public void pdelete(string filename)
-        {
-            System.Console.WriteLine("Deleting the file: " + filename);
-            delete(filename);
         }
 
         public FileData pread(string filename, int semantics)
@@ -108,24 +161,5 @@ namespace ClientServer
             throw new NotImplementedException();
         }
 
-        public MetadataInfo open(string filename)
-        {
-            return primaryMetadata.open(filename);
-        }
-
-        public void close(string filename)
-        {
-            primaryMetadata.close(filename);
-        }
-
-        public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
-        {
-            return primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
-        }
-
-        public void delete(string filename)
-        {
-            primaryMetadata.delete(filename);
-        }
     }
 }

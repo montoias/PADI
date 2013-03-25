@@ -41,17 +41,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileData.cs" />
-    <Compile Include="Helper.cs" />
-    <Compile Include="IClientMetadata.cs" />
-    <Compile Include="IClientServerDataServer.cs" />
-    <Compile Include="IMetadataServerDataServer.cs" />
-    <Compile Include="IPuppetClientServer.cs" />
-    <Compile Include="IPuppetDataServer.cs" />
-    <Compile Include="IPuppetMetadataServer.cs" />
-    <Compile Include="MetadataInfo.cs" />
+    <Compile Include="Exceptions\TableSizeExcedeedException.cs" />
+    <Compile Include="Types\FileData.cs" />
+    <Compile Include="Types\Helper.cs" />
+    <Compile Include="Interfaces\IClientMetadata.cs" />
+    <Compile Include="Interfaces\IClientServerDataServer.cs" />
+    <Compile Include="Interfaces\IMetadataServerDataServer.cs" />
+    <Compile Include="Interfaces\IPuppetClientServer.cs" />
+    <Compile Include="Interfaces\IPuppetDataServer.cs" />
+    <Compile Include="Interfaces\IPuppetMetadataServer.cs" />
+    <Compile Include="Types\MetadataInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
