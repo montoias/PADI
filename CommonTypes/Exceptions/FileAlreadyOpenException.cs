@@ -8,11 +8,11 @@ using System.Security.Permissions;
 namespace CommonTypes
 {
     [Serializable()]
-    public class TableSizeExcedeedException : ApplicationException
+    public class FileAlreadyOpenException : ApplicationException
     {
-        public TableSizeExcedeedException() : base(){}
-        public TableSizeExcedeedException(SerializationInfo info, StreamingContext context) : base(info, context){}
-
+        public FileAlreadyOpenException() : base() { }
+        public FileAlreadyOpenException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+  
         [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter =true)]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {

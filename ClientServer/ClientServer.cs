@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CommonTypes;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.IO;
+
+using CommonTypes;
+
 
 namespace ClientServer
 {
@@ -77,7 +79,7 @@ namespace ClientServer
             {
                 if (metadataTable.Count == 10) //TODO: Exception
                 {
-
+                    throw new TableSizeExcedeedException();
                 }
                 MetadataInfo info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
                 metadataTable.Add(filename, info);
@@ -100,17 +102,17 @@ namespace ClientServer
             System.Console.WriteLine("Opening the file: " + filename);
             if (!metadataTable.ContainsKey(filename))
             {
-                if (metadataTable.Count == 10) //TODO: Exception
+                if (metadataTable.Count == 10) 
                 {
-
+                    throw new TableSizeExcedeedException();
                 }
                 MetadataInfo info = primaryMetadata.open(filename);
                 metadataTable.Add(filename, info);
                 return info;
             }
-            else //TODO: Exception
+            else 
             {
-                return primaryMetadata.open(filename);
+                throw new FileAlreadyOpenException();
             }
         }
 

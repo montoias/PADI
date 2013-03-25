@@ -93,9 +93,14 @@ namespace PuppetMaster
                 metadataInfoList[selectedClient].Add(filename, newMetadata);
                 form.showMetadata(newMetadata);
             }
-            catch (Exception exc) //TODO: FileAlreadyOpenException
+            catch (FileAlreadyOpenException) 
             {
                 form.updateMessage("File " + filename + " already opened!\r\n");
+            }
+
+            catch (TableSizeExcedeedException) 
+            {
+                form.updateMessage("There are 10 slots occupied, you should close one before trying to open a file!\r\n");
             }
         }
 
@@ -121,9 +126,10 @@ namespace PuppetMaster
                 metadataInfoList[selectedClient].Add(filename, newMetadata);
                 //showMetadata(newMetadata);
             }
-            catch (Exception exc) //TODO: FileAlreadyCreatedException
+            catch (TableSizeExcedeedException t) //TODO: FileAlreadyCreatedException
             {
-                form.updateMessage("File " + filename + " already created!\r\n");
+                form.updateMessage("There are 10 slots occupied, you should close one before trying to create a file!\r\n");
+                //form.updateMessage("File " + filename + " already created!\r\n");
             }
         }
 
