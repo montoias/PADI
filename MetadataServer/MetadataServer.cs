@@ -150,13 +150,23 @@ namespace MetadataServer
 
         public string dump()
         {
+            System.Console.WriteLine("Dumping metadata table");
+            int numCacheFiles = metadataTable.Count;
             string contents = "";
-            contents += "METADATA TABLE\r\n";
-            foreach (KeyValuePair<String, MetadataInfo> entry in metadataTable)
+                contents += "METADATA CACHE\r\n";
+
+            if (numCacheFiles != 0)
             {
-                contents += "------" + entry.Key + "------" + entry.Value + "\r\n"; 
+                foreach (KeyValuePair<String, MetadataInfo> entry in metadataTable)
+                {
+                    contents += entry.Value + "\r\n";
+                }
+                contents += numCacheFiles + " files in cache.\r\n";
             }
-            contents += metadataTable.Count + " files in cache.\r\n";
+            else
+            {
+                contents += "Empty cache\r\n";
+            }
             //iterate through folder
 
             return contents;

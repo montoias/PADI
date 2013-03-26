@@ -95,9 +95,14 @@ namespace PuppetMaster
             ClientListBox.Items.Add("Client " + clientCounter++);
         }
 
-        public void updateMessage(string msg)
+        public void updateClientBox(string msg)
         {
             ClientEventBox.Text += msg;
+        }
+
+        public void updateMetadataBox(string msg)
+        {
+            MetadataEventBox.Text += msg;
         }
 
         public void showMetadata(MetadataInfo newMetadata)

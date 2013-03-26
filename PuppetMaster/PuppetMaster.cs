@@ -59,7 +59,7 @@ namespace PuppetMaster
             }
             else
             {
-                form.updateMessage("Client already exists at port " + port + "!\r\n");
+                form.updateClientBox("Client already exists at port " + port + "!\r\n");
             }
 
         }
@@ -74,13 +74,13 @@ namespace PuppetMaster
                 Process.Start(Path.Combine(projectFolder, "MetadataServer\\bin\\Debug\\MetadataServer.exe"), location);
                 IPuppetMetadataServer newMetadata = (IPuppetMetadataServer)Activator.GetObject(
                    typeof(IPuppetMetadataServer),
-                   "tcp://localhost:" + location + "/ClientServer");
+                   "tcp://localhost:" + location + "/MetadataServer");
                 metadataList[selectedMetadata] = newMetadata;
                 metadataLaunched[selectedMetadata] = true;
             }
             else
             {
-                form.updateMessage("Metadata Server " + selectedMetadata + " already launched!\r\n");
+                form.updateClientBox("Metadata Server " + selectedMetadata + " already launched!\r\n");
             }
         }
 
@@ -94,12 +94,12 @@ namespace PuppetMaster
             }
             catch (FileAlreadyOpenedException) 
             {
-                form.updateMessage("File " + filename + " already opened!\r\n");
+                form.updateClientBox("File " + filename + " already opened!\r\n");
             }
 
             catch (TableSizeExcedeedException) 
             {
-                form.updateMessage("There are 10 slots occupied, you should close one before trying to open a file!\r\n");
+                form.updateClientBox("There are 10 slots occupied, you should close one before trying to open a file!\r\n");
             }
         }
 
@@ -112,7 +112,7 @@ namespace PuppetMaster
             }
             catch (FileNotOpenedException)
             {
-                form.updateMessage("File " + filename + " was not opened!\r\n");
+                form.updateClientBox("File " + filename + " was not opened!\r\n");
             }
         }
 
@@ -127,11 +127,11 @@ namespace PuppetMaster
             }
             catch (TableSizeExcedeedException) 
             {
-                form.updateMessage("There are 10 slots occupied, you should close one before trying to create a file!\r\n");
+                form.updateClientBox("There are 10 slots occupied, you should close one before trying to create a file!\r\n");
             }
             catch (FileAlreadyExistsException)
             {
-                form.updateMessage("File " + filename + " already created!\r\n");
+                form.updateClientBox("File " + filename + " already created!\r\n");
             }
         }
 
@@ -143,7 +143,7 @@ namespace PuppetMaster
             }
             catch (Exception) //TODO: FileInUseException and FileNotExistsException
             {
-                form.updateMessage("File " + filename + " cannot be deleted!\r\n");
+                form.updateClientBox("File " + filename + " cannot be deleted!\r\n");
             }
         }
 
@@ -161,7 +161,7 @@ namespace PuppetMaster
         public void dumpMetadataServer(int selectedMetadata)
         {
             //iterate through metadatas and dump each one
-            form.updateMessage(metadataList[selectedMetadata].dump());
+            form.updateMetadataBox(metadataList[selectedMetadata].dump());
         }
 
         public void freezeDataServer()
