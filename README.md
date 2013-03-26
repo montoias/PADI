@@ -1,13 +1,19 @@
 PADI
 ====
-Implement error/exception treatment in the client side (to avoid misbehavior).
+
+
+Implement logic in DataServer!!.
+
+Add dump of folders in metadata servers.
+
+Dump all metadata servers.
+
+Dump clients.
 
 Create general exceptions.
-
-Implement logic in DataServer.
-
-Implement remote process starting.
 
 Create interface for communication between MetadataServers?
 
 Check "TODO's" and "FIXME's" across the code.
+
+Implement remote process starting.
