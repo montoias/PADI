@@ -9,7 +9,7 @@ namespace CommonTypes
 {
     public class FileData
     {
-        int version;
-        FileStream file;
+        //int version;
+        //FileStream file;
     }
 }

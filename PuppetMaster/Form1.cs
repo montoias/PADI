@@ -41,13 +41,13 @@ namespace PuppetMaster
 
         private void OpenFile_Click(object sender, EventArgs e)
         {
-            puppetMaster.OpenFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            puppetMaster.openFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
 
         private void CloseFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.CloseFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            puppetMaster.closeFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
         private void CreateFileButton_Click(object sender, EventArgs e)
@@ -60,7 +60,10 @@ namespace PuppetMaster
             puppetMaster.deleteFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
-       
+        private void DumpMetadataButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.dumpMetadataServer(selectedMetadata);
+        }
 
         private void FailMetadataButton_Click(object sender, EventArgs e)
         {
@@ -94,17 +97,17 @@ namespace PuppetMaster
 
         public void updateMessage(string msg)
         {
-            EventBox.Text += msg;
+            ClientEventBox.Text += msg;
         }
 
         public void showMetadata(MetadataInfo newMetadata)
         {
-            EventBox.Text += "-------------------\r\nMETADATA\r\n";
-            EventBox.Text += "Filename:" + newMetadata.filename + "\r\n";
-            EventBox.Text += "NumDataServers:" + newMetadata.numDataServers + "\r\n";
-            EventBox.Text += "ReadQuorum:" + newMetadata.readQuorum + "\r\n";
-            EventBox.Text += "WriteQuorum:" + newMetadata.writeQuorum + "\r\n";
-            EventBox.Text += "DataServers:" + newMetadata.dataServers + "\r\n";
+            ClientEventBox.Text += "-------------------\r\nMETADATA\r\n";
+            ClientEventBox.Text += "Filename:" + newMetadata.filename + "\r\n";
+            ClientEventBox.Text += "NumDataServers:" + newMetadata.numDataServers + "\r\n";
+            ClientEventBox.Text += "ReadQuorum:" + newMetadata.readQuorum + "\r\n";
+            ClientEventBox.Text += "WriteQuorum:" + newMetadata.writeQuorum + "\r\n";
+            ClientEventBox.Text += "DataServers:" + newMetadata.dataServers + "\r\n";
         }
     }
 }

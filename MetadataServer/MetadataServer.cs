@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CommonTypes;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.IO;
 using System.Collections;
 using System.Windows.Forms;
+
+using CommonTypes;
 
 namespace MetadataServer
 {
@@ -52,7 +53,7 @@ namespace MetadataServer
             String path = Path.Combine(fileFolder, filename);
 
             MetadataInfo metadata;
-            if (!File.Exists(path))
+            if (!metadataTable.ContainsKey(filename) && !File.Exists(path))
             {
                 FileStream newFile = File.Create(path);
                 byte[] metadataBytes;
@@ -73,22 +74,33 @@ namespace MetadataServer
             }
             else
             {
-                //TODO: Impement exception
                 System.Console.WriteLine("File already exists:" + filename);
-                return metadata = new MetadataInfo("ERRO", numDataServers, readQuorum, writeQuorum, "");
+                throw new FileAlreadyExistsException();
             }
         }
 
         public void delete(string filename)
         {
-            if (fileCounter[filename] == 0)
+            string path = Path.Combine(fileFolder, filename);
+
+            if (File.Exists(path))
             {
-                System.Console.WriteLine("Deleting file:" + filename);
-                File.Delete(Path.Combine(fileFolder, filename));
-                fileCounter.Remove(filename);
-                metadataTable.Remove(filename);
+                if (fileCounter[filename] == 0)
+                {
+                    System.Console.WriteLine("Deleting file:" + filename);
+                    File.Delete(path);
+                    fileCounter.Remove(filename);
+                    metadataTable.Remove(filename);
+                }
+                else
+                {
+                    throw new CannotDeleteFileException();
+                }
             }
-            // TODO: throw new exception
+            else
+            {
+                throw new FileDoesNotExistException();
+            }
         }
 
         public MetadataInfo open(string filename)
@@ -115,21 +127,17 @@ namespace MetadataServer
             
                 else
                 {
-                    //TODO: Impement exception
                     System.Console.WriteLine("File doesn't exist:" + filename);
-                    return new MetadataInfo("ERRO", 0, 0, 0, "");
+                    throw new FileDoesNotExistException();
                 }
             }
         }
 
         public void close(string filename)
         {
-            if (fileCounter[filename] != 0)
-            {
-                fileCounter[filename]--;
-            }
-            //TODO: throw exception
+            fileCounter[filename]--;
         }
+
         public void fail()
         {
             throw new NotImplementedException();
@@ -140,12 +148,25 @@ namespace MetadataServer
             throw new NotImplementedException();
         }
 
+        public string dump()
+        {
+            string contents = "";
+            contents += "METADATA TABLE\r\n";
+            foreach (KeyValuePair<String, MetadataInfo> entry in metadataTable)
+            {
+                contents += "------" + entry.Key + "------" + entry.Value + "\r\n"; 
+            }
+            contents += metadataTable.Count + " files in cache.\r\n";
+            //iterate through folder
+
+            return contents;
+        }
+
         private byte[] stringToByteArray(string metadata)
         {
             byte[] bytes = new byte[metadata.Length * sizeof(char)];
             System.Buffer.BlockCopy(metadata.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
-
         }
         
         private string byteArrayToString(byte[] metadata)

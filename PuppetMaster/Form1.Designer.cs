@@ -30,7 +30,7 @@
         {
             this.LaunchClientServerButton = new System.Windows.Forms.Button();
             this.OpenFileButton = new System.Windows.Forms.Button();
-            this.EventBox = new System.Windows.Forms.TextBox();
+            this.ClientEventBox = new System.Windows.Forms.TextBox();
             this.LaunchMetadataServerButton = new System.Windows.Forms.Button();
             this.CreateFileButton = new System.Windows.Forms.Button();
             this.FilenameBox = new System.Windows.Forms.TextBox();
@@ -59,6 +59,8 @@
             this.LaunchDataServerButton = new System.Windows.Forms.Button();
             this.DataServerPortBox = new System.Windows.Forms.TextBox();
             this.DataServerPortLabel = new System.Windows.Forms.Label();
+            this.MetadataEventBox = new System.Windows.Forms.TextBox();
+            this.DumpMetadataButton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -84,14 +86,14 @@
             this.OpenFileButton.UseVisualStyleBackColor = true;
             this.OpenFileButton.Click += new System.EventHandler(this.OpenFile_Click);
             // 
-            // EventBox
+            // ClientEventBox
             // 
-            this.EventBox.Location = new System.Drawing.Point(12, 391);
-            this.EventBox.Multiline = true;
-            this.EventBox.Name = "EventBox";
-            this.EventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.EventBox.Size = new System.Drawing.Size(369, 168);
-            this.EventBox.TabIndex = 2;
+            this.ClientEventBox.Location = new System.Drawing.Point(12, 391);
+            this.ClientEventBox.Multiline = true;
+            this.ClientEventBox.Name = "ClientEventBox";
+            this.ClientEventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.ClientEventBox.Size = new System.Drawing.Size(369, 168);
+            this.ClientEventBox.TabIndex = 2;
             // 
             // LaunchMetadataServerButton
             // 
@@ -270,6 +272,7 @@
             // 
             // MetadataServerGroupBox
             // 
+            this.MetadataServerGroupBox.Controls.Add(this.DumpMetadataButton);
             this.MetadataServerGroupBox.Controls.Add(this.MetadataOption2);
             this.MetadataServerGroupBox.Controls.Add(this.MetadataOption1);
             this.MetadataServerGroupBox.Controls.Add(this.RecoverMetadataServerButton);
@@ -385,6 +388,25 @@
             this.DataServerPortLabel.TabIndex = 11;
             this.DataServerPortLabel.Text = "Port";
             // 
+            // MetadataEventBox
+            // 
+            this.MetadataEventBox.Location = new System.Drawing.Point(460, 391);
+            this.MetadataEventBox.Multiline = true;
+            this.MetadataEventBox.Name = "MetadataEventBox";
+            this.MetadataEventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.MetadataEventBox.Size = new System.Drawing.Size(369, 168);
+            this.MetadataEventBox.TabIndex = 2;
+            // 
+            // DumpMetadataButton
+            // 
+            this.DumpMetadataButton.Location = new System.Drawing.Point(104, 275);
+            this.DumpMetadataButton.Name = "DumpMetadataButton";
+            this.DumpMetadataButton.Size = new System.Drawing.Size(106, 30);
+            this.DumpMetadataButton.TabIndex = 18;
+            this.DumpMetadataButton.Text = "Dump Metadata";
+            this.DumpMetadataButton.UseVisualStyleBackColor = true;
+            this.DumpMetadataButton.Click += new System.EventHandler(this.DumpMetadataButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -393,7 +415,8 @@
             this.Controls.Add(this.DataServerGroupBox);
             this.Controls.Add(this.MetadataServerGroupBox);
             this.Controls.Add(this.ClientGroupBox);
-            this.Controls.Add(this.EventBox);
+            this.Controls.Add(this.MetadataEventBox);
+            this.Controls.Add(this.ClientEventBox);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ClientGroupBox.ResumeLayout(false);
@@ -411,7 +434,7 @@
 
         private System.Windows.Forms.Button LaunchClientServerButton;
         private System.Windows.Forms.Button OpenFileButton;
-        private System.Windows.Forms.TextBox EventBox;
+        private System.Windows.Forms.TextBox ClientEventBox;
         private System.Windows.Forms.Button LaunchMetadataServerButton;
         private System.Windows.Forms.Button CreateFileButton;
         private System.Windows.Forms.TextBox FilenameBox;
@@ -440,6 +463,8 @@
         private System.Windows.Forms.TextBox DataServerPortBox;
         private System.Windows.Forms.Label DataServerPortLabel;
         private System.Windows.Forms.Button RegisterDataServer;
+        private System.Windows.Forms.TextBox MetadataEventBox;
+        private System.Windows.Forms.Button DumpMetadataButton;
     }
 }
 

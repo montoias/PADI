@@ -77,7 +77,7 @@ namespace ClientServer
             System.Console.WriteLine("Creating the file:" + filename);
             if (!metadataTable.ContainsKey(filename))
             {
-                if (metadataTable.Count == 10) //TODO: Exception
+                if (metadataTable.Count == 10) 
                 {
                     throw new TableSizeExcedeedException();
                 }
@@ -85,9 +85,9 @@ namespace ClientServer
                 metadataTable.Add(filename, info);
                 return info;
             }
-            else //TODO: Exception
+            else 
             {
-                return primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
+                throw new FileAlreadyExistsException();
             }
         }
 
@@ -112,7 +112,7 @@ namespace ClientServer
             }
             else 
             {
-                throw new FileAlreadyOpenException();
+                throw new FileAlreadyOpenedException();
             }
         }
 
@@ -124,9 +124,9 @@ namespace ClientServer
                 primaryMetadata.close(filename);
                 metadataTable.Remove(filename);
             }
-            else //TODO: Exception
+            else
             {
-                primaryMetadata.close(filename);
+                throw new FileNotOpenedException();
             }
         }
 

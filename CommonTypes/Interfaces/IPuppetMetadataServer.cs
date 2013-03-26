@@ -10,5 +10,6 @@ namespace CommonTypes
     {
         void fail();
         void recover();
+        string dump();
     }
 }
