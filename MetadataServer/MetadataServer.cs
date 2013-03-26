@@ -18,11 +18,12 @@ namespace MetadataServer
     //TODO: Check for concurrency in all operations!!!
     //http://msdn.microsoft.com/en-us/library/6ka1wd3w.aspx
 
-    class MetadataServer : MarshalByRefObject, IClientMetadata, IPuppetMetadataServer
+    class MetadataServer : MarshalByRefObject, IMetadataServerClientServer, IMetadataServerPuppet, IMetadataServerDataServer
     {
         private static string fileFolder = Path.Combine(Application.StartupPath, "Files");
         private Dictionary<string, int> fileCounter = new Dictionary<string, int>();
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
+        private Dictionary<string, IDataServerMetadataServer> dataServersList = new Dictionary<string, IDataServerMetadataServer>();
 
         static void Main(string[] args)
         {
@@ -186,5 +187,13 @@ namespace MetadataServer
             return new string(chars);
         }
 
+        public void register(string location)
+        {
+            System.Console.WriteLine("registering new data server at tcp://localhost:" + location + "/DataServer");
+
+            dataServersList.Add(location, (IDataServerMetadataServer)Activator.GetObject(
+               typeof(IDataServerMetadataServer),
+               "tcp://localhost:" + location + "/DataServer"));
+        }
     }
 }

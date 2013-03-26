@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
-    public interface IPuppetMetadataServer
+    public interface IMetadataServerPuppet
     {
         void fail();
         void recover();

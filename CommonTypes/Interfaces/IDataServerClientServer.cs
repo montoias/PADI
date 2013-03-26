@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
-    public interface IClientServerDataServer
+    public interface IDataServerClientServer
     {
+        FileData read(string filename, int semantics);
+        void write(string filename, byte[]file);
     }
 }

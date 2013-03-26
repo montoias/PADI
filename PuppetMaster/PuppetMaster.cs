@@ -15,15 +15,16 @@ namespace PuppetMaster
     public class PuppetMaster 
     {
         
-        private List<IPuppetClientServer> clientsList = new List<IPuppetClientServer>();
+        private List<IClientServerPuppet> clientsList = new List<IClientServerPuppet>();
+        private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
+        private List<IDataServerPuppet> dataServersList = new List<IDataServerPuppet>();
         private List<Dictionary<string, MetadataInfo>> metadataInfoList = new List<Dictionary<string, MetadataInfo>>();
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
-        private IPuppetMetadataServer[] metadataList = new IPuppetMetadataServer[3];
 
         //TODO: replace with full remote location
         private string[] metadataLocation = { "8081", "8082", "8083" };
 
-        private List<string> clientsPorts = new List<string>();
+        private List<string> usedPorts = new List<string>();
         private BitArray metadataLaunched = new BitArray(3);
         private Form1 form;
 
@@ -32,6 +33,10 @@ namespace PuppetMaster
         {
             TcpChannel channel = (TcpChannel)Helper.GetChannel(8080, true);
             ChannelServices.RegisterChannel(channel, true);
+            usedPorts.Add("8080");
+            foreach(string port in metadataLocation){
+                usedPorts.Add(port);
+            }
         }
 
         public void setForm(Form1 form)
@@ -41,25 +46,25 @@ namespace PuppetMaster
 
         public void LaunchClient(String port)
         {
-            if (!clientsPorts.Contains(port))
+            if (!usedPorts.Contains(port))
             {
                 string args = port + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
                 //TODO: Implement remote starting -> use WMI
                 Process.Start(Path.Combine(projectFolder, "ClientServer\\bin\\Debug\\ClientServer.exe"), args);
 
-                IPuppetClientServer newClient = (IPuppetClientServer)Activator.GetObject(
-                   typeof(IPuppetClientServer),
+                IClientServerPuppet newClient = (IClientServerPuppet)Activator.GetObject(
+                   typeof(IClientServerPuppet),
                    "tcp://localhost:" + port + "/ClientServer");
 
                 clientsList.Add(newClient);
                 form.addClient();
-                clientsPorts.Add(port);
+                usedPorts.Add(port);
                 metadataInfoList.Add(new Dictionary<string, MetadataInfo>());
             }
             else
             {
-                form.updateClientBox("Client already exists at port " + port + "!\r\n");
+                form.updateClientBox("Object already exists at port " + port + "!\r\n");
             }
 
         }
@@ -72,8 +77,8 @@ namespace PuppetMaster
             {
                 //TODO: Implement remote starting -> use WMI
                 Process.Start(Path.Combine(projectFolder, "MetadataServer\\bin\\Debug\\MetadataServer.exe"), location);
-                IPuppetMetadataServer newMetadata = (IPuppetMetadataServer)Activator.GetObject(
-                   typeof(IPuppetMetadataServer),
+                IMetadataServerPuppet newMetadata = (IMetadataServerPuppet)Activator.GetObject(
+                   typeof(IMetadataServerPuppet),
                    "tcp://localhost:" + location + "/MetadataServer");
                 metadataList[selectedMetadata] = newMetadata;
                 metadataLaunched[selectedMetadata] = true;
@@ -84,11 +89,32 @@ namespace PuppetMaster
             }
         }
 
+        public void LaunchDataServer(string port)
+        {
+            if (!usedPorts.Contains(port))
+            {
+                string args = port + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
+
+                //TODO: Implement remote starting -> use WMI
+                Process.Start(Path.Combine(projectFolder, "DataServer\\bin\\Debug\\DataServer.exe"), args);
+                IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
+                   typeof(IDataServerPuppet),
+                   "tcp://localhost:" + port + "/DataServer");
+                dataServersList.Add(newDataServer);
+                form.addDataServer();
+                usedPorts.Add(port);
+            }
+            else
+            {
+                form.updateClientBox("Object already exists at port " + port + "!\r\n");
+            }
+        }
+
         public void openFile(string filename, int selectedClient)
         {
             try
             {
-                MetadataInfo newMetadata = clientsList[selectedClient].popen(filename);
+                MetadataInfo newMetadata = clientsList[selectedClient].open(filename);
                 metadataInfoList[selectedClient].Add(filename, newMetadata);
                 form.showMetadata(newMetadata);
             }
@@ -107,7 +133,7 @@ namespace PuppetMaster
         {
             try
             {
-                clientsList[selectedClient].pclose(filename);
+                clientsList[selectedClient].close(filename);
                 metadataInfoList[selectedClient].Remove(filename);
             }
             catch (FileNotOpenedException)
@@ -121,7 +147,7 @@ namespace PuppetMaster
             //TODO: Interface details
             try
             {
-                MetadataInfo newMetadata = clientsList[selectedClient].pcreate(filename, 0, 0, 0);
+                MetadataInfo newMetadata = clientsList[selectedClient].create(filename, 0, 0, 0);
                 metadataInfoList[selectedClient].Add(filename, newMetadata);
                 //showMetadata(newMetadata);
             }
@@ -139,7 +165,7 @@ namespace PuppetMaster
         {
             try
             {
-                clientsList[selectedClient].pdelete(filename);
+                clientsList[selectedClient].delete(filename);
             }
             catch (Exception) //TODO: FileInUseException and FileNotExistsException
             {

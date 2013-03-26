@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
-    public interface IMetadataServerDataServer
+    public interface IDataServerPuppet
     {
-        void register(string location);
+        void freeze();
+        void unfreeze();
+        void fail();
+        void recover();
     }
 }

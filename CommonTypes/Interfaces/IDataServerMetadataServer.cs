@@ -6,11 +6,7 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
-    public interface IPuppetDataServer
+    public interface IDataServerMetadataServer
     {
-        void freeze();
-        void unfreeze();
-        void fail();
-        void recover();
     }
 }

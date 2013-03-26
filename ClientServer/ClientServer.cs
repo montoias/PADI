@@ -14,14 +14,14 @@ using CommonTypes;
 namespace ClientServer
 {
     //TODO:Store information from method calls
-    class ClientServer : MarshalByRefObject, IPuppetClientServer, IClientMetadata
+    class ClientServer : MarshalByRefObject, IClientServerPuppet
     {
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
-        private static IClientMetadata[] metadataServer = new IClientMetadata[3];
+        private static IMetadataServerClientServer[] metadataServer = new IMetadataServerClientServer[3];
         private static string[] metadataLocation = new string[3];
 
         //FIXME: is this suppose to be static?
-        static IClientMetadata primaryMetadata;
+        static IMetadataServerClientServer primaryMetadata;
 
         static void Main(string[] args)
         {
@@ -38,8 +38,8 @@ namespace ClientServer
             //Function that check if 0 is up and is the primary server
             //If it isn't up, iterate list
             //If it's not primary, access variable to get primary
-            metadataServer[0] = (IClientMetadata)Activator.GetObject(
-               typeof(IClientMetadata),
+            metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
             primaryMetadata = metadataServer[0];
 
@@ -58,16 +58,16 @@ namespace ClientServer
         //TODO: Implement algorithm that'll work in case of failure
         private void getMetadataServer()
         {
-            metadataServer[0] = (IClientMetadata)Activator.GetObject(
-               typeof(IClientMetadata),
+            metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
 
-            metadataServer[1] = (IClientMetadata)Activator.GetObject(
-               typeof(IClientMetadata),
+            metadataServer[1] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
                "tcp://localhost:" + metadataLocation[1] + "/MetadataServer");
 
-            metadataServer[2] = (IClientMetadata)Activator.GetObject(
-               typeof(IClientMetadata),
+            metadataServer[2] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
                "tcp://localhost:" + metadataLocation[2] + "/MetadataServer");
 
         }
@@ -130,38 +130,15 @@ namespace ClientServer
             }
         }
 
-        /*
-         * Puppet Master Logic
-         */
-        public MetadataInfo pcreate(string filename, int numDataServers, int readQuorum, int writeQuorum)
-        {
-            return create(filename, numDataServers, readQuorum, writeQuorum);
-        }
-
-        public void pdelete(string filename)
-        {
-            delete(filename);
-        }
-
-        public MetadataInfo popen(string filename)
-        {
-            return open(filename);
-        }
-
-        public void pclose(string filename)
-        {
-            close(filename);
-        }
-
-        public FileData pread(string filename, int semantics)
+        public FileData read(string filename, int semantics)
         {
             throw new NotImplementedException();
         }
 
-        public void pwrite(string filename, FileStream file)
+        public void write(string filename, byte[] file)
         {
             throw new NotImplementedException();
         }
-
+        
     }
 }

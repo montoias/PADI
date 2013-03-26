@@ -47,14 +47,15 @@
     <Compile Include="Exceptions\FileAlreadyExistsException.cs" />
     <Compile Include="Exceptions\FileAlreadyOpenedException.cs" />
     <Compile Include="Exceptions\TableSizeExcedeedException.cs" />
+    <Compile Include="Interfaces\IDataServerMetadataServer.cs" />
     <Compile Include="Types\FileData.cs" />
     <Compile Include="Types\Helper.cs" />
-    <Compile Include="Interfaces\IClientMetadata.cs" />
-    <Compile Include="Interfaces\IClientServerDataServer.cs" />
+    <Compile Include="Interfaces\IMetadataServerClientServer.cs" />
+    <Compile Include="Interfaces\IDataServerClientServer.cs" />
     <Compile Include="Interfaces\IMetadataServerDataServer.cs" />
-    <Compile Include="Interfaces\IPuppetClientServer.cs" />
-    <Compile Include="Interfaces\IPuppetDataServer.cs" />
-    <Compile Include="Interfaces\IPuppetMetadataServer.cs" />
+    <Compile Include="Interfaces\IClientServerPuppet.cs" />
+    <Compile Include="Interfaces\IDataServerPuppet.cs" />
+    <Compile Include="Interfaces\IMetadataServerPuppet.cs" />
     <Compile Include="Types\MetadataInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

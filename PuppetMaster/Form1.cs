@@ -22,6 +22,7 @@ namespace PuppetMaster
         private PuppetMaster puppetMaster;
         private int selectedMetadata = 0;
         private int clientCounter = 0;
+        private int dataServerCounter = 0;
 
         public Form1(PuppetMaster puppetMaster)
         {
@@ -37,6 +38,11 @@ namespace PuppetMaster
         private void LaunchMetadataButton_Click(object sender, EventArgs e)
         {
             puppetMaster.LaunchMetadata(selectedMetadata);
+        }
+
+        private void LaunchDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.LaunchDataServer(DataServerPortBox.Text);
         }
 
         private void OpenFile_Click(object sender, EventArgs e)
@@ -92,7 +98,12 @@ namespace PuppetMaster
 
         public void addClient()
         {
-            ClientListBox.Items.Add("Client " + clientCounter++);
+            ClientListBox.Items.Add("c-" + clientCounter++);
+        }
+
+        public void addDataServer()
+        {
+            DataServerListBox.Items.Add("d-" + dataServerCounter++);
         }
 
         public void updateClientBox(string msg)
@@ -113,6 +124,18 @@ namespace PuppetMaster
             ClientEventBox.Text += "ReadQuorum:" + newMetadata.readQuorum + "\r\n";
             ClientEventBox.Text += "WriteQuorum:" + newMetadata.writeQuorum + "\r\n";
             ClientEventBox.Text += "DataServers:" + newMetadata.dataServers + "\r\n";
+        }
+
+        private void ClientPortBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            const char Delete = (char)8;
+            e.Handled = !Char.IsDigit(e.KeyChar) && e.KeyChar != Delete;
+        }
+
+        private void DataServerPortBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            const char Delete = (char)8;
+            e.Handled = !Char.IsDigit(e.KeyChar) && e.KeyChar != Delete;
         }
     }
 }
