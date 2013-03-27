@@ -14,6 +14,6 @@ namespace CommonTypes
         void close(string filename);
         void delete(string filename);
         FileData read(string filename, int semantics);
-        void write(string filename, byte[] file);
+        void write(string filename, string file);
     }
 }

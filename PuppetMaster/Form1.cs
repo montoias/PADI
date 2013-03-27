@@ -56,9 +56,11 @@ namespace PuppetMaster
             puppetMaster.closeFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
+        //TODO: Check for user input vality
         private void CreateFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.createFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            puppetMaster.createFile(FilenameBox.Text, Convert.ToInt32(NServersTextBox.Text), 
+                Convert.ToInt32(ReadQuorumTextBox.Text), Convert.ToInt32(WriteQuorumTextBox.Text), ClientListBox.SelectedIndex);
         }
 
         private void DeleteFileButton_Click(object sender, EventArgs e)
@@ -98,12 +100,14 @@ namespace PuppetMaster
 
         public void addClient()
         {
-            ClientListBox.Items.Add("c-" + clientCounter++);
+            ClientListBox.Items.Add("c-" + clientCounter);
+            ClientListBox.SetSelected(clientCounter++, true);
         }
 
         public void addDataServer()
         {
-            DataServerListBox.Items.Add("d-" + dataServerCounter++);
+            DataServerListBox.Items.Add("d-" + dataServerCounter);
+            DataServerListBox.SetSelected(dataServerCounter++, true);
         }
 
         public void updateClientBox(string msg)
@@ -123,19 +127,28 @@ namespace PuppetMaster
             ClientEventBox.Text += "NumDataServers:" + newMetadata.numDataServers + "\r\n";
             ClientEventBox.Text += "ReadQuorum:" + newMetadata.readQuorum + "\r\n";
             ClientEventBox.Text += "WriteQuorum:" + newMetadata.writeQuorum + "\r\n";
-            ClientEventBox.Text += "DataServers:" + newMetadata.dataServers + "\r\n";
+            ClientEventBox.Text += "DataServers:" + newMetadata.dataServersToString() + "\r\n";
         }
 
-        private void ClientPortBox_KeyPress(object sender, KeyPressEventArgs e)
+        private void checkNumeric(object sender, KeyPressEventArgs e)
         {
             const char Delete = (char)8;
             e.Handled = !Char.IsDigit(e.KeyChar) && e.KeyChar != Delete;
         }
 
-        private void DataServerPortBox_KeyPress(object sender, KeyPressEventArgs e)
+        private void WriteFileButton_Click(object sender, EventArgs e)
         {
-            const char Delete = (char)8;
-            e.Handled = !Char.IsDigit(e.KeyChar) && e.KeyChar != Delete;
+            puppetMaster.writeFile(FilenameBox.Text, FileTextbox.Text, ClientListBox.SelectedIndex);
         }
+
+        private void KillProcessesButton_Click(object sender, EventArgs e)
+        {
+            clientCounter = 0;
+            dataServerCounter = 0;
+            ClientListBox.Items.Clear();
+            DataServerListBox.Items.Clear();
+            puppetMaster.killProcesses();
+        }
+
     }
 }

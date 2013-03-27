@@ -61,8 +61,22 @@ namespace MetadataServer
 
                 System.Console.WriteLine("Creating file:" + filename);
 
-                //TODO: Obtain the data severs available
-                metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, "a");
+                if (numDataServers <= dataServersList.Count)
+                {
+                    //TODO: Distribution algorithm
+                    ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
+                    List<String> locations = new List<string>();
+                    for (int i = 0; i < numDataServers; i++)
+                    {
+                        locations.Add((string)dataServersArray[i]);
+                    }
+
+                    metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
+                }
+                else //TODO: Exception
+                {
+                    throw new NotImplementedException();
+                }
 
                 fileCounter.Add(filename, 1);
                 metadataTable.Add(filename, metadata);
@@ -120,8 +134,17 @@ namespace MetadataServer
                 {
                     System.Console.WriteLine("Opening file:" + filename);
                     string[] strings = byteArrayToString(File.ReadAllBytes(path)).Split('\n');
-                    MetadataInfo metadata = new MetadataInfo(strings[0], Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]), Convert.ToInt32(strings[3]), strings[4]);
+                    string[] locations = strings[4].Split(' ');
+                    List<string> parsedLocations = new List<string>();
+
+                    foreach (string location in locations)
+                    {
+                        parsedLocations.Add(location);
+                    }
+
+                    MetadataInfo metadata = new MetadataInfo(strings[0], Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]), Convert.ToInt32(strings[3]), parsedLocations);
                     metadataTable.Add(filename, metadata);
+                    fileCounter.Add(filename, 1);
                     
                     return metadata;
                 }
@@ -173,17 +196,17 @@ namespace MetadataServer
             return contents;
         }
 
-        private byte[] stringToByteArray(string metadata)
+        private byte[] stringToByteArray(string s)
         {
-            byte[] bytes = new byte[metadata.Length * sizeof(char)];
-            System.Buffer.BlockCopy(metadata.ToCharArray(), 0, bytes, 0, bytes.Length);
+            byte[] bytes = new byte[s.Length * sizeof(char)];
+            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
         }
         
-        private string byteArrayToString(byte[] metadata)
+        private string byteArrayToString(byte[] b)
         {
-            char[] chars = new char[metadata.Length / sizeof(char)];
-            System.Buffer.BlockCopy(metadata, 0, chars, 0, metadata.Length);
+            char[] chars = new char[b.Length / sizeof(char)];
+            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
             return new string(chars);
         }
 

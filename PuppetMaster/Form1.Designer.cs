@@ -46,6 +46,13 @@
             this.RecoverMetadataServerButton = new System.Windows.Forms.Button();
             this.ClientListBox = new System.Windows.Forms.ListBox();
             this.ClientGroupBox = new System.Windows.Forms.GroupBox();
+            this.FileTextbox = new System.Windows.Forms.TextBox();
+            this.WriteQuorumTextBox = new System.Windows.Forms.TextBox();
+            this.ReadQuorumTextBox = new System.Windows.Forms.TextBox();
+            this.NServersTextBox = new System.Windows.Forms.TextBox();
+            this.ReadQuorumLabel = new System.Windows.Forms.Label();
+            this.WriteQuorumLabel = new System.Windows.Forms.Label();
+            this.NServersLabel = new System.Windows.Forms.Label();
             this.WriteFileButton = new System.Windows.Forms.Button();
             this.ReadFileButton = new System.Windows.Forms.Button();
             this.MetadataServerGroupBox = new System.Windows.Forms.GroupBox();
@@ -60,12 +67,7 @@
             this.DataServerPortBox = new System.Windows.Forms.TextBox();
             this.DataServerPortLabel = new System.Windows.Forms.Label();
             this.MetadataEventBox = new System.Windows.Forms.TextBox();
-            this.NServersLabel = new System.Windows.Forms.Label();
-            this.WriteQuorumLabel = new System.Windows.Forms.Label();
-            this.ReadQuorumLabel = new System.Windows.Forms.Label();
-            this.NServersTextBox = new System.Windows.Forms.TextBox();
-            this.ReadQuorumTextBox = new System.Windows.Forms.TextBox();
-            this.WriteQuorumTextBox = new System.Windows.Forms.TextBox();
+            this.KillProcessesbutton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -73,7 +75,7 @@
             // 
             // LaunchClientServerButton
             // 
-            this.LaunchClientServerButton.Location = new System.Drawing.Point(267, 292);
+            this.LaunchClientServerButton.Location = new System.Drawing.Point(331, 295);
             this.LaunchClientServerButton.Name = "LaunchClientServerButton";
             this.LaunchClientServerButton.Size = new System.Drawing.Size(93, 28);
             this.LaunchClientServerButton.TabIndex = 0;
@@ -83,7 +85,7 @@
             // 
             // OpenFileButton
             // 
-            this.OpenFileButton.Location = new System.Drawing.Point(202, 164);
+            this.OpenFileButton.Location = new System.Drawing.Point(109, 166);
             this.OpenFileButton.Name = "OpenFileButton";
             this.OpenFileButton.Size = new System.Drawing.Size(85, 30);
             this.OpenFileButton.TabIndex = 1;
@@ -102,7 +104,7 @@
             // 
             // LaunchMetadataServerButton
             // 
-            this.LaunchMetadataServerButton.Location = new System.Drawing.Point(222, 275);
+            this.LaunchMetadataServerButton.Location = new System.Drawing.Point(156, 260);
             this.LaunchMetadataServerButton.Name = "LaunchMetadataServerButton";
             this.LaunchMetadataServerButton.Size = new System.Drawing.Size(106, 30);
             this.LaunchMetadataServerButton.TabIndex = 3;
@@ -112,7 +114,7 @@
             // 
             // CreateFileButton
             // 
-            this.CreateFileButton.Location = new System.Drawing.Point(111, 164);
+            this.CreateFileButton.Location = new System.Drawing.Point(18, 166);
             this.CreateFileButton.Name = "CreateFileButton";
             this.CreateFileButton.Size = new System.Drawing.Size(85, 30);
             this.CreateFileButton.TabIndex = 4;
@@ -139,7 +141,7 @@
             // 
             // DeleteFileButton
             // 
-            this.DeleteFileButton.Location = new System.Drawing.Point(111, 200);
+            this.DeleteFileButton.Location = new System.Drawing.Point(18, 202);
             this.DeleteFileButton.Name = "DeleteFileButton";
             this.DeleteFileButton.Size = new System.Drawing.Size(85, 30);
             this.DeleteFileButton.TabIndex = 7;
@@ -149,7 +151,7 @@
             // 
             // CloseFileButton
             // 
-            this.CloseFileButton.Location = new System.Drawing.Point(202, 200);
+            this.CloseFileButton.Location = new System.Drawing.Point(109, 202);
             this.CloseFileButton.Name = "CloseFileButton";
             this.CloseFileButton.Size = new System.Drawing.Size(85, 30);
             this.CloseFileButton.TabIndex = 8;
@@ -164,7 +166,7 @@
             this.ClientPortBox.Name = "ClientPortBox";
             this.ClientPortBox.Size = new System.Drawing.Size(51, 20);
             this.ClientPortBox.TabIndex = 9;
-            this.ClientPortBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ClientPortBox_KeyPress);
+            this.ClientPortBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
             // 
             // ClientPortLabel
             // 
@@ -179,7 +181,7 @@
             // 
             this.MetadataOption1.AutoSize = true;
             this.MetadataOption1.Checked = true;
-            this.MetadataOption1.Location = new System.Drawing.Point(215, 38);
+            this.MetadataOption1.Location = new System.Drawing.Point(149, 23);
             this.MetadataOption1.Name = "MetadataOption1";
             this.MetadataOption1.Size = new System.Drawing.Size(113, 17);
             this.MetadataOption1.TabIndex = 13;
@@ -191,7 +193,7 @@
             // MetadataOption2
             // 
             this.MetadataOption2.AutoSize = true;
-            this.MetadataOption2.Location = new System.Drawing.Point(215, 72);
+            this.MetadataOption2.Location = new System.Drawing.Point(149, 57);
             this.MetadataOption2.Name = "MetadataOption2";
             this.MetadataOption2.Size = new System.Drawing.Size(113, 17);
             this.MetadataOption2.TabIndex = 14;
@@ -202,7 +204,7 @@
             // MetadataOption3
             // 
             this.MetadataOption3.AutoSize = true;
-            this.MetadataOption3.Location = new System.Drawing.Point(215, 107);
+            this.MetadataOption3.Location = new System.Drawing.Point(149, 92);
             this.MetadataOption3.Name = "MetadataOption3";
             this.MetadataOption3.Size = new System.Drawing.Size(113, 17);
             this.MetadataOption3.TabIndex = 15;
@@ -212,7 +214,7 @@
             // 
             // FailMetadataServerButton
             // 
-            this.FailMetadataServerButton.Location = new System.Drawing.Point(20, 43);
+            this.FailMetadataServerButton.Location = new System.Drawing.Point(19, 28);
             this.FailMetadataServerButton.Name = "FailMetadataServerButton";
             this.FailMetadataServerButton.Size = new System.Drawing.Size(98, 30);
             this.FailMetadataServerButton.TabIndex = 16;
@@ -222,7 +224,7 @@
             // 
             // RecoverMetadataServerButton
             // 
-            this.RecoverMetadataServerButton.Location = new System.Drawing.Point(20, 82);
+            this.RecoverMetadataServerButton.Location = new System.Drawing.Point(19, 67);
             this.RecoverMetadataServerButton.Name = "RecoverMetadataServerButton";
             this.RecoverMetadataServerButton.Size = new System.Drawing.Size(98, 30);
             this.RecoverMetadataServerButton.TabIndex = 17;
@@ -240,6 +242,7 @@
             // 
             // ClientGroupBox
             // 
+            this.ClientGroupBox.Controls.Add(this.FileTextbox);
             this.ClientGroupBox.Controls.Add(this.WriteQuorumTextBox);
             this.ClientGroupBox.Controls.Add(this.ReadQuorumTextBox);
             this.ClientGroupBox.Controls.Add(this.NServersTextBox);
@@ -260,25 +263,88 @@
             this.ClientGroupBox.Controls.Add(this.ClientPortBox);
             this.ClientGroupBox.Location = new System.Drawing.Point(12, 12);
             this.ClientGroupBox.Name = "ClientGroupBox";
-            this.ClientGroupBox.Size = new System.Drawing.Size(395, 333);
+            this.ClientGroupBox.Size = new System.Drawing.Size(442, 333);
             this.ClientGroupBox.TabIndex = 19;
             this.ClientGroupBox.TabStop = false;
             this.ClientGroupBox.Text = "Client Server";
             // 
+            // FileTextbox
+            // 
+            this.FileTextbox.Location = new System.Drawing.Point(223, 165);
+            this.FileTextbox.Multiline = true;
+            this.FileTextbox.Name = "FileTextbox";
+            this.FileTextbox.Size = new System.Drawing.Size(186, 113);
+            this.FileTextbox.TabIndex = 26;
+            // 
+            // WriteQuorumTextBox
+            // 
+            this.WriteQuorumTextBox.Location = new System.Drawing.Point(202, 125);
+            this.WriteQuorumTextBox.MaxLength = 2;
+            this.WriteQuorumTextBox.Name = "WriteQuorumTextBox";
+            this.WriteQuorumTextBox.Size = new System.Drawing.Size(35, 20);
+            this.WriteQuorumTextBox.TabIndex = 25;
+            this.WriteQuorumTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
+            // 
+            // ReadQuorumTextBox
+            // 
+            this.ReadQuorumTextBox.Location = new System.Drawing.Point(203, 89);
+            this.ReadQuorumTextBox.MaxLength = 2;
+            this.ReadQuorumTextBox.Name = "ReadQuorumTextBox";
+            this.ReadQuorumTextBox.Size = new System.Drawing.Size(34, 20);
+            this.ReadQuorumTextBox.TabIndex = 24;
+            this.ReadQuorumTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
+            // 
+            // NServersTextBox
+            // 
+            this.NServersTextBox.Location = new System.Drawing.Point(202, 55);
+            this.NServersTextBox.MaxLength = 2;
+            this.NServersTextBox.Name = "NServersTextBox";
+            this.NServersTextBox.Size = new System.Drawing.Size(35, 20);
+            this.NServersTextBox.TabIndex = 23;
+            this.NServersTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
+            // 
+            // ReadQuorumLabel
+            // 
+            this.ReadQuorumLabel.AutoSize = true;
+            this.ReadQuorumLabel.Location = new System.Drawing.Point(121, 92);
+            this.ReadQuorumLabel.Name = "ReadQuorumLabel";
+            this.ReadQuorumLabel.Size = new System.Drawing.Size(70, 13);
+            this.ReadQuorumLabel.TabIndex = 22;
+            this.ReadQuorumLabel.Text = "ReadQuorum";
+            // 
+            // WriteQuorumLabel
+            // 
+            this.WriteQuorumLabel.AutoSize = true;
+            this.WriteQuorumLabel.Location = new System.Drawing.Point(119, 128);
+            this.WriteQuorumLabel.Name = "WriteQuorumLabel";
+            this.WriteQuorumLabel.Size = new System.Drawing.Size(72, 13);
+            this.WriteQuorumLabel.TabIndex = 21;
+            this.WriteQuorumLabel.Text = "Write Quorum";
+            // 
+            // NServersLabel
+            // 
+            this.NServersLabel.AutoSize = true;
+            this.NServersLabel.Location = new System.Drawing.Point(140, 58);
+            this.NServersLabel.Name = "NServersLabel";
+            this.NServersLabel.Size = new System.Drawing.Size(51, 13);
+            this.NServersLabel.TabIndex = 20;
+            this.NServersLabel.Text = "NServers";
+            // 
             // WriteFileButton
             // 
-            this.WriteFileButton.Location = new System.Drawing.Point(207, 247);
+            this.WriteFileButton.Location = new System.Drawing.Point(109, 249);
             this.WriteFileButton.Name = "WriteFileButton";
-            this.WriteFileButton.Size = new System.Drawing.Size(80, 30);
+            this.WriteFileButton.Size = new System.Drawing.Size(85, 30);
             this.WriteFileButton.TabIndex = 19;
             this.WriteFileButton.Text = "Write File";
             this.WriteFileButton.UseVisualStyleBackColor = true;
+            this.WriteFileButton.Click += new System.EventHandler(this.WriteFileButton_Click);
             // 
             // ReadFileButton
             // 
-            this.ReadFileButton.Location = new System.Drawing.Point(111, 247);
+            this.ReadFileButton.Location = new System.Drawing.Point(18, 249);
             this.ReadFileButton.Name = "ReadFileButton";
-            this.ReadFileButton.Size = new System.Drawing.Size(80, 30);
+            this.ReadFileButton.Size = new System.Drawing.Size(85, 30);
             this.ReadFileButton.TabIndex = 19;
             this.ReadFileButton.Text = "Read File";
             this.ReadFileButton.UseVisualStyleBackColor = true;
@@ -292,16 +358,16 @@
             this.MetadataServerGroupBox.Controls.Add(this.MetadataOption3);
             this.MetadataServerGroupBox.Controls.Add(this.FailMetadataServerButton);
             this.MetadataServerGroupBox.Controls.Add(this.LaunchMetadataServerButton);
-            this.MetadataServerGroupBox.Location = new System.Drawing.Point(430, 13);
+            this.MetadataServerGroupBox.Location = new System.Drawing.Point(460, 17);
             this.MetadataServerGroupBox.Name = "MetadataServerGroupBox";
-            this.MetadataServerGroupBox.Size = new System.Drawing.Size(356, 333);
+            this.MetadataServerGroupBox.Size = new System.Drawing.Size(293, 328);
             this.MetadataServerGroupBox.TabIndex = 20;
             this.MetadataServerGroupBox.TabStop = false;
             this.MetadataServerGroupBox.Text = "Metadata Server";
             // 
             // DumpMetadataButton
             // 
-            this.DumpMetadataButton.Location = new System.Drawing.Point(104, 275);
+            this.DumpMetadataButton.Location = new System.Drawing.Point(38, 260);
             this.DumpMetadataButton.Name = "DumpMetadataButton";
             this.DumpMetadataButton.Size = new System.Drawing.Size(106, 30);
             this.DumpMetadataButton.TabIndex = 18;
@@ -387,7 +453,7 @@
             this.DataServerPortBox.Name = "DataServerPortBox";
             this.DataServerPortBox.Size = new System.Drawing.Size(78, 20);
             this.DataServerPortBox.TabIndex = 9;
-            this.DataServerPortBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.DataServerPortBox_KeyPress);
+            this.DataServerPortBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
             // 
             // DataServerPortLabel
             // 
@@ -407,62 +473,22 @@
             this.MetadataEventBox.Size = new System.Drawing.Size(369, 168);
             this.MetadataEventBox.TabIndex = 2;
             // 
-            // NServersLabel
+            // KillProcessesbutton
             // 
-            this.NServersLabel.AutoSize = true;
-            this.NServersLabel.Location = new System.Drawing.Point(140, 58);
-            this.NServersLabel.Name = "NServersLabel";
-            this.NServersLabel.Size = new System.Drawing.Size(51, 13);
-            this.NServersLabel.TabIndex = 20;
-            this.NServersLabel.Text = "NServers";
-            // 
-            // WriteQuorumLabel
-            // 
-            this.WriteQuorumLabel.AutoSize = true;
-            this.WriteQuorumLabel.Location = new System.Drawing.Point(119, 128);
-            this.WriteQuorumLabel.Name = "WriteQuorumLabel";
-            this.WriteQuorumLabel.Size = new System.Drawing.Size(72, 13);
-            this.WriteQuorumLabel.TabIndex = 21;
-            this.WriteQuorumLabel.Text = "Write Quorum";
-            // 
-            // ReadQuorumLabel
-            // 
-            this.ReadQuorumLabel.AutoSize = true;
-            this.ReadQuorumLabel.Location = new System.Drawing.Point(121, 92);
-            this.ReadQuorumLabel.Name = "ReadQuorumLabel";
-            this.ReadQuorumLabel.Size = new System.Drawing.Size(70, 13);
-            this.ReadQuorumLabel.TabIndex = 22;
-            this.ReadQuorumLabel.Text = "ReadQuorum";
-            // 
-            // NServersTextBox
-            // 
-            this.NServersTextBox.Location = new System.Drawing.Point(202, 55);
-            this.NServersTextBox.MaxLength = 2;
-            this.NServersTextBox.Name = "NServersTextBox";
-            this.NServersTextBox.Size = new System.Drawing.Size(35, 20);
-            this.NServersTextBox.TabIndex = 23;
-            // 
-            // ReadQuorumTextBox
-            // 
-            this.ReadQuorumTextBox.Location = new System.Drawing.Point(203, 89);
-            this.ReadQuorumTextBox.MaxLength = 2;
-            this.ReadQuorumTextBox.Name = "ReadQuorumTextBox";
-            this.ReadQuorumTextBox.Size = new System.Drawing.Size(34, 20);
-            this.ReadQuorumTextBox.TabIndex = 24;
-            // 
-            // WriteQuorumTextBox
-            // 
-            this.WriteQuorumTextBox.Location = new System.Drawing.Point(202, 125);
-            this.WriteQuorumTextBox.MaxLength = 2;
-            this.WriteQuorumTextBox.Name = "WriteQuorumTextBox";
-            this.WriteQuorumTextBox.Size = new System.Drawing.Size(35, 20);
-            this.WriteQuorumTextBox.TabIndex = 25;
+            this.KillProcessesbutton.Location = new System.Drawing.Point(1028, 524);
+            this.KillProcessesbutton.Name = "KillProcessesbutton";
+            this.KillProcessesbutton.Size = new System.Drawing.Size(96, 35);
+            this.KillProcessesbutton.TabIndex = 22;
+            this.KillProcessesbutton.Text = "Kill Processes";
+            this.KillProcessesbutton.UseVisualStyleBackColor = true;
+            this.KillProcessesbutton.Click += new System.EventHandler(this.KillProcessesButton_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1211, 581);
+            this.Controls.Add(this.KillProcessesbutton);
             this.Controls.Add(this.DataServerGroupBox);
             this.Controls.Add(this.MetadataServerGroupBox);
             this.Controls.Add(this.ClientGroupBox);
@@ -521,6 +547,8 @@
         private System.Windows.Forms.TextBox ReadQuorumTextBox;
         private System.Windows.Forms.TextBox NServersTextBox;
         private System.Windows.Forms.Label ReadQuorumLabel;
+        private System.Windows.Forms.TextBox FileTextbox;
+        private System.Windows.Forms.Button KillProcessesbutton;
     }
 }
 

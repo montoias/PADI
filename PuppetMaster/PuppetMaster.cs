@@ -33,8 +33,14 @@ namespace PuppetMaster
         {
             TcpChannel channel = (TcpChannel)Helper.GetChannel(8080, true);
             ChannelServices.RegisterChannel(channel, true);
+            addKnownPorts();
+        }
+
+        private void addKnownPorts()
+        {
             usedPorts.Add("8080");
-            foreach(string port in metadataLocation){
+            foreach (string port in metadataLocation)
+            {
                 usedPorts.Add(port);
             }
         }
@@ -127,6 +133,10 @@ namespace PuppetMaster
             {
                 form.updateClientBox("There are 10 slots occupied, you should close one before trying to open a file!\r\n");
             }
+            catch (FileDoesNotExistException)
+            {
+                form.updateClientBox("The file: " + filename + " you've tried to open doesn't exist!\r\n");
+            }
         }
 
         public void closeFile(string filename, int selectedClient)
@@ -142,12 +152,11 @@ namespace PuppetMaster
             }
         }
 
-        public void createFile(string filename, int selectedClient)
+        public void createFile(string filename, int nServers, int readQuorum, int writeQuorum, int selectedClient)
         {
-            //TODO: Interface details
             try
             {
-                MetadataInfo newMetadata = clientsList[selectedClient].create(filename, 0, 0, 0);
+                MetadataInfo newMetadata = clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum);
                 metadataInfoList[selectedClient].Add(filename, newMetadata);
                 //showMetadata(newMetadata);
             }
@@ -172,6 +181,19 @@ namespace PuppetMaster
                 form.updateClientBox("File " + filename + " cannot be deleted!\r\n");
             }
         }
+
+        public void writeFile(string filename, string file, int selectedClient)
+        {
+            try
+            {
+                clientsList[selectedClient].write(filename, file);
+            }
+            catch (Exception) //TODO: FileInUseException and FileNotExistsException
+            {
+                form.updateClientBox("File " + filename + " cannot be deleted!\r\n");
+            }
+        }
+
 
 
         public void failMetadata()
@@ -198,6 +220,24 @@ namespace PuppetMaster
         public void unfreezeDataServer()
         {
             throw new NotImplementedException();
+        }
+
+        public void killProcesses()
+        {
+            foreach(Process proc in Process.GetProcessesByName("DataServer")){
+                proc.Kill();
+            }
+            foreach (Process proc in Process.GetProcessesByName("ClientServer"))
+            {
+                proc.Kill();
+            }
+            foreach (Process proc in Process.GetProcessesByName("MetadataServer"))
+            {
+                proc.Kill();
+            }
+
+            usedPorts.Clear();
+            addKnownPorts();
         }
     }
 }

@@ -2,7 +2,7 @@ PADI
 ====
 
 
-Implement logic in DataServer!!.
+Implement logic in DataServer (missing read).
 
 Add dump of folders in metadata servers.
 

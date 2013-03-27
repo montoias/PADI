@@ -14,7 +14,7 @@ namespace DataServer
 {
     public class DataServer : MarshalByRefObject, IDataServerClientServer, IDataServerPuppet, IDataServerMetadataServer
     {
-        private static string fileFolder = Path.Combine(Application.StartupPath, "Files");
+        private static string fileFolder;
         private static string[] metadataLocation = new string[3];
         private static IMetadataServerDataServer[] metadataServer = new IMetadataServerDataServer[3];
         private static IMetadataServerDataServer primaryMetadata;
@@ -31,6 +31,7 @@ namespace DataServer
                 "DataServer",
                 WellKnownObjectMode.Singleton);
 
+            fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             createFolderFile();
 
             //TODO: Get current location of the MetadataServer
@@ -90,9 +91,19 @@ namespace DataServer
             throw new NotImplementedException();
         }
 
+        //TODO: Append to file when file aready exists
         public void write(string filename, byte[] file)
         {
-            throw new NotImplementedException();
+            String path = Path.Combine(fileFolder, filename);
+
+            if (!File.Exists(path))
+            {
+                FileStream newFile = File.Create(path);
+
+                newFile.Write(file, 0, file.Length);
+                newFile.Close();
+
+            }
         }
         
     }

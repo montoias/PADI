@@ -135,9 +135,40 @@ namespace ClientServer
             throw new NotImplementedException();
         }
 
-        public void write(string filename, byte[] file)
+        //TODO: keep server objects?
+        //TODO: implement quoruns
+        public void write(string filename, string textFile)
         {
-            throw new NotImplementedException();
+            if (metadataTable.ContainsKey(filename))
+            {
+                MetadataInfo metadata = metadataTable[filename];
+                foreach (string location in metadata.dataServers)
+                {
+                    IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
+                    typeof(IDataServerClientServer),
+                    "tcp://localhost:" + location + "/DataServer");
+                    dataServer.write(filename, stringToByteArray(textFile));
+                }
+            }
+            else
+            {
+                //TODO : MetadataFile not there exception
+                throw new NotImplementedException();
+            }
+        }
+
+        private byte[] stringToByteArray(string s)
+        {
+            byte[] bytes = new byte[s.Length * sizeof(char)];
+            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
+            return bytes;
+        }
+
+        private string byteArrayToString(byte[] b)
+        {
+            char[] chars = new char[b.Length / sizeof(char)];
+            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
+            return new string(chars);
         }
         
     }
