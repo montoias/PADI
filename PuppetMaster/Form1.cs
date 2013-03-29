@@ -23,6 +23,8 @@ namespace PuppetMaster
         private int selectedMetadata = 0;
         private int clientCounter = 0;
         private int dataServerCounter = 0;
+        private int clientPort = 8000;
+        private int dataServerPort = 9000;
 
         public Form1(PuppetMaster puppetMaster)
         {
@@ -32,7 +34,8 @@ namespace PuppetMaster
 
         private void LaunchClient_Click(object sender, EventArgs e)
         {
-            puppetMaster.LaunchClient(ClientPortBox.Text);
+            puppetMaster.LaunchClient(clientPort.ToString());
+            clientPort++;
         }
 
         private void LaunchMetadataButton_Click(object sender, EventArgs e)
@@ -42,30 +45,47 @@ namespace PuppetMaster
 
         private void LaunchDataServerButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.LaunchDataServer(DataServerPortBox.Text);
+            puppetMaster.LaunchDataServer(dataServerPort.ToString());
+            dataServerPort++;
         }
 
         private void OpenFile_Click(object sender, EventArgs e)
         {
-            puppetMaster.openFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            if (FilenameBox.Text.Equals(""))
+                ClientEventBox.Text += "Please, specify a filename.\r\n";
+            else
+                puppetMaster.openFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
 
         private void CloseFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.closeFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            if (FilenameBox.Text.Equals(""))
+                ClientEventBox.Text += "Please, specify a filename.\r\n";
+            else
+                puppetMaster.closeFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
-        //TODO: Check for user input vality
         private void CreateFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.createFile(FilenameBox.Text, Convert.ToInt32(NServersTextBox.Text), 
-                Convert.ToInt32(ReadQuorumTextBox.Text), Convert.ToInt32(WriteQuorumTextBox.Text), ClientListBox.SelectedIndex);
+            if (FilenameBox.Text.Equals("") || NServersTextBox.Text.Equals("") || ReadQuorumTextBox.Text.Equals("") ||
+                WriteQuorumTextBox.Text.Equals(""))
+            {
+                ClientEventBox.Text += "Please, fill up all the fields necessary to create a file.\r\n";
+            }
+            else
+            {
+                puppetMaster.createFile(FilenameBox.Text, Convert.ToInt32(NServersTextBox.Text),
+                    Convert.ToInt32(ReadQuorumTextBox.Text), Convert.ToInt32(WriteQuorumTextBox.Text), ClientListBox.SelectedIndex);
+            }
         }
 
         private void DeleteFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.deleteFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            if (FilenameBox.Text.Equals(""))
+                ClientEventBox.Text += "Please, specify a filename.\r\n";
+            else
+                puppetMaster.deleteFile(FilenameBox.Text, ClientListBox.SelectedIndex);
         }
 
         private void DumpMetadataButton_Click(object sender, EventArgs e)
@@ -120,6 +140,12 @@ namespace PuppetMaster
             MetadataEventBox.Text += msg;
         }
 
+        public void updateFileText(string msg, int version)
+        {
+            FileTextbox.Clear();
+            FileTextbox.Text += msg;
+        }
+
         public void showMetadata(MetadataInfo newMetadata)
         {
             ClientEventBox.Text += "-------------------\r\nMETADATA\r\n";
@@ -138,17 +164,29 @@ namespace PuppetMaster
 
         private void WriteFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.writeFile(FilenameBox.Text, FileTextbox.Text, ClientListBox.SelectedIndex);
+            if (FilenameBox.Text.Equals(""))
+                ClientEventBox.Text += "Please, specify a filename.\r\n";
+            else
+                puppetMaster.writeFile(FilenameBox.Text, FileTextbox.Text, ClientListBox.SelectedIndex);
+        }
+
+        private void ReadFileButton_Click(object sender, EventArgs e)
+        {
+            if (FilenameBox.Text.Equals("") || SemanticsTextBox.Text.Equals(""))
+                ClientEventBox.Text += "Please, fill all the fields necessary to read a file\r\n";
+            else
+                puppetMaster.readFile(FilenameBox.Text, Convert.ToInt32(SemanticsTextBox.Text), ClientListBox.SelectedIndex);
         }
 
         private void KillProcessesButton_Click(object sender, EventArgs e)
         {
             clientCounter = 0;
             dataServerCounter = 0;
+            clientPort = 8000;
+            dataServerPort = 9000;
             ClientListBox.Items.Clear();
             DataServerListBox.Items.Clear();
             puppetMaster.killProcesses();
         }
-
     }
 }

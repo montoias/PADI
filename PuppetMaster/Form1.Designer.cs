@@ -37,8 +37,6 @@
             this.FilenameLabel = new System.Windows.Forms.Label();
             this.DeleteFileButton = new System.Windows.Forms.Button();
             this.CloseFileButton = new System.Windows.Forms.Button();
-            this.ClientPortBox = new System.Windows.Forms.TextBox();
-            this.ClientPortLabel = new System.Windows.Forms.Label();
             this.MetadataOption1 = new System.Windows.Forms.RadioButton();
             this.MetadataOption2 = new System.Windows.Forms.RadioButton();
             this.MetadataOption3 = new System.Windows.Forms.RadioButton();
@@ -46,6 +44,8 @@
             this.RecoverMetadataServerButton = new System.Windows.Forms.Button();
             this.ClientListBox = new System.Windows.Forms.ListBox();
             this.ClientGroupBox = new System.Windows.Forms.GroupBox();
+            this.SemanticsTextBox = new System.Windows.Forms.TextBox();
+            this.SemanticsLabel = new System.Windows.Forms.Label();
             this.FileTextbox = new System.Windows.Forms.TextBox();
             this.WriteQuorumTextBox = new System.Windows.Forms.TextBox();
             this.ReadQuorumTextBox = new System.Windows.Forms.TextBox();
@@ -64,8 +64,6 @@
             this.FreezeDataServerButton = new System.Windows.Forms.Button();
             this.RecoverDataServerButton = new System.Windows.Forms.Button();
             this.FailDataServerButton = new System.Windows.Forms.Button();
-            this.DataServerPortBox = new System.Windows.Forms.TextBox();
-            this.DataServerPortLabel = new System.Windows.Forms.Label();
             this.MetadataEventBox = new System.Windows.Forms.TextBox();
             this.KillProcessesbutton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
@@ -159,24 +157,6 @@
             this.CloseFileButton.UseVisualStyleBackColor = true;
             this.CloseFileButton.Click += new System.EventHandler(this.CloseFileButton_Click);
             // 
-            // ClientPortBox
-            // 
-            this.ClientPortBox.Location = new System.Drawing.Point(58, 300);
-            this.ClientPortBox.MaxLength = 5;
-            this.ClientPortBox.Name = "ClientPortBox";
-            this.ClientPortBox.Size = new System.Drawing.Size(51, 20);
-            this.ClientPortBox.TabIndex = 9;
-            this.ClientPortBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
-            // 
-            // ClientPortLabel
-            // 
-            this.ClientPortLabel.AutoSize = true;
-            this.ClientPortLabel.Location = new System.Drawing.Point(15, 301);
-            this.ClientPortLabel.Name = "ClientPortLabel";
-            this.ClientPortLabel.Size = new System.Drawing.Size(26, 13);
-            this.ClientPortLabel.TabIndex = 11;
-            this.ClientPortLabel.Text = "Port";
-            // 
             // MetadataOption1
             // 
             this.MetadataOption1.AutoSize = true;
@@ -242,6 +222,8 @@
             // 
             // ClientGroupBox
             // 
+            this.ClientGroupBox.Controls.Add(this.SemanticsTextBox);
+            this.ClientGroupBox.Controls.Add(this.SemanticsLabel);
             this.ClientGroupBox.Controls.Add(this.FileTextbox);
             this.ClientGroupBox.Controls.Add(this.WriteQuorumTextBox);
             this.ClientGroupBox.Controls.Add(this.ReadQuorumTextBox);
@@ -257,16 +239,32 @@
             this.ClientGroupBox.Controls.Add(this.OpenFileButton);
             this.ClientGroupBox.Controls.Add(this.CreateFileButton);
             this.ClientGroupBox.Controls.Add(this.CloseFileButton);
-            this.ClientGroupBox.Controls.Add(this.ClientPortLabel);
             this.ClientGroupBox.Controls.Add(this.DeleteFileButton);
             this.ClientGroupBox.Controls.Add(this.LaunchClientServerButton);
-            this.ClientGroupBox.Controls.Add(this.ClientPortBox);
             this.ClientGroupBox.Location = new System.Drawing.Point(12, 12);
             this.ClientGroupBox.Name = "ClientGroupBox";
             this.ClientGroupBox.Size = new System.Drawing.Size(442, 333);
             this.ClientGroupBox.TabIndex = 19;
             this.ClientGroupBox.TabStop = false;
             this.ClientGroupBox.Text = "Client Server";
+            // 
+            // SemanticsTextBox
+            // 
+            this.SemanticsTextBox.Location = new System.Drawing.Point(345, 125);
+            this.SemanticsTextBox.MaxLength = 1;
+            this.SemanticsTextBox.Name = "SemanticsTextBox";
+            this.SemanticsTextBox.Size = new System.Drawing.Size(29, 20);
+            this.SemanticsTextBox.TabIndex = 28;
+            this.SemanticsTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
+            // 
+            // SemanticsLabel
+            // 
+            this.SemanticsLabel.AutoSize = true;
+            this.SemanticsLabel.Location = new System.Drawing.Point(283, 128);
+            this.SemanticsLabel.Name = "SemanticsLabel";
+            this.SemanticsLabel.Size = new System.Drawing.Size(56, 13);
+            this.SemanticsLabel.TabIndex = 27;
+            this.SemanticsLabel.Text = "Semantics";
             // 
             // FileTextbox
             // 
@@ -348,6 +346,7 @@
             this.ReadFileButton.TabIndex = 19;
             this.ReadFileButton.Text = "Read File";
             this.ReadFileButton.UseVisualStyleBackColor = true;
+            this.ReadFileButton.Click += new System.EventHandler(this.ReadFileButton_Click);
             // 
             // MetadataServerGroupBox
             // 
@@ -383,8 +382,6 @@
             this.DataServerGroupBox.Controls.Add(this.FreezeDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.RecoverDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.FailDataServerButton);
-            this.DataServerGroupBox.Controls.Add(this.DataServerPortBox);
-            this.DataServerGroupBox.Controls.Add(this.DataServerPortLabel);
             this.DataServerGroupBox.Location = new System.Drawing.Point(812, 13);
             this.DataServerGroupBox.Name = "DataServerGroupBox";
             this.DataServerGroupBox.Size = new System.Drawing.Size(360, 332);
@@ -446,24 +443,6 @@
             this.FailDataServerButton.Text = "Fail Server";
             this.FailDataServerButton.UseVisualStyleBackColor = true;
             // 
-            // DataServerPortBox
-            // 
-            this.DataServerPortBox.Location = new System.Drawing.Point(79, 293);
-            this.DataServerPortBox.MaxLength = 5;
-            this.DataServerPortBox.Name = "DataServerPortBox";
-            this.DataServerPortBox.Size = new System.Drawing.Size(78, 20);
-            this.DataServerPortBox.TabIndex = 9;
-            this.DataServerPortBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
-            // 
-            // DataServerPortLabel
-            // 
-            this.DataServerPortLabel.AutoSize = true;
-            this.DataServerPortLabel.Location = new System.Drawing.Point(36, 296);
-            this.DataServerPortLabel.Name = "DataServerPortLabel";
-            this.DataServerPortLabel.Size = new System.Drawing.Size(26, 13);
-            this.DataServerPortLabel.TabIndex = 11;
-            this.DataServerPortLabel.Text = "Port";
-            // 
             // MetadataEventBox
             // 
             this.MetadataEventBox.Location = new System.Drawing.Point(460, 391);
@@ -501,7 +480,6 @@
             this.MetadataServerGroupBox.ResumeLayout(false);
             this.MetadataServerGroupBox.PerformLayout();
             this.DataServerGroupBox.ResumeLayout(false);
-            this.DataServerGroupBox.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -518,8 +496,6 @@
         private System.Windows.Forms.Label FilenameLabel;
         private System.Windows.Forms.Button DeleteFileButton;
         private System.Windows.Forms.Button CloseFileButton;
-        private System.Windows.Forms.TextBox ClientPortBox;
-        private System.Windows.Forms.Label ClientPortLabel;
         private System.Windows.Forms.RadioButton MetadataOption1;
         private System.Windows.Forms.RadioButton MetadataOption2;
         private System.Windows.Forms.RadioButton MetadataOption3;
@@ -531,8 +507,6 @@
         private System.Windows.Forms.Button ReadFileButton;
         private System.Windows.Forms.GroupBox MetadataServerGroupBox;
         private System.Windows.Forms.GroupBox DataServerGroupBox;
-        private System.Windows.Forms.TextBox DataServerPortBox;
-        private System.Windows.Forms.Label DataServerPortLabel;
         private System.Windows.Forms.TextBox MetadataEventBox;
         private System.Windows.Forms.Button DumpMetadataButton;
         private System.Windows.Forms.ListBox DataServerListBox;
@@ -549,6 +523,8 @@
         private System.Windows.Forms.Label ReadQuorumLabel;
         private System.Windows.Forms.TextBox FileTextbox;
         private System.Windows.Forms.Button KillProcessesbutton;
+        private System.Windows.Forms.TextBox SemanticsTextBox;
+        private System.Windows.Forms.Label SemanticsLabel;
     }
 }
 

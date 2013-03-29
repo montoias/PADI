@@ -43,7 +43,6 @@ namespace DataServer
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
             primaryMetadata = metadataServer[0];
 
-            //TODO: Pass full location
             primaryMetadata.register(port);
 
             System.Console.WriteLine("press <enter> to exit...");
@@ -86,24 +85,32 @@ namespace DataServer
             throw new NotImplementedException();
         }
 
+        //TODO: Retrieve version
         public FileData read(string filename, int semantics)
-        {
-            throw new NotImplementedException();
-        }
-
-        //TODO: Append to file when file aready exists
-        public void write(string filename, byte[] file)
         {
             String path = Path.Combine(fileFolder, filename);
 
-            if (!File.Exists(path))
+            if (File.Exists(path))
             {
-                FileStream newFile = File.Create(path);
-
-                newFile.Write(file, 0, file.Length);
-                newFile.Close();
-
+                System.Console.WriteLine("Opening file:" + filename);
+                FileData fileData = new FileData(System.IO.File.ReadAllBytes(path), 0);
+               
+                return fileData;
             }
+            else
+            {
+                System.Console.WriteLine("File doesn't exist:" + filename);
+                throw new FileDoesNotExistException();
+            }
+        }
+
+        //TODO: Attribute version
+        public void write(string filename, byte[] file)
+        {
+            System.Console.WriteLine("Writing the file: " + filename);
+            String path = Path.Combine(fileFolder, filename);
+
+            File.WriteAllBytes(path,file);
         }
         
     }

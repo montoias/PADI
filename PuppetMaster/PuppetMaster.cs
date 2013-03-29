@@ -128,7 +128,6 @@ namespace PuppetMaster
             {
                 form.updateClientBox("File " + filename + " already opened!\r\n");
             }
-
             catch (TableSizeExcedeedException) 
             {
                 form.updateClientBox("There are 10 slots occupied, you should close one before trying to open a file!\r\n");
@@ -158,15 +157,19 @@ namespace PuppetMaster
             {
                 MetadataInfo newMetadata = clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum);
                 metadataInfoList[selectedClient].Add(filename, newMetadata);
-                //showMetadata(newMetadata);
+                form.showMetadata(newMetadata);
             }
-            catch (TableSizeExcedeedException) 
+            catch (TableSizeExcedeedException)
             {
                 form.updateClientBox("There are 10 slots occupied, you should close one before trying to create a file!\r\n");
             }
             catch (FileAlreadyExistsException)
             {
                 form.updateClientBox("File " + filename + " already created!\r\n");
+            }
+            catch (InsufficientDataServersException)
+            {
+                form.updateClientBox("There aren't enough servers for the request!~\r\n");
             }
         }
 
@@ -176,9 +179,13 @@ namespace PuppetMaster
             {
                 clientsList[selectedClient].delete(filename);
             }
-            catch (Exception) //TODO: FileInUseException and FileNotExistsException
+            catch (FileDoesNotExistException) 
             {
-                form.updateClientBox("File " + filename + " cannot be deleted!\r\n");
+                form.updateClientBox("File " + filename + " does not exist!\r\n");
+            }
+            catch (CannotDeleteFileException)
+            {
+                form.updateClientBox("The file cannot be deleted because is being used!\r\n");
             }
         }
 
@@ -188,13 +195,37 @@ namespace PuppetMaster
             {
                 clientsList[selectedClient].write(filename, file);
             }
-            catch (Exception) //TODO: FileInUseException and FileNotExistsException
+            catch (MetadataFileDoesNotExistException) //TODO: FileInUseException 
             {
-                form.updateClientBox("File " + filename + " cannot be deleted!\r\n");
+                form.updateClientBox("You have to have the metadata file in order to perform a write!\r\n");
             }
+            catch (Exception) //TODO: FileInUseException 
+            {
+                form.updateClientBox("File " + filename + " SPECIFY ERROR!\r\n");
+            }
+            
         }
 
-
+        public void readFile(string filename, int semantics, int selectedClient)
+        {
+            try
+            {
+                FileData fileData = clientsList[selectedClient].read(filename, 0);
+                form.updateFileText(byteArrayToString(fileData.file), fileData.version);
+            }
+            catch (MetadataFileDoesNotExistException) //TODO: FileInUseException 
+            {
+                form.updateClientBox("You have to have the metadata file in order to perform a read!\r\n");
+            }
+            catch (FileDoesNotExistException) //TODO: FileInUseException 
+            {
+                form.updateClientBox("File " + filename + " does not exist!\r\n");
+            }
+            catch (Exception) 
+            {
+                form.updateClientBox("File " + filename + " SPECIFY ERROR!\r\n");
+            }
+        }
 
         public void failMetadata()
         {
@@ -238,6 +269,13 @@ namespace PuppetMaster
 
             usedPorts.Clear();
             addKnownPorts();
+        }
+
+        private string byteArrayToString(byte[] b)
+        {
+            char[] chars = new char[b.Length / sizeof(char)];
+            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
+            return new string(chars);
         }
     }
 }

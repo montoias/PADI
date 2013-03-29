@@ -7,9 +7,16 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
+    [Serializable]
     public class FileData
     {
-        //int version;
-        //FileStream file;
+        public byte[] file;
+        public int version;
+
+        public FileData(byte[] file, int version)
+        {
+            this.file = file;
+            this.version = version;
+        }
     }
 }

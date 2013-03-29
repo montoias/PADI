@@ -14,7 +14,6 @@ namespace CommonTypes
 
         public MetadataInfo(string filename, int numDataServers, int readQuorum, int writeQuorum, List<string> dataServers)
         {
-            // TODO: Complete member initialization
             this.filename = filename;
             this.numDataServers = numDataServers;
             this.readQuorum = readQuorum;
@@ -42,7 +41,7 @@ namespace CommonTypes
                 toReturn += s + " ";
             }
 
-            return toReturn;
+            return toReturn.Remove(toReturn.Length - 1);
         }
     }
 }

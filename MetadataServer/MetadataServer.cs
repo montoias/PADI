@@ -56,13 +56,12 @@ namespace MetadataServer
             MetadataInfo metadata;
             if (!metadataTable.ContainsKey(filename) && !File.Exists(path))
             {
-                FileStream newFile = File.Create(path);
-                byte[] metadataBytes;
-
-                System.Console.WriteLine("Creating file:" + filename);
-
                 if (numDataServers <= dataServersList.Count)
                 {
+                    byte[] metadataBytes;
+
+                    System.Console.WriteLine("Creating file:" + filename);
+
                     //TODO: Distribution algorithm
                     ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
                     List<String> locations = new List<string>();
@@ -72,20 +71,20 @@ namespace MetadataServer
                     }
 
                     metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
+
+                    fileCounter.Add(filename, 1);
+                    metadataTable.Add(filename, metadata);
+
+                    metadataBytes = stringToByteArray(metadata.ToString());
+                    File.WriteAllBytes(path, metadataBytes);
+
+                    return metadata;
                 }
-                else //TODO: Exception
+                else 
                 {
-                    throw new NotImplementedException();
-                }
-
-                fileCounter.Add(filename, 1);
-                metadataTable.Add(filename, metadata);
-
-                metadataBytes = stringToByteArray(metadata.ToString());
-                newFile.Write(metadataBytes, 0, metadataBytes.Length);
-                newFile.Close();
-
-                return metadata;
+                    System.Console.WriteLine("There aren't enough servers for the request!");
+                    throw new InsufficientDataServersException(); //TODO: pass number of servers available
+                }                
             }
             else
             {

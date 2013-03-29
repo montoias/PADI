@@ -19,9 +19,7 @@ namespace ClientServer
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
         private static IMetadataServerClientServer[] metadataServer = new IMetadataServerClientServer[3];
         private static string[] metadataLocation = new string[3];
-
-        //FIXME: is this suppose to be static?
-        static IMetadataServerClientServer primaryMetadata;
+        private static IMetadataServerClientServer primaryMetadata;
 
         static void Main(string[] args)
         {
@@ -130,9 +128,31 @@ namespace ClientServer
             }
         }
 
+        //TODO: Put in file array
+        //Make quorum 
+        //Async request
         public FileData read(string filename, int semantics)
         {
-            throw new NotImplementedException();
+            if (metadataTable.ContainsKey(filename))
+            {
+                FileData fileData = null;
+                MetadataInfo metadata = metadataTable[filename];
+                foreach (string location in metadata.dataServers)
+                {
+                    System.Console.WriteLine("Reading from dataServer at port " + location);
+                    IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
+                    typeof(IDataServerClientServer),
+                    "tcp://localhost:" + location + "/DataServer");
+                    fileData = dataServer.read(filename, semantics);
+                }
+
+                return fileData;
+            }
+            else  //TODO: Check if its in disk, load in metadataTable, if not, throw exception
+            {
+                System.Console.WriteLine("Read - Not in cache.");
+                throw new MetadataFileDoesNotExistException();
+            } 
         }
 
         //TODO: keep server objects?
@@ -141,6 +161,8 @@ namespace ClientServer
         {
             if (metadataTable.ContainsKey(filename))
             {
+                System.Console.WriteLine("Writing the file: " + filename);
+
                 MetadataInfo metadata = metadataTable[filename];
                 foreach (string location in metadata.dataServers)
                 {
@@ -152,8 +174,7 @@ namespace ClientServer
             }
             else
             {
-                //TODO : MetadataFile not there exception
-                throw new NotImplementedException();
+                throw new MetadataFileDoesNotExistException();
             }
         }
 
