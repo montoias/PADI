@@ -14,14 +14,13 @@ namespace PuppetMaster
     //TODO : read from config file
     public class PuppetMaster 
     {
-        
         private List<IClientServerPuppet> clientsList = new List<IClientServerPuppet>();
         private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
         private List<IDataServerPuppet> dataServersList = new List<IDataServerPuppet>();
         private List<Dictionary<string, MetadataInfo>> metadataInfoList = new List<Dictionary<string, MetadataInfo>>();
+        private List<Dictionary<string, FileData>> fileInfoList = new List<Dictionary<string, FileData>>();
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
 
-        //TODO: replace with full remote location
         private string[] metadataLocation = { "8081", "8082", "8083" };
 
         private List<string> usedPorts = new List<string>();
@@ -56,7 +55,6 @@ namespace PuppetMaster
             {
                 string args = port + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-                //TODO: Implement remote starting -> use WMI
                 Process.Start(Path.Combine(projectFolder, "ClientServer\\bin\\Debug\\ClientServer.exe"), args);
 
                 IClientServerPuppet newClient = (IClientServerPuppet)Activator.GetObject(
@@ -81,7 +79,6 @@ namespace PuppetMaster
 
             if (!metadataLaunched[selectedMetadata])
             {
-                //TODO: Implement remote starting -> use WMI
                 Process.Start(Path.Combine(projectFolder, "MetadataServer\\bin\\Debug\\MetadataServer.exe"), location);
                 IMetadataServerPuppet newMetadata = (IMetadataServerPuppet)Activator.GetObject(
                    typeof(IMetadataServerPuppet),
@@ -101,7 +98,6 @@ namespace PuppetMaster
             {
                 string args = port + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-                //TODO: Implement remote starting -> use WMI
                 Process.Start(Path.Combine(projectFolder, "DataServer\\bin\\Debug\\DataServer.exe"), args);
                 IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
                    typeof(IDataServerPuppet),
@@ -109,6 +105,7 @@ namespace PuppetMaster
                 dataServersList.Add(newDataServer);
                 form.addDataServer();
                 usedPorts.Add(port);
+                fileInfoList.Add(new Dictionary<string, FileData>());
             }
             else
             {
@@ -199,32 +196,37 @@ namespace PuppetMaster
             {
                 form.updateClientBox("You have to have the metadata file in order to perform a write!\r\n");
             }
-            catch (Exception) //TODO: FileInUseException 
+            catch (Exception e) //TODO: FileInUseException 
             {
-                form.updateClientBox("File " + filename + " SPECIFY ERROR!\r\n");
+                form.updateClientBox(e.Message);
             }
             
         }
 
         public void readFile(string filename, int semantics, int selectedClient)
         {
+            FileData fileData = null;
+
             try
             {
-                FileData fileData = clientsList[selectedClient].read(filename, 0);
-                form.updateFileText(byteArrayToString(fileData.file), fileData.version);
+                fileData = clientsList[selectedClient].read(filename, 0);
+                fileInfoList[selectedClient].Add(filename, fileData);
             }
-            catch (MetadataFileDoesNotExistException) //TODO: FileInUseException 
+            catch (MetadataFileDoesNotExistException)
             {
                 form.updateClientBox("You have to have the metadata file in order to perform a read!\r\n");
             }
-            catch (FileDoesNotExistException) //TODO: FileInUseException 
+            catch (FileDoesNotExistException)
             {
                 form.updateClientBox("File " + filename + " does not exist!\r\n");
             }
-            catch (Exception) 
+            catch (ArgumentException)
             {
-                form.updateClientBox("File " + filename + " SPECIFY ERROR!\r\n");
+                fileInfoList[selectedClient][filename] = fileData;
             }
+
+            form.updateFileText(byteArrayToString(fileData.file), fileData.version);
+
         }
 
         public void failMetadata()
@@ -253,6 +255,16 @@ namespace PuppetMaster
             throw new NotImplementedException();
         }
 
+        public void failDataServer(int selectedDataServer)
+        {
+            dataServersList[selectedDataServer].fail();
+        }
+
+        public void recoverDataServer(int selectedDataServer)
+        {
+            dataServersList[selectedDataServer].recover();
+        }
+
         public void killProcesses()
         {
             foreach(Process proc in Process.GetProcessesByName("DataServer")){
@@ -268,6 +280,7 @@ namespace PuppetMaster
             }
 
             usedPorts.Clear();
+            metadataLaunched.SetAll(false);
             addKnownPorts();
         }
 

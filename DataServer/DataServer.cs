@@ -18,6 +18,7 @@ namespace DataServer
         private static string[] metadataLocation = new string[3];
         private static IMetadataServerDataServer[] metadataServer = new IMetadataServerDataServer[3];
         private static IMetadataServerDataServer primaryMetadata;
+        private bool ignoringMessages = false;
 
         static void Main(string[] args)
         {
@@ -77,17 +78,20 @@ namespace DataServer
 
         public void fail()
         {
-            throw new NotImplementedException();
+            System.Console.WriteLine("Now ignoring messages.");
+            ignoringMessages = true;
         }
 
         public void recover()
         {
-            throw new NotImplementedException();
+            System.Console.WriteLine("Accepting messages again");
+            ignoringMessages = false;
         }
 
         //TODO: Retrieve version
         public FileData read(string filename, int semantics)
         {
+            checkFailure();
             String path = Path.Combine(fileFolder, filename);
 
             if (File.Exists(path))
@@ -104,14 +108,24 @@ namespace DataServer
             }
         }
 
+
         //TODO: Attribute version
         public void write(string filename, byte[] file)
         {
+            checkFailure();
             System.Console.WriteLine("Writing the file: " + filename);
             String path = Path.Combine(fileFolder, filename);
-
             File.WriteAllBytes(path,file);
         }
-        
+
+
+        private void checkFailure()
+        {
+            System.Console.WriteLine("Checking for failure... It is " + ignoringMessages);
+            if (ignoringMessages)
+            {
+                throw new RemotingException();
+            }
+        }
     }
 }

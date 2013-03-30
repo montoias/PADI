@@ -188,5 +188,15 @@ namespace PuppetMaster
             DataServerListBox.Items.Clear();
             puppetMaster.killProcesses();
         }
+
+        private void FailDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.failDataServer(DataServerListBox.SelectedIndex);
+        }
+
+        private void RecoverDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.recoverDataServer(DataServerListBox.SelectedIndex);
+        }
     }
 }

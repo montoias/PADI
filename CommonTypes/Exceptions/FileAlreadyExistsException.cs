@@ -10,6 +10,7 @@ namespace CommonTypes
     [Serializable()]
     public class FileAlreadyExistsException : ApplicationException
     {
+
         public FileAlreadyExistsException() : base() { }
         public FileAlreadyExistsException(SerializationInfo info, StreamingContext context) : base(info, context) { }
   

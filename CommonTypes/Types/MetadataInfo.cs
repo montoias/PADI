@@ -27,7 +27,7 @@ namespace CommonTypes
             toReturn += numDataServers + "\r\n";
             toReturn += readQuorum + "\r\n";
             toReturn +=  writeQuorum + "\r\n";
-            toReturn += dataServersToString() + "\r\n";
+            toReturn += dataServersToString();
 
             return toReturn;
         }

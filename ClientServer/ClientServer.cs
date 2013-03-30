@@ -17,6 +17,7 @@ namespace ClientServer
     class ClientServer : MarshalByRefObject, IClientServerPuppet
     {
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
+        private Dictionary<string, FileData> fileTable = new Dictionary<string, FileData>();
         private static IMetadataServerClientServer[] metadataServer = new IMetadataServerClientServer[3];
         private static string[] metadataLocation = new string[3];
         private static IMetadataServerClientServer primaryMetadata;
@@ -128,15 +129,17 @@ namespace ClientServer
             }
         }
 
-        //TODO: Put in file array
-        //Make quorum 
-        //Async request
         public FileData read(string filename, int semantics)
         {
             if (metadataTable.ContainsKey(filename))
             {
+                System.Console.WriteLine("Reading the file: " + filename);
                 FileData fileData = null;
                 MetadataInfo metadata = metadataTable[filename];
+
+                //TODO: Make quorum 
+                //TODO: Async request
+                //TODO: Handle exceptions from failing servers
                 foreach (string location in metadata.dataServers)
                 {
                     System.Console.WriteLine("Reading from dataServer at port " + location);
@@ -145,18 +148,25 @@ namespace ClientServer
                     "tcp://localhost:" + location + "/DataServer");
                     fileData = dataServer.read(filename, semantics);
                 }
+                try
+                {
+                    fileTable.Add(filename, fileData);
+                }
+                catch(ArgumentException){
+                    fileTable[filename] = fileData;
+                }
 
                 return fileData;
             }
-            else  //TODO: Check if its in disk, load in metadataTable, if not, throw exception
+            else 
             {
-                System.Console.WriteLine("Read - Not in cache.");
                 throw new MetadataFileDoesNotExistException();
             } 
         }
 
         //TODO: keep server objects?
         //TODO: implement quoruns
+        //TODO: Check if a read was previously done
         public void write(string filename, string textFile)
         {
             if (metadataTable.ContainsKey(filename))

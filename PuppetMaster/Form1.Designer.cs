@@ -433,6 +433,7 @@
             this.RecoverDataServerButton.TabIndex = 19;
             this.RecoverDataServerButton.Text = "Recover Server";
             this.RecoverDataServerButton.UseVisualStyleBackColor = true;
+            this.RecoverDataServerButton.Click += new System.EventHandler(this.RecoverDataServerButton_Click);
             // 
             // FailDataServerButton
             // 
@@ -442,6 +443,7 @@
             this.FailDataServerButton.TabIndex = 18;
             this.FailDataServerButton.Text = "Fail Server";
             this.FailDataServerButton.UseVisualStyleBackColor = true;
+            this.FailDataServerButton.Click += new System.EventHandler(this.FailDataServerButton_Click);
             // 
             // MetadataEventBox
             // 
