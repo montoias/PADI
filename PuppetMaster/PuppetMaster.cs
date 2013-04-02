@@ -14,18 +14,23 @@ namespace PuppetMaster
     //TODO : read from config file
     public class PuppetMaster 
     {
+
+        private Form1 form;
+        private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+        private string[] scriptInstructions;
+
         private List<IClientServerPuppet> clientsList = new List<IClientServerPuppet>();
-        private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
         private List<IDataServerPuppet> dataServersList = new List<IDataServerPuppet>();
+
         private List<Dictionary<string, MetadataInfo>> metadataInfoList = new List<Dictionary<string, MetadataInfo>>();
         private List<Dictionary<string, FileData>> fileInfoList = new List<Dictionary<string, FileData>>();
-        private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
 
+        private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
         private string[] metadataLocation = { "8081", "8082", "8083" };
+        private BitArray metadataLaunched = new BitArray(3);
 
         private List<string> usedPorts = new List<string>();
-        private BitArray metadataLaunched = new BitArray(3);
-        private Form1 form;
+
 
 
         public PuppetMaster()
@@ -289,6 +294,20 @@ namespace PuppetMaster
             char[] chars = new char[b.Length / sizeof(char)];
             System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
             return new string(chars);
+        }
+
+        public void loadScript(string scriptFile)
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), scriptFile);
+            scriptInstructions = byteArrayToString(File.ReadAllBytes(path)).Split('\n');
+            foreach(string s in scriptInstructions)
+                form.updateClientBox(s + "\r\n");
+
+        }
+
+        public void runScript(string scriptFile)
+        {
+            
         }
     }
 }

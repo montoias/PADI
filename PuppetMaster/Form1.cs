@@ -198,5 +198,10 @@ namespace PuppetMaster
         {
             puppetMaster.recoverDataServer(DataServerListBox.SelectedIndex);
         }
+
+        private void LoadScriptButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.loadScript(ScriptFileBox.Text);
+        }
     }
 }

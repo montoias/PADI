@@ -66,9 +66,16 @@
             this.FailDataServerButton = new System.Windows.Forms.Button();
             this.MetadataEventBox = new System.Windows.Forms.TextBox();
             this.KillProcessesbutton = new System.Windows.Forms.Button();
+            this.ScriptBox = new System.Windows.Forms.GroupBox();
+            this.LoadScriptButton = new System.Windows.Forms.Button();
+            this.ScriptFileLabel = new System.Windows.Forms.Label();
+            this.ScriptFileBox = new System.Windows.Forms.TextBox();
+            this.RunScriptButton = new System.Windows.Forms.Button();
+            this.NextStepButton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
+            this.ScriptBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // LaunchClientServerButton
@@ -97,7 +104,7 @@
             this.ClientEventBox.Multiline = true;
             this.ClientEventBox.Name = "ClientEventBox";
             this.ClientEventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.ClientEventBox.Size = new System.Drawing.Size(369, 168);
+            this.ClientEventBox.Size = new System.Drawing.Size(284, 168);
             this.ClientEventBox.TabIndex = 2;
             // 
             // LaunchMetadataServerButton
@@ -384,14 +391,14 @@
             this.DataServerGroupBox.Controls.Add(this.FailDataServerButton);
             this.DataServerGroupBox.Location = new System.Drawing.Point(812, 13);
             this.DataServerGroupBox.Name = "DataServerGroupBox";
-            this.DataServerGroupBox.Size = new System.Drawing.Size(360, 332);
+            this.DataServerGroupBox.Size = new System.Drawing.Size(294, 332);
             this.DataServerGroupBox.TabIndex = 21;
             this.DataServerGroupBox.TabStop = false;
             this.DataServerGroupBox.Text = "Data Server";
             // 
             // LaunchDataServerButton
             // 
-            this.LaunchDataServerButton.Location = new System.Drawing.Point(203, 284);
+            this.LaunchDataServerButton.Location = new System.Drawing.Point(22, 264);
             this.LaunchDataServerButton.Name = "LaunchDataServerButton";
             this.LaunchDataServerButton.Size = new System.Drawing.Size(113, 31);
             this.LaunchDataServerButton.TabIndex = 23;
@@ -402,7 +409,7 @@
             // DataServerListBox
             // 
             this.DataServerListBox.FormattingEnabled = true;
-            this.DataServerListBox.Location = new System.Drawing.Point(216, 43);
+            this.DataServerListBox.Location = new System.Drawing.Point(164, 32);
             this.DataServerListBox.Name = "DataServerListBox";
             this.DataServerListBox.Size = new System.Drawing.Size(101, 147);
             this.DataServerListBox.TabIndex = 22;
@@ -447,16 +454,16 @@
             // 
             // MetadataEventBox
             // 
-            this.MetadataEventBox.Location = new System.Drawing.Point(460, 391);
+            this.MetadataEventBox.Location = new System.Drawing.Point(323, 391);
             this.MetadataEventBox.Multiline = true;
             this.MetadataEventBox.Name = "MetadataEventBox";
             this.MetadataEventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.MetadataEventBox.Size = new System.Drawing.Size(369, 168);
+            this.MetadataEventBox.Size = new System.Drawing.Size(320, 168);
             this.MetadataEventBox.TabIndex = 2;
             // 
             // KillProcessesbutton
             // 
-            this.KillProcessesbutton.Location = new System.Drawing.Point(1028, 524);
+            this.KillProcessesbutton.Location = new System.Drawing.Point(1187, 696);
             this.KillProcessesbutton.Name = "KillProcessesbutton";
             this.KillProcessesbutton.Size = new System.Drawing.Size(96, 35);
             this.KillProcessesbutton.TabIndex = 22;
@@ -464,11 +471,71 @@
             this.KillProcessesbutton.UseVisualStyleBackColor = true;
             this.KillProcessesbutton.Click += new System.EventHandler(this.KillProcessesButton_Click);
             // 
+            // ScriptBox
+            // 
+            this.ScriptBox.Controls.Add(this.NextStepButton);
+            this.ScriptBox.Controls.Add(this.RunScriptButton);
+            this.ScriptBox.Controls.Add(this.ScriptFileBox);
+            this.ScriptBox.Controls.Add(this.ScriptFileLabel);
+            this.ScriptBox.Controls.Add(this.LoadScriptButton);
+            this.ScriptBox.Location = new System.Drawing.Point(728, 380);
+            this.ScriptBox.Name = "ScriptBox";
+            this.ScriptBox.Size = new System.Drawing.Size(368, 187);
+            this.ScriptBox.TabIndex = 23;
+            this.ScriptBox.TabStop = false;
+            this.ScriptBox.Text = "Script Options";
+            // 
+            // LoadScriptButton
+            // 
+            this.LoadScriptButton.Location = new System.Drawing.Point(19, 40);
+            this.LoadScriptButton.Name = "LoadScriptButton";
+            this.LoadScriptButton.Size = new System.Drawing.Size(88, 32);
+            this.LoadScriptButton.TabIndex = 0;
+            this.LoadScriptButton.Text = "Load Script";
+            this.LoadScriptButton.UseVisualStyleBackColor = true;
+            this.LoadScriptButton.Click += new System.EventHandler(this.LoadScriptButton_Click);
+            // 
+            // ScriptFileLabel
+            // 
+            this.ScriptFileLabel.AutoSize = true;
+            this.ScriptFileLabel.Location = new System.Drawing.Point(166, 50);
+            this.ScriptFileLabel.Name = "ScriptFileLabel";
+            this.ScriptFileLabel.Size = new System.Drawing.Size(53, 13);
+            this.ScriptFileLabel.TabIndex = 1;
+            this.ScriptFileLabel.Text = "Script File";
+            // 
+            // ScriptFileBox
+            // 
+            this.ScriptFileBox.Location = new System.Drawing.Point(225, 47);
+            this.ScriptFileBox.Multiline = true;
+            this.ScriptFileBox.Name = "ScriptFileBox";
+            this.ScriptFileBox.Size = new System.Drawing.Size(109, 25);
+            this.ScriptFileBox.TabIndex = 2;
+            // 
+            // RunScriptButton
+            // 
+            this.RunScriptButton.Location = new System.Drawing.Point(19, 78);
+            this.RunScriptButton.Name = "RunScriptButton";
+            this.RunScriptButton.Size = new System.Drawing.Size(88, 32);
+            this.RunScriptButton.TabIndex = 3;
+            this.RunScriptButton.Text = "Run Script";
+            this.RunScriptButton.UseVisualStyleBackColor = true;
+            // 
+            // NextStepButton
+            // 
+            this.NextStepButton.Location = new System.Drawing.Point(19, 116);
+            this.NextStepButton.Name = "NextStepButton";
+            this.NextStepButton.Size = new System.Drawing.Size(88, 31);
+            this.NextStepButton.TabIndex = 4;
+            this.NextStepButton.Text = "Next Step";
+            this.NextStepButton.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1211, 581);
+            this.ClientSize = new System.Drawing.Size(1315, 758);
+            this.Controls.Add(this.ScriptBox);
             this.Controls.Add(this.KillProcessesbutton);
             this.Controls.Add(this.DataServerGroupBox);
             this.Controls.Add(this.MetadataServerGroupBox);
@@ -482,6 +549,8 @@
             this.MetadataServerGroupBox.ResumeLayout(false);
             this.MetadataServerGroupBox.PerformLayout();
             this.DataServerGroupBox.ResumeLayout(false);
+            this.ScriptBox.ResumeLayout(false);
+            this.ScriptBox.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -527,6 +596,12 @@
         private System.Windows.Forms.Button KillProcessesbutton;
         private System.Windows.Forms.TextBox SemanticsTextBox;
         private System.Windows.Forms.Label SemanticsLabel;
+        private System.Windows.Forms.GroupBox ScriptBox;
+        private System.Windows.Forms.Button NextStepButton;
+        private System.Windows.Forms.Button RunScriptButton;
+        private System.Windows.Forms.TextBox ScriptFileBox;
+        private System.Windows.Forms.Label ScriptFileLabel;
+        private System.Windows.Forms.Button LoadScriptButton;
     }
 }
 
