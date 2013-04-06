@@ -23,8 +23,6 @@ namespace PuppetMaster
         private int selectedMetadata = 0;
         private int clientCounter = 0;
         private int dataServerCounter = 0;
-        private int clientPort = 8000;
-        private int dataServerPort = 9000;
 
         public Form1(PuppetMaster puppetMaster)
         {
@@ -34,19 +32,17 @@ namespace PuppetMaster
 
         private void LaunchClient_Click(object sender, EventArgs e)
         {
-            puppetMaster.LaunchClient(clientPort.ToString());
-            clientPort++;
+            puppetMaster.launchClient();
         }
 
         private void LaunchMetadataButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.LaunchMetadata(selectedMetadata);
+            puppetMaster.launchMetadata(selectedMetadata);
         }
 
         private void LaunchDataServerButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.LaunchDataServer(dataServerPort.ToString());
-            dataServerPort++;
+            puppetMaster.launchDataServer();
         }
 
         private void OpenFile_Click(object sender, EventArgs e)
@@ -182,8 +178,6 @@ namespace PuppetMaster
         {
             clientCounter = 0;
             dataServerCounter = 0;
-            clientPort = 8000;
-            dataServerPort = 9000;
             ClientListBox.Items.Clear();
             DataServerListBox.Items.Clear();
             puppetMaster.killProcesses();
@@ -203,5 +197,17 @@ namespace PuppetMaster
         {
             puppetMaster.loadScript(ScriptFileBox.Text);
         }
+
+        private void RunScriptButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.runScript();
+        }
+
+        private void NextStepButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.nextStep();
+        }
+
+        
     }
 }

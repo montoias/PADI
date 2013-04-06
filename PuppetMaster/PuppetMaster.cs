@@ -29,7 +29,10 @@ namespace PuppetMaster
         private string[] metadataLocation = { "8081", "8082", "8083" };
         private BitArray metadataLaunched = new BitArray(3);
 
-        private List<string> usedPorts = new List<string>();
+        
+        private int clientPort = 8000;
+        private int dataServerPort = 9000;
+        private List<int> usedPorts = new List<int>();
 
 
 
@@ -42,10 +45,10 @@ namespace PuppetMaster
 
         private void addKnownPorts()
         {
-            usedPorts.Add("8080");
+            usedPorts.Add(8080);
             foreach (string port in metadataLocation)
             {
-                usedPorts.Add(port);
+                usedPorts.Add(Convert.ToInt32(port));
             }
         }
 
@@ -54,31 +57,25 @@ namespace PuppetMaster
             this.form = form;
         }
 
-        public void LaunchClient(String port)
+        public void launchClient()
         {
-            if (!usedPorts.Contains(port))
-            {
-                string args = port + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
+            string args = clientPort + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-                Process.Start(Path.Combine(projectFolder, "ClientServer\\bin\\Debug\\ClientServer.exe"), args);
+            Process.Start(Path.Combine(projectFolder, "ClientServer\\bin\\Debug\\ClientServer.exe"), args);
 
-                IClientServerPuppet newClient = (IClientServerPuppet)Activator.GetObject(
-                   typeof(IClientServerPuppet),
-                   "tcp://localhost:" + port + "/ClientServer");
+            IClientServerPuppet newClient = (IClientServerPuppet)Activator.GetObject(
+                typeof(IClientServerPuppet),
+                "tcp://localhost:" + clientPort + "/ClientServer");
 
-                clientsList.Add(newClient);
-                form.addClient();
-                usedPorts.Add(port);
-                metadataInfoList.Add(new Dictionary<string, MetadataInfo>());
-            }
-            else
-            {
-                form.updateClientBox("Object already exists at port " + port + "!\r\n");
-            }
+            clientsList.Add(newClient);
+            form.addClient();
+            usedPorts.Add(clientPort++);
+            metadataInfoList.Add(new Dictionary<string, MetadataInfo>());
+            
 
         }
 
-        public void LaunchMetadata(int selectedMetadata)
+        public void launchMetadata(int selectedMetadata)
         {
             string location = metadataLocation[selectedMetadata];
 
@@ -97,25 +94,18 @@ namespace PuppetMaster
             }
         }
 
-        public void LaunchDataServer(string port)
+        public void launchDataServer()
         {
-            if (!usedPorts.Contains(port))
-            {
-                string args = port + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
+            string args = dataServerPort + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-                Process.Start(Path.Combine(projectFolder, "DataServer\\bin\\Debug\\DataServer.exe"), args);
-                IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
-                   typeof(IDataServerPuppet),
-                   "tcp://localhost:" + port + "/DataServer");
-                dataServersList.Add(newDataServer);
-                form.addDataServer();
-                usedPorts.Add(port);
-                fileInfoList.Add(new Dictionary<string, FileData>());
-            }
-            else
-            {
-                form.updateClientBox("Object already exists at port " + port + "!\r\n");
-            }
+            Process.Start(Path.Combine(projectFolder, "DataServer\\bin\\Debug\\DataServer.exe"), args);
+            IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
+                typeof(IDataServerPuppet),
+                "tcp://localhost:" + dataServerPort + "/DataServer");
+            dataServersList.Add(newDataServer);
+            form.addDataServer();
+            usedPorts.Add(dataServerPort++);
+            fileInfoList.Add(new Dictionary<string, FileData>());
         }
 
         public void openFile(string filename, int selectedClient)
@@ -284,9 +274,143 @@ namespace PuppetMaster
                 proc.Kill();
             }
 
+            clientPort = 8000;
+            dataServerPort = 9000;
             usedPorts.Clear();
             metadataLaunched.SetAll(false);
             addKnownPorts();
+        }
+
+        public void loadScript(string scriptFile)
+        {
+            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, scriptFile);
+            scriptInstructions = File.ReadAllLines(path);
+        }
+
+        public void runScript()
+        {
+            foreach (string instruction in scriptInstructions)
+            {
+                if (instruction[0] != '#')
+                {
+                    interpretInstruction(instruction);
+                }
+            }
+        }
+
+
+        public void nextStep()
+        {
+        }
+        
+        private void interpretInstruction(string command)
+        {
+            string [] parameters = command.Split(',');
+            string[] processInst = parameters[0].Split(' ');
+            string instruction = processInst[0];
+            string[] processInfo = processInst[1].Split('-');
+            int processNumber = Convert.ToInt32(processInfo[1]);
+
+            switch (processInfo[0])
+            {
+                case "c":
+                    if(clientsList.Count <= processNumber)
+                    {
+                        launchClient();
+                    }
+                    break;
+                case "m":
+                    if(!metadataLaunched[processNumber])
+                    {
+                        launchMetadata(processNumber);
+                    }
+                    break;
+                case "d":
+                    if(dataServersList.Count <= processNumber)
+                    {
+                        launchDataServer();
+                    }
+                    break;
+            }
+
+            switch (instruction)
+            {
+                case "FREEZE":
+                    if (processInfo[0].Equals("d"))
+                    {
+                        freezeDataServer();
+                    }
+                    break;
+                case "UNFREEZE":
+                    if (processInfo[0].Equals("d"))
+                    {
+                        unfreezeDataServer();
+                    }
+                    break;
+                case "CREATE":
+                    if (processInfo[0].Equals("c"))
+                    {
+                        createFile(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]), processNumber);
+                    }
+                    break;
+                case "DELETE":
+                    if (processInfo[0].Equals("c"))
+                    {
+                        deleteFile(parameters[1], processNumber);
+                    }
+                    break;
+                case "OPEN":
+                    if (processInfo[0].Equals("c"))
+                    {
+                        openFile(parameters[1], processNumber);
+                    }
+                    break;
+                case "CLOSE":
+                    if (processInfo[0].Equals("c"))
+                    {
+                        closeFile(parameters[1], processNumber);
+                    }
+                    break;
+                case "WRITE":
+                    if (processInfo[0].Equals("c"))
+                    {
+                        /*UNFINISHED*/
+                        writeFile(parameters[1], processNumber);
+                    }
+                    break;
+                case "READ":
+                case "FAIL":
+                    if (processInfo[0].Equals("d"))
+                    {
+                    }
+                    else if(processInfo[0].Equals("m"))
+                    {
+                    }
+                    break;
+                case "RECOVER":
+                    if (processInfo[0].Equals("d"))
+                    {
+                    }
+                    else if(processInfo[0].Equals("m"))
+                    {
+                    }
+                    break;
+                case "DUMP":
+                    switch (processInfo[0])
+                    {
+                        case "c":
+                            break;
+                        case "m":
+                            break;
+                        case "d":
+                            break;
+                    }
+                    break;
+                case "EXESCRIPT":
+                    break;
+                default:
+                    break;
+            }
         }
 
         private string byteArrayToString(byte[] b)
@@ -294,20 +418,6 @@ namespace PuppetMaster
             char[] chars = new char[b.Length / sizeof(char)];
             System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
             return new string(chars);
-        }
-
-        public void loadScript(string scriptFile)
-        {
-            string path = Path.Combine(Directory.GetCurrentDirectory(), scriptFile);
-            scriptInstructions = byteArrayToString(File.ReadAllBytes(path)).Split('\n');
-            foreach(string s in scriptInstructions)
-                form.updateClientBox(s + "\r\n");
-
-        }
-
-        public void runScript(string scriptFile)
-        {
-            
         }
     }
 }

@@ -67,11 +67,11 @@
             this.MetadataEventBox = new System.Windows.Forms.TextBox();
             this.KillProcessesbutton = new System.Windows.Forms.Button();
             this.ScriptBox = new System.Windows.Forms.GroupBox();
-            this.LoadScriptButton = new System.Windows.Forms.Button();
-            this.ScriptFileLabel = new System.Windows.Forms.Label();
-            this.ScriptFileBox = new System.Windows.Forms.TextBox();
-            this.RunScriptButton = new System.Windows.Forms.Button();
             this.NextStepButton = new System.Windows.Forms.Button();
+            this.RunScriptButton = new System.Windows.Forms.Button();
+            this.ScriptFileBox = new System.Windows.Forms.TextBox();
+            this.ScriptFileLabel = new System.Windows.Forms.Label();
+            this.LoadScriptButton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -485,15 +485,33 @@
             this.ScriptBox.TabStop = false;
             this.ScriptBox.Text = "Script Options";
             // 
-            // LoadScriptButton
+            // NextStepButton
             // 
-            this.LoadScriptButton.Location = new System.Drawing.Point(19, 40);
-            this.LoadScriptButton.Name = "LoadScriptButton";
-            this.LoadScriptButton.Size = new System.Drawing.Size(88, 32);
-            this.LoadScriptButton.TabIndex = 0;
-            this.LoadScriptButton.Text = "Load Script";
-            this.LoadScriptButton.UseVisualStyleBackColor = true;
-            this.LoadScriptButton.Click += new System.EventHandler(this.LoadScriptButton_Click);
+            this.NextStepButton.Location = new System.Drawing.Point(19, 116);
+            this.NextStepButton.Name = "NextStepButton";
+            this.NextStepButton.Size = new System.Drawing.Size(88, 31);
+            this.NextStepButton.TabIndex = 4;
+            this.NextStepButton.Text = "Next Step";
+            this.NextStepButton.UseVisualStyleBackColor = true;
+            this.NextStepButton.Click += new System.EventHandler(this.NextStepButton_Click);
+            // 
+            // RunScriptButton
+            // 
+            this.RunScriptButton.Location = new System.Drawing.Point(19, 78);
+            this.RunScriptButton.Name = "RunScriptButton";
+            this.RunScriptButton.Size = new System.Drawing.Size(88, 32);
+            this.RunScriptButton.TabIndex = 3;
+            this.RunScriptButton.Text = "Run Script";
+            this.RunScriptButton.UseVisualStyleBackColor = true;
+            this.RunScriptButton.Click += new System.EventHandler(this.RunScriptButton_Click);
+            // 
+            // ScriptFileBox
+            // 
+            this.ScriptFileBox.Location = new System.Drawing.Point(225, 47);
+            this.ScriptFileBox.Multiline = true;
+            this.ScriptFileBox.Name = "ScriptFileBox";
+            this.ScriptFileBox.Size = new System.Drawing.Size(109, 25);
+            this.ScriptFileBox.TabIndex = 2;
             // 
             // ScriptFileLabel
             // 
@@ -504,31 +522,15 @@
             this.ScriptFileLabel.TabIndex = 1;
             this.ScriptFileLabel.Text = "Script File";
             // 
-            // ScriptFileBox
+            // LoadScriptButton
             // 
-            this.ScriptFileBox.Location = new System.Drawing.Point(225, 47);
-            this.ScriptFileBox.Multiline = true;
-            this.ScriptFileBox.Name = "ScriptFileBox";
-            this.ScriptFileBox.Size = new System.Drawing.Size(109, 25);
-            this.ScriptFileBox.TabIndex = 2;
-            // 
-            // RunScriptButton
-            // 
-            this.RunScriptButton.Location = new System.Drawing.Point(19, 78);
-            this.RunScriptButton.Name = "RunScriptButton";
-            this.RunScriptButton.Size = new System.Drawing.Size(88, 32);
-            this.RunScriptButton.TabIndex = 3;
-            this.RunScriptButton.Text = "Run Script";
-            this.RunScriptButton.UseVisualStyleBackColor = true;
-            // 
-            // NextStepButton
-            // 
-            this.NextStepButton.Location = new System.Drawing.Point(19, 116);
-            this.NextStepButton.Name = "NextStepButton";
-            this.NextStepButton.Size = new System.Drawing.Size(88, 31);
-            this.NextStepButton.TabIndex = 4;
-            this.NextStepButton.Text = "Next Step";
-            this.NextStepButton.UseVisualStyleBackColor = true;
+            this.LoadScriptButton.Location = new System.Drawing.Point(19, 40);
+            this.LoadScriptButton.Name = "LoadScriptButton";
+            this.LoadScriptButton.Size = new System.Drawing.Size(88, 32);
+            this.LoadScriptButton.TabIndex = 0;
+            this.LoadScriptButton.Text = "Load Script";
+            this.LoadScriptButton.UseVisualStyleBackColor = true;
+            this.LoadScriptButton.Click += new System.EventHandler(this.LoadScriptButton_Click);
             // 
             // Form1
             // 
