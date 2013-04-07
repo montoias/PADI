@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 
 using CommonTypes;
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace PuppetMaster
 {
@@ -16,7 +18,7 @@ namespace PuppetMaster
         private Form1 form;
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
         private string[] scriptInstructions;
-        private List<string> stringRegisters = new List<string>();
+        private int currentInstruction;
 
         private List<IClientServerPuppet> clientsList = new List<IClientServerPuppet>();
         private List<IDataServerPuppet> dataServersList = new List<IDataServerPuppet>();
@@ -118,7 +120,7 @@ namespace PuppetMaster
             }
             catch (Exception e) //TODO: FileInUseException 
             {
-                form.updateClientBox(e.Message);
+                form.updateClientBox(e.StackTrace);
             }
             
         }
@@ -136,28 +138,25 @@ namespace PuppetMaster
 
         }
 
-        public void readFile(int fileRegister, int semantics, int selectedClient)
+        public void readFile(int fileRegister, string semantics, int byteRegister, int selectedClient)
         {
             FileData fileData = null;
             try
             {
-                fileData = clientsList[selectedClient].read(fileRegister, semantics);
+                fileData = clientsList[selectedClient].read(fileRegister, semantics, byteRegister);
             }
             catch (Exception e) 
             {
                 form.updateClientBox(e.Message);
             }
-            /*catch (MetadataFileDoesNotExistException)
-            {
-                form.updateClientBox("You have to have the metadata file in order to perform a read!\r\n");
-            }
-            catch (FileDoesNotExistException)
-            {
-                form.updateClientBox("File " + fileRegister + " does not exist!\r\n");
-            }*/
 
-            form.updateFileText(System.Text.Encoding.Default.GetString(fileData.file), fileData.version);
+            form.updateFileText(byteArrayToString(fileData.file), fileData.version);
 
+        }
+
+        public void dumpClients(int selectedClient)
+        {
+            form.updateClientBox(clientsList[selectedClient].dump());
         }
 
         /****************************
@@ -188,7 +187,7 @@ namespace PuppetMaster
 
         public void unfreezeDataServer(int selectedDataServer)
         {
-            dataServersList[selectedDataServer].unfreeze();
+            //dataServersList[selectedDataServer].unfreeze();
         }
 
         public void failDataServer(int selectedDataServer)
@@ -199,6 +198,11 @@ namespace PuppetMaster
         public void recoverDataServer(int selectedDataServer)
         {
             dataServersList[selectedDataServer].recover();
+        }
+
+        public void dumpDataServer(int processNumber)
+        {
+            throw new NotImplementedException();
         }
 
         /*********************************
@@ -259,6 +263,7 @@ namespace PuppetMaster
                 "tcp://localhost:" + dataServerPort + "/DataServer");
             dataServersList.Add(newDataServer);
             form.addDataServer();
+            dataServerPort++;
         }
 
         /*
@@ -268,6 +273,7 @@ namespace PuppetMaster
         {
             string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, scriptFile);
             scriptInstructions = File.ReadAllLines(path);
+            currentInstruction = 0;
         }
 
         /*
@@ -284,14 +290,17 @@ namespace PuppetMaster
             }
         }
 
-
         public void nextStep()
         {
+            while ((scriptInstructions[currentInstruction][0]).Equals('#'))
+                currentInstruction++;
+
+            interpretInstruction(scriptInstructions[currentInstruction++]);
         }
         
         private void interpretInstruction(string command)
         {
-            string [] parameters = command.Split(',');
+            string[] parameters = Regex.Split(command, ", ");
             string[] processInst = parameters[0].Split(' ');
             string instruction = processInst[0];
             string[] processInfo = processInst[1].Split('-');
@@ -324,23 +333,23 @@ namespace PuppetMaster
                 case "WRITE":
                     if (processInfo[0].Equals("c"))
                     {
-                        string contents;
                         try
                         {
                             int registerIndex = Convert.ToInt32(parameters[2]);
-                            contents = stringRegisters[registerIndex];
+                            writeFile(Convert.ToInt32(parameters[1]), registerIndex, processNumber);
                         }
                         catch (FormatException)
                         {
-                            contents = parameters[2];
+                            string textFile = parameters[2].Replace("\"", "");
+                            writeFile(Convert.ToInt32(parameters[1]), textFile, processNumber);
                         }
-                        writeFile(Convert.ToInt32(parameters[1]), contents, processNumber);
+                        
                     }
                     break;
                 case "READ":
                     if (processInfo[0].Equals("c"))
                     {
-
+                        readFile(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), processNumber);
                     }
                     break;
                 case "OPEN":
@@ -403,10 +412,13 @@ namespace PuppetMaster
                     switch (processInfo[0])
                     {
                         case "c":
+                            dumpClients(processNumber);
                             break;
                         case "m":
+                            dumpMetadataServer(processNumber);
                             break;
                         case "d":
+                            dumpDataServer(processNumber);
                             break;
                     }
                     break;
@@ -440,6 +452,13 @@ namespace PuppetMaster
             clientPort = 8000;
             dataServerPort = 9000;
             metadataLaunched.SetAll(false);
+        }
+
+        private string byteArrayToString(byte[] b)
+        {
+            char[] chars = new char[b.Length / sizeof(char)];
+            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
+            return new string(chars);
         }
     }
 }

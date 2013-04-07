@@ -13,8 +13,9 @@ namespace CommonTypes
         MetadataInfo open(string filename);
         void close(string filename);
         void delete(string filename);
-        FileData read(int fileRegister, int semantics);
+        FileData read(int fileRegister, string semantics, int byteRegister);
         void write(int fileRegister, string file);
         void write(int fileRegister, int byteRegister);
+        string dump();
     }
 }

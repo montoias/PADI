@@ -23,7 +23,7 @@ namespace CommonTypes
 
         public override string ToString()
         {
-            String toReturn = this.filename + "\r\n";
+            string toReturn = this.filename + "\r\n";
             toReturn += numDataServers + "\r\n";
             toReturn += readQuorum + "\r\n";
             toReturn +=  writeQuorum + "\r\n";

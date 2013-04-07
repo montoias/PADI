@@ -282,6 +282,7 @@
             this.DumpClientButton.TabIndex = 35;
             this.DumpClientButton.Text = "Dump Client";
             this.DumpClientButton.UseVisualStyleBackColor = true;
+            this.DumpClientButton.Click += new System.EventHandler(this.DumpClientButton_Click);
             // 
             // UseTextFileOption
             // 

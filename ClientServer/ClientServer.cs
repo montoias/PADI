@@ -124,9 +124,8 @@ namespace ClientServer
             }
         }
 
-        public FileData read(int fileRegister, int semantics)
+        public FileData read(int fileRegister, string semantics, int byteRegister)
         {
-
             System.Console.WriteLine("Reading file from metadata info @ register: " + fileRegister);
             FileData fileData = null;
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
@@ -140,7 +139,7 @@ namespace ClientServer
                 fileData = dataServer.read(metadata.filename, semantics);
             }
             
-            byteRegisters[fileRegister] = fileData;
+            byteRegisters[byteRegister] = fileData;
 
             return fileData;
              
@@ -151,18 +150,19 @@ namespace ClientServer
             System.Console.WriteLine("Writing file from metadata info @ register: " + fileRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+
             foreach (string location in metadata.dataServers)
             {
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + location + "/DataServer");
-                dataServer.write(metadata.filename, Encoding.ASCII.GetBytes(textFile));
+                dataServer.write(metadata.filename, stringToByteArray(textFile));
             }
         }
 
         public void write(int fileRegister, int byteRegister)
         {
-            System.Console.WriteLine("Writing @ register: " + fileRegister);
+            System.Console.WriteLine("Writing file from metadata info @ register: " + fileRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             FileData fileData = byteRegisters[byteRegister];
@@ -174,6 +174,39 @@ namespace ClientServer
                 "tcp://localhost:" + location + "/DataServer");
                 dataServer.write(metadata.filename, fileData.file);
             }
+        }
+
+        private byte[] stringToByteArray(string s)
+        {
+            byte[] bytes = new byte[s.Length * sizeof(char)];
+            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
+            return bytes;
+        }
+
+        //TODO: print current metadata server
+        public string dump()
+        {
+            string toReturn = "";
+
+            System.Console.WriteLine("Dumping Client information");
+            toReturn += "  FileRegisters\r\n";
+
+            object[] keys = new object[fileRegisters.Keys.Count];
+            fileRegisters.Keys.CopyTo(keys, 0);
+            for (int i = 0; i < fileRegisters.Keys.Count; i++)
+            {
+                toReturn += "    FileRegister: " + i + "\r\n" + fileRegisters[i] + "\r\n";  
+            }
+
+            toReturn += "  ByteRegisters\r\n";
+
+            //FIXME: entry.value -> make toString for fileData
+            foreach (KeyValuePair<int, FileData> fileData in byteRegisters)
+            {
+                toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + "entry.Value" + "\r\n";  
+            }
+
+            return toReturn;
         }
     }
 }

@@ -103,7 +103,7 @@ namespace PuppetMaster
 
         private void ReadFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.readFile(Convert.ToInt32(FileRegisterTextBox.Text), Convert.ToInt32(SemanticsTextBox.Text), ClientListBox.SelectedIndex);
+            //puppetMaster.readFile(Convert.ToInt32(FileRegisterTextBox.Text), Convert.ToInt32(SemanticsTextBox.Text), ClientListBox.SelectedIndex);
         }
 
         private void FailMetadataButton_Click(object sender, EventArgs e)
@@ -226,6 +226,11 @@ namespace PuppetMaster
         {
             FileTextbox.Clear();
             FileTextbox.Text += msg;
+        }
+
+        private void DumpClientButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.dumpClients(ClientListBox.SelectedIndex);
         }
     }
 }

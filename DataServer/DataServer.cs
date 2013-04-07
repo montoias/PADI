@@ -22,7 +22,7 @@ namespace DataServer
 
         static void Main(string[] args)
         {
-            String port = args[0];
+            string port = args[0];
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port), true);
             ChannelServices.RegisterChannel(channel, true);
             setMetadataLocation(args);
@@ -60,6 +60,11 @@ namespace DataServer
 
             if (!folderExists)
                 Directory.CreateDirectory(fileFolder);
+            else
+            {
+                Directory.Delete(fileFolder, true);
+                Directory.CreateDirectory(fileFolder);
+            }
         }
 
         public void freeze()
@@ -85,10 +90,10 @@ namespace DataServer
         }
 
         //TODO: Retrieve version
-        public FileData read(string filename, int semantics)
+        public FileData read(string filename, string semantics)
         {
             checkFailure();
-            String path = Path.Combine(fileFolder, filename);
+            string path = Path.Combine(fileFolder, filename);
 
             if (File.Exists(path))
             {
@@ -104,14 +109,13 @@ namespace DataServer
             }
         }
 
-
         //TODO: Attribute version
         public void write(string filename, byte[] file)
         {
             checkFailure();
-            System.Console.WriteLine("Writing the file: " + filename);
-            String path = Path.Combine(fileFolder, filename);
-            File.WriteAllBytes(path,file);
+            System.Console.WriteLine("Writing the file:" + filename);
+            string path = Path.Combine(fileFolder, filename);
+            File.WriteAllBytes(path, file);
         }
 
 

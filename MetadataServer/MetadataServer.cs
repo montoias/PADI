@@ -47,7 +47,7 @@ namespace MetadataServer
 
         public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
         {
-            String path = Path.Combine(fileFolder, filename);
+            string path = Path.Combine(fileFolder, filename);
 
             MetadataInfo metadata;
             if (!metadataTable.ContainsKey(filename) && !File.Exists(path))
@@ -60,7 +60,7 @@ namespace MetadataServer
 
                     //TODO: Distribution algorithm
                     ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
-                    List<String> locations = new List<string>();
+                    List<string> locations = new List<string>();
                     for (int i = 0; i < numDataServers; i++)
                     {
                         locations.Add((string)dataServersArray[i]);
@@ -71,7 +71,7 @@ namespace MetadataServer
                     fileCounter.Add(filename, 1);
                     metadataTable.Add(filename, metadata);
 
-                    metadataBytes = Encoding.ASCII.GetBytes(metadata.ToString());
+                    metadataBytes = stringToByteArray(metadata.ToString());
                     File.WriteAllBytes(path, metadataBytes);
 
                     return metadata;
@@ -115,7 +115,7 @@ namespace MetadataServer
 
         public MetadataInfo open(string filename)
         {
-            String path = Path.Combine(fileFolder, filename);
+            string path = Path.Combine(fileFolder, filename);
 
             if (metadataTable.ContainsKey(filename))
             {
@@ -128,7 +128,7 @@ namespace MetadataServer
                 if (File.Exists(path))
                 {
                     System.Console.WriteLine("Opening file:" + filename);
-                    string[] strings = System.Text.Encoding.Default.GetString(File.ReadAllBytes(path)).Split('\n');
+                    string[] strings = byteArrayToString(File.ReadAllBytes(path)).Split('\n');
                     string[] locations = strings[4].Split(' ');
                     List<string> parsedLocations = new List<string>();
 
@@ -194,7 +194,7 @@ namespace MetadataServer
 
             if (numCacheFiles != 0)
             {
-                foreach (KeyValuePair<String, MetadataInfo> entry in metadataTable)
+                foreach (KeyValuePair<string, MetadataInfo> entry in metadataTable)
                 {
                     contents += entry.Value + "\r\n";
                 }
@@ -220,6 +220,11 @@ namespace MetadataServer
 
             if (!folderExists)
                 Directory.CreateDirectory(fileFolder);
+            else
+            {
+                Directory.Delete(fileFolder, true);
+                Directory.CreateDirectory(fileFolder);
+            }
         }
 
         private string generateLocalFileName(string filename, string location)
@@ -227,5 +232,19 @@ namespace MetadataServer
             return "";
         }
 
+
+        private byte[] stringToByteArray(string s)
+        {
+            byte[] bytes = new byte[s.Length * sizeof(char)];
+            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
+            return bytes;
+        }
+
+        private string byteArrayToString(byte[] b)
+        {
+            char[] chars = new char[b.Length / sizeof(char)];
+            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
+            return new string(chars);
+        }
     }
 }
