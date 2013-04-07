@@ -41,13 +41,9 @@ namespace MetadataServer
             System.Console.ReadLine();
         }
 
-        private static void createFolderFile()
-        {
-            bool folderExists = Directory.Exists(fileFolder);
-
-            if (!folderExists)
-                Directory.CreateDirectory(fileFolder);
-        }
+        /**************************
+         ********* CLIENT *********
+         **************************/
 
         public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
         {
@@ -75,7 +71,7 @@ namespace MetadataServer
                     fileCounter.Add(filename, 1);
                     metadataTable.Add(filename, metadata);
 
-                    metadataBytes = stringToByteArray(metadata.ToString());
+                    metadataBytes = Encoding.ASCII.GetBytes(metadata.ToString());
                     File.WriteAllBytes(path, metadataBytes);
 
                     return metadata;
@@ -132,7 +128,7 @@ namespace MetadataServer
                 if (File.Exists(path))
                 {
                     System.Console.WriteLine("Opening file:" + filename);
-                    string[] strings = byteArrayToString(File.ReadAllBytes(path)).Split('\n');
+                    string[] strings = System.Text.Encoding.Default.GetString(File.ReadAllBytes(path)).Split('\n');
                     string[] locations = strings[4].Split(' ');
                     List<string> parsedLocations = new List<string>();
 
@@ -141,7 +137,8 @@ namespace MetadataServer
                         parsedLocations.Add(location);
                     }
 
-                    MetadataInfo metadata = new MetadataInfo(strings[0], Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]), Convert.ToInt32(strings[3]), parsedLocations);
+                    MetadataInfo metadata = new MetadataInfo(strings[0], Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]),
+                                                                        Convert.ToInt32(strings[3]), parsedLocations);
                     metadataTable.Add(filename, metadata);
                     fileCounter.Add(filename, 1);
                     
@@ -160,6 +157,23 @@ namespace MetadataServer
         {
             fileCounter[filename]--;
         }
+
+        /*******************************
+         ********* DATA SERVER *********
+         *******************************/
+
+        public void register(string location)
+        {
+            System.Console.WriteLine("registering new data server at tcp://localhost:" + location + "/DataServer");
+
+            dataServersList.Add(location, (IDataServerMetadataServer)Activator.GetObject(
+               typeof(IDataServerMetadataServer),
+               "tcp://localhost:" + location + "/DataServer"));
+        }
+
+        /*********************************
+        ********* PUPPET MASTER *********
+        *********************************/
 
         public void fail()
         {
@@ -195,27 +209,23 @@ namespace MetadataServer
             return contents;
         }
 
-        private byte[] stringToByteArray(string s)
+        /****************************
+         ********* METADATA *********
+         ****************************/
+
+
+        private static void createFolderFile()
         {
-            byte[] bytes = new byte[s.Length * sizeof(char)];
-            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
-        }
-        
-        private string byteArrayToString(byte[] b)
-        {
-            char[] chars = new char[b.Length / sizeof(char)];
-            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
-            return new string(chars);
+            bool folderExists = Directory.Exists(fileFolder);
+
+            if (!folderExists)
+                Directory.CreateDirectory(fileFolder);
         }
 
-        public void register(string location)
+        private string generateLocalFileName(string filename, string location)
         {
-            System.Console.WriteLine("registering new data server at tcp://localhost:" + location + "/DataServer");
-
-            dataServersList.Add(location, (IDataServerMetadataServer)Activator.GetObject(
-               typeof(IDataServerMetadataServer),
-               "tcp://localhost:" + location + "/DataServer"));
+            return "";
         }
+
     }
 }

@@ -35,10 +35,6 @@ namespace DataServer
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             createFolderFile();
 
-            //TODO: Get current location of the MetadataServer
-            //Function that check if 0 is up and is the primary server
-            //If it isn't up, iterate list
-            //If it's not primary, access variable to get primary
             metadataServer[0] = (IMetadataServerDataServer)Activator.GetObject(
                typeof(IMetadataServerDataServer),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");

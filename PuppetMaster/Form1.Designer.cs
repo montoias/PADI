@@ -44,6 +44,13 @@
             this.RecoverMetadataServerButton = new System.Windows.Forms.Button();
             this.ClientListBox = new System.Windows.Forms.ListBox();
             this.ClientGroupBox = new System.Windows.Forms.GroupBox();
+            this.DumpClientButton = new System.Windows.Forms.Button();
+            this.UseTextFileOption = new System.Windows.Forms.RadioButton();
+            this.ByteRegisterOption = new System.Windows.Forms.RadioButton();
+            this.FileRegisterTextBox = new System.Windows.Forms.TextBox();
+            this.ByteRegisterTextBox = new System.Windows.Forms.TextBox();
+            this.ByteRegisterLabel = new System.Windows.Forms.Label();
+            this.FileRegisterLabel = new System.Windows.Forms.Label();
             this.SemanticsTextBox = new System.Windows.Forms.TextBox();
             this.SemanticsLabel = new System.Windows.Forms.Label();
             this.FileTextbox = new System.Windows.Forms.TextBox();
@@ -58,6 +65,7 @@
             this.MetadataServerGroupBox = new System.Windows.Forms.GroupBox();
             this.DumpMetadataButton = new System.Windows.Forms.Button();
             this.DataServerGroupBox = new System.Windows.Forms.GroupBox();
+            this.DumpDataServerButton = new System.Windows.Forms.Button();
             this.LaunchDataServerButton = new System.Windows.Forms.Button();
             this.DataServerListBox = new System.Windows.Forms.ListBox();
             this.UnfreezeDataServerButton = new System.Windows.Forms.Button();
@@ -72,6 +80,10 @@
             this.ScriptFileBox = new System.Windows.Forms.TextBox();
             this.ScriptFileLabel = new System.Windows.Forms.Label();
             this.LoadScriptButton = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.ClientEventsLabel = new System.Windows.Forms.Label();
+            this.MetadataEventsLabel = new System.Windows.Forms.Label();
+            this.DataServerEventsLabel = new System.Windows.Forms.Label();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -80,9 +92,9 @@
             // 
             // LaunchClientServerButton
             // 
-            this.LaunchClientServerButton.Location = new System.Drawing.Point(331, 295);
+            this.LaunchClientServerButton.Location = new System.Drawing.Point(18, 284);
             this.LaunchClientServerButton.Name = "LaunchClientServerButton";
-            this.LaunchClientServerButton.Size = new System.Drawing.Size(93, 28);
+            this.LaunchClientServerButton.Size = new System.Drawing.Size(85, 29);
             this.LaunchClientServerButton.TabIndex = 0;
             this.LaunchClientServerButton.Text = "Launch Client";
             this.LaunchClientServerButton.UseVisualStyleBackColor = true;
@@ -90,7 +102,7 @@
             // 
             // OpenFileButton
             // 
-            this.OpenFileButton.Location = new System.Drawing.Point(109, 166);
+            this.OpenFileButton.Location = new System.Drawing.Point(118, 166);
             this.OpenFileButton.Name = "OpenFileButton";
             this.OpenFileButton.Size = new System.Drawing.Size(85, 30);
             this.OpenFileButton.TabIndex = 1;
@@ -104,7 +116,7 @@
             this.ClientEventBox.Multiline = true;
             this.ClientEventBox.Name = "ClientEventBox";
             this.ClientEventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.ClientEventBox.Size = new System.Drawing.Size(284, 168);
+            this.ClientEventBox.Size = new System.Drawing.Size(270, 168);
             this.ClientEventBox.TabIndex = 2;
             // 
             // LaunchMetadataServerButton
@@ -146,7 +158,7 @@
             // 
             // DeleteFileButton
             // 
-            this.DeleteFileButton.Location = new System.Drawing.Point(18, 202);
+            this.DeleteFileButton.Location = new System.Drawing.Point(18, 213);
             this.DeleteFileButton.Name = "DeleteFileButton";
             this.DeleteFileButton.Size = new System.Drawing.Size(85, 30);
             this.DeleteFileButton.TabIndex = 7;
@@ -156,7 +168,7 @@
             // 
             // CloseFileButton
             // 
-            this.CloseFileButton.Location = new System.Drawing.Point(109, 202);
+            this.CloseFileButton.Location = new System.Drawing.Point(116, 213);
             this.CloseFileButton.Name = "CloseFileButton";
             this.CloseFileButton.Size = new System.Drawing.Size(85, 30);
             this.CloseFileButton.TabIndex = 8;
@@ -229,6 +241,13 @@
             // 
             // ClientGroupBox
             // 
+            this.ClientGroupBox.Controls.Add(this.DumpClientButton);
+            this.ClientGroupBox.Controls.Add(this.UseTextFileOption);
+            this.ClientGroupBox.Controls.Add(this.ByteRegisterOption);
+            this.ClientGroupBox.Controls.Add(this.FileRegisterTextBox);
+            this.ClientGroupBox.Controls.Add(this.ByteRegisterTextBox);
+            this.ClientGroupBox.Controls.Add(this.ByteRegisterLabel);
+            this.ClientGroupBox.Controls.Add(this.FileRegisterLabel);
             this.ClientGroupBox.Controls.Add(this.SemanticsTextBox);
             this.ClientGroupBox.Controls.Add(this.SemanticsLabel);
             this.ClientGroupBox.Controls.Add(this.FileTextbox);
@@ -250,24 +269,92 @@
             this.ClientGroupBox.Controls.Add(this.LaunchClientServerButton);
             this.ClientGroupBox.Location = new System.Drawing.Point(12, 12);
             this.ClientGroupBox.Name = "ClientGroupBox";
-            this.ClientGroupBox.Size = new System.Drawing.Size(442, 333);
+            this.ClientGroupBox.Size = new System.Drawing.Size(577, 333);
             this.ClientGroupBox.TabIndex = 19;
             this.ClientGroupBox.TabStop = false;
             this.ClientGroupBox.Text = "Client Server";
             // 
+            // DumpClientButton
+            // 
+            this.DumpClientButton.Location = new System.Drawing.Point(116, 284);
+            this.DumpClientButton.Name = "DumpClientButton";
+            this.DumpClientButton.Size = new System.Drawing.Size(87, 29);
+            this.DumpClientButton.TabIndex = 35;
+            this.DumpClientButton.Text = "Dump Client";
+            this.DumpClientButton.UseVisualStyleBackColor = true;
+            // 
+            // UseTextFileOption
+            // 
+            this.UseTextFileOption.AutoSize = true;
+            this.UseTextFileOption.Checked = true;
+            this.UseTextFileOption.Location = new System.Drawing.Point(450, 18);
+            this.UseTextFileOption.Name = "UseTextFileOption";
+            this.UseTextFileOption.Size = new System.Drawing.Size(87, 17);
+            this.UseTextFileOption.TabIndex = 34;
+            this.UseTextFileOption.TabStop = true;
+            this.UseTextFileOption.Text = "Use Text File";
+            this.UseTextFileOption.UseVisualStyleBackColor = true;
+            this.UseTextFileOption.CheckedChanged += new System.EventHandler(this.UseTextFileOption_CheckedChanged);
+            // 
+            // ByteRegisterOption
+            // 
+            this.ByteRegisterOption.AutoSize = true;
+            this.ByteRegisterOption.Location = new System.Drawing.Point(450, 48);
+            this.ByteRegisterOption.Name = "ByteRegisterOption";
+            this.ByteRegisterOption.Size = new System.Drawing.Size(110, 17);
+            this.ByteRegisterOption.TabIndex = 33;
+            this.ByteRegisterOption.Text = "Use Byte Register";
+            this.ByteRegisterOption.UseVisualStyleBackColor = true;
+            this.ByteRegisterOption.CheckedChanged += new System.EventHandler(this.ByteRegisterOption_CheckedChanged);
+            // 
+            // FileRegisterTextBox
+            // 
+            this.FileRegisterTextBox.Location = new System.Drawing.Point(515, 121);
+            this.FileRegisterTextBox.Multiline = true;
+            this.FileRegisterTextBox.Name = "FileRegisterTextBox";
+            this.FileRegisterTextBox.Size = new System.Drawing.Size(34, 20);
+            this.FileRegisterTextBox.TabIndex = 32;
+            // 
+            // ByteRegisterTextBox
+            // 
+            this.ByteRegisterTextBox.Location = new System.Drawing.Point(516, 92);
+            this.ByteRegisterTextBox.Multiline = true;
+            this.ByteRegisterTextBox.Name = "ByteRegisterTextBox";
+            this.ByteRegisterTextBox.Size = new System.Drawing.Size(33, 20);
+            this.ByteRegisterTextBox.TabIndex = 31;
+            // 
+            // ByteRegisterLabel
+            // 
+            this.ByteRegisterLabel.AutoSize = true;
+            this.ByteRegisterLabel.Location = new System.Drawing.Point(428, 92);
+            this.ByteRegisterLabel.Name = "ByteRegisterLabel";
+            this.ByteRegisterLabel.Size = new System.Drawing.Size(70, 13);
+            this.ByteRegisterLabel.TabIndex = 30;
+            this.ByteRegisterLabel.Text = "Byte Register";
+            // 
+            // FileRegisterLabel
+            // 
+            this.FileRegisterLabel.AutoSize = true;
+            this.FileRegisterLabel.Location = new System.Drawing.Point(428, 120);
+            this.FileRegisterLabel.Name = "FileRegisterLabel";
+            this.FileRegisterLabel.Size = new System.Drawing.Size(65, 13);
+            this.FileRegisterLabel.TabIndex = 29;
+            this.FileRegisterLabel.Text = "File Register";
+            // 
             // SemanticsTextBox
             // 
-            this.SemanticsTextBox.Location = new System.Drawing.Point(345, 125);
+            this.SemanticsTextBox.Location = new System.Drawing.Point(515, 150);
             this.SemanticsTextBox.MaxLength = 1;
+            this.SemanticsTextBox.Multiline = true;
             this.SemanticsTextBox.Name = "SemanticsTextBox";
-            this.SemanticsTextBox.Size = new System.Drawing.Size(29, 20);
+            this.SemanticsTextBox.Size = new System.Drawing.Size(33, 20);
             this.SemanticsTextBox.TabIndex = 28;
             this.SemanticsTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
             // 
             // SemanticsLabel
             // 
             this.SemanticsLabel.AutoSize = true;
-            this.SemanticsLabel.Location = new System.Drawing.Point(283, 128);
+            this.SemanticsLabel.Location = new System.Drawing.Point(428, 150);
             this.SemanticsLabel.Name = "SemanticsLabel";
             this.SemanticsLabel.Size = new System.Drawing.Size(56, 13);
             this.SemanticsLabel.TabIndex = 27;
@@ -275,7 +362,7 @@
             // 
             // FileTextbox
             // 
-            this.FileTextbox.Location = new System.Drawing.Point(223, 165);
+            this.FileTextbox.Location = new System.Drawing.Point(374, 200);
             this.FileTextbox.Multiline = true;
             this.FileTextbox.Name = "FileTextbox";
             this.FileTextbox.Size = new System.Drawing.Size(186, 113);
@@ -337,7 +424,7 @@
             // 
             // WriteFileButton
             // 
-            this.WriteFileButton.Location = new System.Drawing.Point(109, 249);
+            this.WriteFileButton.Location = new System.Drawing.Point(220, 213);
             this.WriteFileButton.Name = "WriteFileButton";
             this.WriteFileButton.Size = new System.Drawing.Size(85, 30);
             this.WriteFileButton.TabIndex = 19;
@@ -347,7 +434,7 @@
             // 
             // ReadFileButton
             // 
-            this.ReadFileButton.Location = new System.Drawing.Point(18, 249);
+            this.ReadFileButton.Location = new System.Drawing.Point(220, 166);
             this.ReadFileButton.Name = "ReadFileButton";
             this.ReadFileButton.Size = new System.Drawing.Size(85, 30);
             this.ReadFileButton.TabIndex = 19;
@@ -364,7 +451,7 @@
             this.MetadataServerGroupBox.Controls.Add(this.MetadataOption3);
             this.MetadataServerGroupBox.Controls.Add(this.FailMetadataServerButton);
             this.MetadataServerGroupBox.Controls.Add(this.LaunchMetadataServerButton);
-            this.MetadataServerGroupBox.Location = new System.Drawing.Point(460, 17);
+            this.MetadataServerGroupBox.Location = new System.Drawing.Point(611, 17);
             this.MetadataServerGroupBox.Name = "MetadataServerGroupBox";
             this.MetadataServerGroupBox.Size = new System.Drawing.Size(293, 328);
             this.MetadataServerGroupBox.TabIndex = 20;
@@ -383,18 +470,28 @@
             // 
             // DataServerGroupBox
             // 
+            this.DataServerGroupBox.Controls.Add(this.DumpDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.LaunchDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.DataServerListBox);
             this.DataServerGroupBox.Controls.Add(this.UnfreezeDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.FreezeDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.RecoverDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.FailDataServerButton);
-            this.DataServerGroupBox.Location = new System.Drawing.Point(812, 13);
+            this.DataServerGroupBox.Location = new System.Drawing.Point(934, 13);
             this.DataServerGroupBox.Name = "DataServerGroupBox";
             this.DataServerGroupBox.Size = new System.Drawing.Size(294, 332);
             this.DataServerGroupBox.TabIndex = 21;
             this.DataServerGroupBox.TabStop = false;
             this.DataServerGroupBox.Text = "Data Server";
+            // 
+            // DumpDataServerButton
+            // 
+            this.DumpDataServerButton.Location = new System.Drawing.Point(157, 264);
+            this.DumpDataServerButton.Name = "DumpDataServerButton";
+            this.DumpDataServerButton.Size = new System.Drawing.Size(108, 30);
+            this.DumpDataServerButton.TabIndex = 24;
+            this.DumpDataServerButton.Text = "Dump Data Server";
+            this.DumpDataServerButton.UseVisualStyleBackColor = true;
             // 
             // LaunchDataServerButton
             // 
@@ -454,16 +551,16 @@
             // 
             // MetadataEventBox
             // 
-            this.MetadataEventBox.Location = new System.Drawing.Point(323, 391);
+            this.MetadataEventBox.Location = new System.Drawing.Point(302, 391);
             this.MetadataEventBox.Multiline = true;
             this.MetadataEventBox.Name = "MetadataEventBox";
             this.MetadataEventBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.MetadataEventBox.Size = new System.Drawing.Size(320, 168);
+            this.MetadataEventBox.Size = new System.Drawing.Size(270, 168);
             this.MetadataEventBox.TabIndex = 2;
             // 
             // KillProcessesbutton
             // 
-            this.KillProcessesbutton.Location = new System.Drawing.Point(1187, 696);
+            this.KillProcessesbutton.Location = new System.Drawing.Point(976, 584);
             this.KillProcessesbutton.Name = "KillProcessesbutton";
             this.KillProcessesbutton.Size = new System.Drawing.Size(96, 35);
             this.KillProcessesbutton.TabIndex = 22;
@@ -478,7 +575,7 @@
             this.ScriptBox.Controls.Add(this.ScriptFileBox);
             this.ScriptBox.Controls.Add(this.ScriptFileLabel);
             this.ScriptBox.Controls.Add(this.LoadScriptButton);
-            this.ScriptBox.Location = new System.Drawing.Point(728, 380);
+            this.ScriptBox.Location = new System.Drawing.Point(870, 372);
             this.ScriptBox.Name = "ScriptBox";
             this.ScriptBox.Size = new System.Drawing.Size(368, 187);
             this.ScriptBox.TabIndex = 23;
@@ -532,11 +629,50 @@
             this.LoadScriptButton.UseVisualStyleBackColor = true;
             this.LoadScriptButton.Click += new System.EventHandler(this.LoadScriptButton_Click);
             // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(592, 391);
+            this.textBox1.Multiline = true;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(263, 168);
+            this.textBox1.TabIndex = 24;
+            // 
+            // ClientEventsLabel
+            // 
+            this.ClientEventsLabel.AutoSize = true;
+            this.ClientEventsLabel.Location = new System.Drawing.Point(12, 375);
+            this.ClientEventsLabel.Name = "ClientEventsLabel";
+            this.ClientEventsLabel.Size = new System.Drawing.Size(72, 13);
+            this.ClientEventsLabel.TabIndex = 25;
+            this.ClientEventsLabel.Text = "Client Events:";
+            // 
+            // MetadataEventsLabel
+            // 
+            this.MetadataEventsLabel.AutoSize = true;
+            this.MetadataEventsLabel.Location = new System.Drawing.Point(303, 372);
+            this.MetadataEventsLabel.Name = "MetadataEventsLabel";
+            this.MetadataEventsLabel.Size = new System.Drawing.Size(88, 13);
+            this.MetadataEventsLabel.TabIndex = 26;
+            this.MetadataEventsLabel.Text = "Metadata Events";
+            // 
+            // DataServerEventsLabel
+            // 
+            this.DataServerEventsLabel.AutoSize = true;
+            this.DataServerEventsLabel.Location = new System.Drawing.Point(608, 372);
+            this.DataServerEventsLabel.Name = "DataServerEventsLabel";
+            this.DataServerEventsLabel.Size = new System.Drawing.Size(100, 13);
+            this.DataServerEventsLabel.TabIndex = 27;
+            this.DataServerEventsLabel.Text = "Data Server Events";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1315, 758);
+            this.ClientSize = new System.Drawing.Size(1250, 629);
+            this.Controls.Add(this.DataServerEventsLabel);
+            this.Controls.Add(this.MetadataEventsLabel);
+            this.Controls.Add(this.ClientEventsLabel);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.ScriptBox);
             this.Controls.Add(this.KillProcessesbutton);
             this.Controls.Add(this.DataServerGroupBox);
@@ -604,6 +740,18 @@
         private System.Windows.Forms.TextBox ScriptFileBox;
         private System.Windows.Forms.Label ScriptFileLabel;
         private System.Windows.Forms.Button LoadScriptButton;
+        private System.Windows.Forms.RadioButton UseTextFileOption;
+        private System.Windows.Forms.RadioButton ByteRegisterOption;
+        private System.Windows.Forms.TextBox FileRegisterTextBox;
+        private System.Windows.Forms.TextBox ByteRegisterTextBox;
+        private System.Windows.Forms.Label ByteRegisterLabel;
+        private System.Windows.Forms.Label FileRegisterLabel;
+        private System.Windows.Forms.Button DumpDataServerButton;
+        private System.Windows.Forms.Button DumpClientButton;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Label ClientEventsLabel;
+        private System.Windows.Forms.Label MetadataEventsLabel;
+        private System.Windows.Forms.Label DataServerEventsLabel;
     }
 }
 

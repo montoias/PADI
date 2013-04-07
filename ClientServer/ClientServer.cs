@@ -7,17 +7,18 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.IO;
+using System.Collections.Specialized;
 
 using CommonTypes;
 
 
 namespace ClientServer
 {
-    //TODO:Store information from method calls
     class ClientServer : MarshalByRefObject, IClientServerPuppet
     {
-        private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
-        private Dictionary<string, FileData> fileTable = new Dictionary<string, FileData>();
+        private OrderedDictionary fileRegisters = new OrderedDictionary();
+        private Dictionary<int, FileData> byteRegisters = new Dictionary<int, FileData>();
+
         private static IMetadataServerClientServer[] metadataServer = new IMetadataServerClientServer[3];
         private static string[] metadataLocation = new string[3];
         private static IMetadataServerClientServer primaryMetadata;
@@ -33,10 +34,6 @@ namespace ClientServer
                 "ClientServer",
                 WellKnownObjectMode.Singleton);
 
-            //TODO: Get current location of the MetadataServer
-            //Function that check if 0 is up and is the primary server
-            //If it isn't up, iterate list
-            //If it's not primary, access variable to get primary
             metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
                typeof(IMetadataServerClientServer),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
@@ -54,7 +51,6 @@ namespace ClientServer
             metadataLocation[2] = args[3];
         }
 
-        //TODO: Implement algorithm that'll work in case of failure
         private void getMetadataServer()
         {
             metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
@@ -74,14 +70,13 @@ namespace ClientServer
         public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
         {
             System.Console.WriteLine("Creating the file:" + filename);
-            if (!metadataTable.ContainsKey(filename))
+            if (!fileRegisters.Contains(filename)) //This verification may avoid one more message sent through the network.
             {
-                if (metadataTable.Count == 10) 
+                if (fileRegisters.Count == 10) 
                 {
                     throw new TableSizeExcedeedException();
                 }
                 MetadataInfo info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
-                metadataTable.Add(filename, info);
                 return info;
             }
             else 
@@ -99,14 +94,14 @@ namespace ClientServer
         public MetadataInfo open(string filename)
         {
             System.Console.WriteLine("Opening the file: " + filename);
-            if (!metadataTable.ContainsKey(filename))
+            if (!fileRegisters.Contains(filename))
             {
-                if (metadataTable.Count == 10) 
+                if (fileRegisters.Count == 10) 
                 {
                     throw new TableSizeExcedeedException();
                 }
                 MetadataInfo info = primaryMetadata.open(filename);
-                metadataTable.Add(filename, info);
+                fileRegisters.Add(filename, info);
                 return info;
             }
             else 
@@ -118,10 +113,10 @@ namespace ClientServer
         public void close(string filename)
         {
             System.Console.WriteLine("Closing the file: " + filename);
-            if (metadataTable.ContainsKey(filename))
+            if (fileRegisters.Contains(filename))
             {
                 primaryMetadata.close(filename);
-                metadataTable.Remove(filename);
+                fileRegisters.Remove(filename);
             }
             else
             {
@@ -129,78 +124,56 @@ namespace ClientServer
             }
         }
 
-        public FileData read(string filename, int semantics)
+        public FileData read(int fileRegister, int semantics)
         {
-            if (metadataTable.ContainsKey(filename))
+
+            System.Console.WriteLine("Reading file from metadata info @ register: " + fileRegister);
+            FileData fileData = null;
+            MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+
+            foreach (string location in metadata.dataServers)
             {
-                System.Console.WriteLine("Reading the file: " + filename);
-                FileData fileData = null;
-                MetadataInfo metadata = metadataTable[filename];
-
-                //TODO: Make quorum 
-                //TODO: Async request
-                //TODO: Handle exceptions from failing servers
-                foreach (string location in metadata.dataServers)
-                {
-                    System.Console.WriteLine("Reading from dataServer at port " + location);
-                    IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
-                    typeof(IDataServerClientServer),
-                    "tcp://localhost:" + location + "/DataServer");
-                    fileData = dataServer.read(filename, semantics);
-                }
-                try
-                {
-                    fileTable.Add(filename, fileData);
-                }
-                catch(ArgumentException){
-                    fileTable[filename] = fileData;
-                }
-
-                return fileData;
+                System.Console.WriteLine("Reading from dataServer at port " + location);
+                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
+                typeof(IDataServerClientServer),
+                "tcp://localhost:" + location + "/DataServer");
+                fileData = dataServer.read(metadata.filename, semantics);
             }
-            else 
-            {
-                throw new MetadataFileDoesNotExistException();
-            } 
+            
+            byteRegisters[fileRegister] = fileData;
+
+            return fileData;
+             
         }
 
-        //TODO: keep server objects?
-        //TODO: implement quoruns
-        //TODO: Check if a read was previously done
-        public void write(string filename, string textFile)
+        public void write(int fileRegister, string textFile)
         {
-            if (metadataTable.ContainsKey(filename))
-            {
-                System.Console.WriteLine("Writing the file: " + filename);
+            System.Console.WriteLine("Writing file from metadata info @ register: " + fileRegister);
 
-                MetadataInfo metadata = metadataTable[filename];
-                foreach (string location in metadata.dataServers)
-                {
-                    IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
-                    typeof(IDataServerClientServer),
-                    "tcp://localhost:" + location + "/DataServer");
-                    dataServer.write(filename, stringToByteArray(textFile));
-                }
-            }
-            else
+            MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            foreach (string location in metadata.dataServers)
             {
-                throw new MetadataFileDoesNotExistException();
+                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
+                typeof(IDataServerClientServer),
+                "tcp://localhost:" + location + "/DataServer");
+                dataServer.write(metadata.filename, Encoding.ASCII.GetBytes(textFile));
             }
         }
 
-        private byte[] stringToByteArray(string s)
+        public void write(int fileRegister, int byteRegister)
         {
-            byte[] bytes = new byte[s.Length * sizeof(char)];
-            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
-        }
+            System.Console.WriteLine("Writing @ register: " + fileRegister);
 
-        private string byteArrayToString(byte[] b)
-        {
-            char[] chars = new char[b.Length / sizeof(char)];
-            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
-            return new string(chars);
+            MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            FileData fileData = byteRegisters[byteRegister];
+
+            foreach (string location in metadata.dataServers)
+            {
+                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
+                typeof(IDataServerClientServer),
+                "tcp://localhost:" + location + "/DataServer");
+                dataServer.write(metadata.filename, fileData.file);
+            }
         }
-        
     }
 }
