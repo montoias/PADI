@@ -129,6 +129,7 @@ namespace DataServer
             string contents = "DATA SERVER FOLDER\r\n";
             foreach (string filename in Directory.GetFiles(fileFolder))
                 contents += filename + "\r\n";
+
             return contents;
         }
     }

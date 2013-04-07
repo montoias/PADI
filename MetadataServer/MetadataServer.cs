@@ -204,7 +204,11 @@ namespace MetadataServer
             {
                 contents += "Empty cache\r\n";
             }
-            //iterate through folder
+            
+            contents += "METADATA FOLDER\r\n";
+
+            foreach(string filename in Directory.GetFiles(fileFolder))
+                contents += filename + "\r\n";
 
             return contents;
         }

@@ -12,5 +12,6 @@ namespace CommonTypes
         void unfreeze();
         void fail();
         void recover();
+        string dump();
     }
 }

@@ -80,7 +80,7 @@
             this.ScriptFileBox = new System.Windows.Forms.TextBox();
             this.ScriptFileLabel = new System.Windows.Forms.Label();
             this.LoadScriptButton = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.DataServerEventBox = new System.Windows.Forms.TextBox();
             this.ClientEventsLabel = new System.Windows.Forms.Label();
             this.MetadataEventsLabel = new System.Windows.Forms.Label();
             this.DataServerEventsLabel = new System.Windows.Forms.Label();
@@ -493,6 +493,7 @@
             this.DumpDataServerButton.TabIndex = 24;
             this.DumpDataServerButton.Text = "Dump Data Server";
             this.DumpDataServerButton.UseVisualStyleBackColor = true;
+            this.DumpDataServerButton.Click += new System.EventHandler(this.DumpDataServerButton_Click);
             // 
             // LaunchDataServerButton
             // 
@@ -630,13 +631,13 @@
             this.LoadScriptButton.UseVisualStyleBackColor = true;
             this.LoadScriptButton.Click += new System.EventHandler(this.LoadScriptButton_Click);
             // 
-            // textBox1
+            // DataServerEventBox
             // 
-            this.textBox1.Location = new System.Drawing.Point(592, 391);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(263, 168);
-            this.textBox1.TabIndex = 24;
+            this.DataServerEventBox.Location = new System.Drawing.Point(592, 391);
+            this.DataServerEventBox.Multiline = true;
+            this.DataServerEventBox.Name = "DataServerEventBox";
+            this.DataServerEventBox.Size = new System.Drawing.Size(263, 168);
+            this.DataServerEventBox.TabIndex = 24;
             // 
             // ClientEventsLabel
             // 
@@ -652,18 +653,18 @@
             this.MetadataEventsLabel.AutoSize = true;
             this.MetadataEventsLabel.Location = new System.Drawing.Point(303, 372);
             this.MetadataEventsLabel.Name = "MetadataEventsLabel";
-            this.MetadataEventsLabel.Size = new System.Drawing.Size(88, 13);
+            this.MetadataEventsLabel.Size = new System.Drawing.Size(91, 13);
             this.MetadataEventsLabel.TabIndex = 26;
-            this.MetadataEventsLabel.Text = "Metadata Events";
+            this.MetadataEventsLabel.Text = "Metadata Events:";
             // 
             // DataServerEventsLabel
             // 
             this.DataServerEventsLabel.AutoSize = true;
-            this.DataServerEventsLabel.Location = new System.Drawing.Point(608, 372);
+            this.DataServerEventsLabel.Location = new System.Drawing.Point(596, 372);
             this.DataServerEventsLabel.Name = "DataServerEventsLabel";
-            this.DataServerEventsLabel.Size = new System.Drawing.Size(100, 13);
+            this.DataServerEventsLabel.Size = new System.Drawing.Size(103, 13);
             this.DataServerEventsLabel.TabIndex = 27;
-            this.DataServerEventsLabel.Text = "Data Server Events";
+            this.DataServerEventsLabel.Text = "Data Server Events:";
             // 
             // Form1
             // 
@@ -673,7 +674,7 @@
             this.Controls.Add(this.DataServerEventsLabel);
             this.Controls.Add(this.MetadataEventsLabel);
             this.Controls.Add(this.ClientEventsLabel);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.DataServerEventBox);
             this.Controls.Add(this.ScriptBox);
             this.Controls.Add(this.KillProcessesbutton);
             this.Controls.Add(this.DataServerGroupBox);
@@ -749,7 +750,7 @@
         private System.Windows.Forms.Label FileRegisterLabel;
         private System.Windows.Forms.Button DumpDataServerButton;
         private System.Windows.Forms.Button DumpClientButton;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox DataServerEventBox;
         private System.Windows.Forms.Label ClientEventsLabel;
         private System.Windows.Forms.Label MetadataEventsLabel;
         private System.Windows.Forms.Label DataServerEventsLabel;

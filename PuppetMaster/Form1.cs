@@ -222,6 +222,11 @@ namespace PuppetMaster
             MetadataEventBox.Text += msg;
         }
 
+        public void updateDataServerBox(string msg)
+        {
+            DataServerEventBox.Text += msg;
+        }
+
         public void updateFileText(string msg, int version)
         {
             FileTextbox.Clear();
@@ -230,7 +235,12 @@ namespace PuppetMaster
 
         private void DumpClientButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.dumpClients(ClientListBox.SelectedIndex);
+            puppetMaster.dumpClient(ClientListBox.SelectedIndex);
+        }
+
+        private void DumpDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.dumpDataServer(DataServerListBox.SelectedIndex);
         }
     }
 }

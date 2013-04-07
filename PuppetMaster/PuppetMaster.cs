@@ -154,7 +154,7 @@ namespace PuppetMaster
 
         }
 
-        public void dumpClients(int selectedClient)
+        public void dumpClient(int selectedClient)
         {
             form.updateClientBox(clientsList[selectedClient].dump());
         }
@@ -200,9 +200,9 @@ namespace PuppetMaster
             dataServersList[selectedDataServer].recover();
         }
 
-        public void dumpDataServer(int processNumber)
+        public void dumpDataServer(int selectedDataServer)
         {
-            throw new NotImplementedException();
+            form.updateDataServerBox(dataServersList[selectedDataServer].dump());
         }
 
         /*********************************
@@ -412,7 +412,7 @@ namespace PuppetMaster
                     switch (processInfo[0])
                     {
                         case "c":
-                            dumpClients(processNumber);
+                            dumpClient(processNumber);
                             break;
                         case "m":
                             dumpMetadataServer(processNumber);
