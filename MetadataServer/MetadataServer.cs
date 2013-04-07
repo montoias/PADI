@@ -56,7 +56,7 @@ namespace MetadataServer
                 {
                     byte[] metadataBytes;
 
-                    System.Console.WriteLine("Creating file:" + filename);
+                    System.Console.WriteLine("Creating file:" + filename + " Length:" + filename.Length);
 
                     //TODO: Distribution algorithm
                     ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
@@ -137,7 +137,7 @@ namespace MetadataServer
                         parsedLocations.Add(location);
                     }
 
-                    MetadataInfo metadata = new MetadataInfo(strings[0], Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]),
+                    MetadataInfo metadata = new MetadataInfo(filename, Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]),
                                                                         Convert.ToInt32(strings[3]), parsedLocations);
                     metadataTable.Add(filename, metadata);
                     fileCounter.Add(filename, 1);
@@ -213,18 +213,12 @@ namespace MetadataServer
          ********* METADATA *********
          ****************************/
 
-
         private static void createFolderFile()
         {
             bool folderExists = Directory.Exists(fileFolder);
 
             if (!folderExists)
                 Directory.CreateDirectory(fileFolder);
-            else
-            {
-                Directory.Delete(fileFolder, true);
-                Directory.CreateDirectory(fileFolder);
-            }
         }
 
         private string generateLocalFileName(string filename, string location)

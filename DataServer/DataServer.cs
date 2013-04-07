@@ -60,11 +60,6 @@ namespace DataServer
 
             if (!folderExists)
                 Directory.CreateDirectory(fileFolder);
-            else
-            {
-                Directory.Delete(fileFolder, true);
-                Directory.CreateDirectory(fileFolder);
-            }
         }
 
         public void freeze()
@@ -126,6 +121,15 @@ namespace DataServer
             {
                 throw new RemotingException();
             }
+        }
+
+
+        public string dump()
+        {
+            string contents = "DATA SERVER FOLDER\r\n";
+            foreach (string filename in Directory.GetFiles(fileFolder))
+                contents += filename + "\r\n";
+            return contents;
         }
     }
 }
