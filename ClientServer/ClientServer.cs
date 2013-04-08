@@ -130,13 +130,13 @@ namespace ClientServer
             FileData fileData = null;
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
 
-            foreach (string location in metadata.dataServers)
+            foreach (string dsInfo in metadata.dataServers)
             {
-                System.Console.WriteLine("Reading from dataServer at port " + location);
+                System.Console.WriteLine("Reading from dataServer at port " + metadata.getDataServerLocation(dsInfo));
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
-                "tcp://localhost:" + location + "/DataServer");
-                fileData = dataServer.read(metadata.filename, semantics);
+                "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
+                fileData = dataServer.read(metadata.getLocalFilename(dsInfo), semantics);
             }
             
             byteRegisters[byteRegister] = fileData;
@@ -151,12 +151,12 @@ namespace ClientServer
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
 
-            foreach (string location in metadata.dataServers)
+            foreach (string dsInfo in metadata.dataServers)
             {
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
-                "tcp://localhost:" + location + "/DataServer");
-                dataServer.write(metadata.filename, stringToByteArray(textFile));
+                "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
+                dataServer.write(metadata.getLocalFilename(dsInfo), stringToByteArray(textFile));
             }
         }
 
@@ -167,12 +167,12 @@ namespace ClientServer
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             FileData fileData = byteRegisters[byteRegister];
 
-            foreach (string location in metadata.dataServers)
+            foreach (string dsInfo in metadata.dataServers)
             {
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
-                "tcp://localhost:" + location + "/DataServer");
-                dataServer.write(metadata.filename, fileData.file);
+                "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
+                dataServer.write(metadata.getLocalFilename(dsInfo), fileData.file);
             }
         }
 
@@ -182,7 +182,7 @@ namespace ClientServer
             System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
         }
-
+       
         //TODO: print current metadata server
         public string dump()
         {
@@ -203,7 +203,7 @@ namespace ClientServer
             //FIXME: entry.value -> make toString for fileData
             foreach (KeyValuePair<int, FileData> fileData in byteRegisters)
             {
-                toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + "entry.Value" + "\r\n";  
+                toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + fileData.Value + "\r\n";  
             }
 
             return toReturn;

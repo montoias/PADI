@@ -32,6 +32,15 @@ namespace CommonTypes
             return toReturn;
         }
 
+        public string getDataServerLocation(string dataServer)
+        {
+            return (dataServer.Split(','))[0];
+        }
+
+        public string getLocalFilename(string dataServer)
+        {
+            return (dataServer.Split(','))[1];
+        }
         public string dataServersToString()
         {
             string toReturn = "";

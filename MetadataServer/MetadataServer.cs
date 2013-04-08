@@ -63,7 +63,7 @@ namespace MetadataServer
                     List<string> locations = new List<string>();
                     for (int i = 0; i < numDataServers; i++)
                     {
-                        locations.Add((string)dataServersArray[i]);
+                        locations.Add((string)dataServersArray[i] + "," + generateLocalFileName());
                     }
 
                     metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
@@ -225,11 +225,18 @@ namespace MetadataServer
                 Directory.CreateDirectory(fileFolder);
         }
 
-        private string generateLocalFileName(string filename, string location)
+        private string generateLocalFileName()
         {
-            return "";
-        }
+            long i = 1;
 
+            foreach (byte b in Guid.NewGuid().ToByteArray())
+            {
+                i *= ((int)b + 1);
+            }
+
+            return string.Format("{0:x}", i - DateTime.Now.Ticks);
+        }
+        
 
         private byte[] stringToByteArray(string s)
         {
