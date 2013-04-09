@@ -383,14 +383,16 @@ namespace PuppetMaster
                     copy(processNumber, Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
                     break;
                 case "EXESCRIPT":
-                    exescript(processNumber, parameters[2]);
+                    exescript(processNumber, processInst[2]);
                     break;
             }
         }
 
         public void exescript(int selectedClient, string filename)
         {
-            clientsList[selectedClient].exescript(filename);
+            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
+            string[] fileText = File.ReadAllLines(path);
+            clientsList[selectedClient].exescript(fileText);
         }
 
         private void launchProcessIfNeeded(string process, int processNumber)

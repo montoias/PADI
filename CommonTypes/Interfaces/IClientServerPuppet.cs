@@ -18,6 +18,6 @@ namespace CommonTypes
         void write(int fileRegister, int byteRegister);
         void copy(int fileRegister1, string semantics, int fileRegister2, string salt);
         string dump();
-        void exescript(string filename);
+        void exescript(string[] filename);
     }
 }
