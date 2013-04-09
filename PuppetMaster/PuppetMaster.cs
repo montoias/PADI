@@ -306,87 +306,43 @@ namespace PuppetMaster
             string[] processInfo = processInst[1].Split('-');
             int processNumber = Convert.ToInt32(processInfo[1])-1;
             
-            switch (processInfo[0])
-            {
-                case "c":
-                    if(clientsList.Count <= processNumber)
-                    {
-                        launchClient();
-                    }
-                    break;
-                case "m":
-                    if(!metadataLaunched[processNumber])
-                    {
-                        launchMetadata(processNumber);
-                    }
-                    break;
-                case "d":
-                    if(dataServersList.Count <= processNumber)
-                    {
-                        launchDataServer();
-                    }
-                    break;
-            }
+            launchProcessIfNeeded(processInfo[0], processNumber);
             
             switch (instruction)
             {
                 case "WRITE":
-                    if (processInfo[0].Equals("c"))
+                    try
                     {
-                        try
-                        {
-                            int registerIndex = Convert.ToInt32(parameters[2]);
-                            writeFile(Convert.ToInt32(parameters[1]), registerIndex, processNumber);
-                        }
-                        catch (FormatException)
-                        {
-                            string textFile = parameters[2].Replace("\"", "");
-                            writeFile(Convert.ToInt32(parameters[1]), textFile, processNumber);
-                        }
-                        
+                        int registerIndex = Convert.ToInt32(parameters[2]);
+                        writeFile(Convert.ToInt32(parameters[1]), registerIndex, processNumber);
                     }
+                    catch (FormatException)
+                    {
+                        string textFile = parameters[2].Replace("\"", "");
+                        writeFile(Convert.ToInt32(parameters[1]), textFile, processNumber);
+                    }
+
                     break;
                 case "READ":
-                    if (processInfo[0].Equals("c"))
-                    {
                         readFile(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), processNumber);
-                    }
                     break;
                 case "OPEN":
-                    if (processInfo[0].Equals("c"))
-                    {
                         openFile(parameters[1], processNumber);
-                    }
                     break;
                 case "CLOSE":
-                    if (processInfo[0].Equals("c"))
-                    {
                         closeFile(parameters[1], processNumber);
-                    }
                     break;
                 case "CREATE":
-                    if (processInfo[0].Equals("c"))
-                    {
                         createFile(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]), processNumber);
-                    }
                     break;
                 case "DELETE":
-                    if (processInfo[0].Equals("c"))
-                    {
                         deleteFile(parameters[1], processNumber);
-                    }
                     break;
                 case "FREEZE":
-                    if (processInfo[0].Equals("d"))
-                    {
                         freezeDataServer(processNumber);
-                    }
                     break;
                 case "UNFREEZE":
-                    if (processInfo[0].Equals("d"))
-                    {
                         unfreezeDataServer(processNumber);
-                    }
                     break;
                 case "FAIL":
                     if (processInfo[0].Equals("d"))
@@ -423,10 +379,48 @@ namespace PuppetMaster
                     }
                     break;
                 case "COPY":
+                    string salt = parameters[4].Replace("\"", "");
+                    copy(processNumber, Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
                     break;
                 case "EXESCRIPT":
+                    exescript(processNumber, parameters[2]);
                     break;
             }
+        }
+
+        public void exescript(int selectedClient, string filename)
+        {
+            clientsList[selectedClient].exescript(filename);
+        }
+
+        private void launchProcessIfNeeded(string process, int processNumber)
+        {
+            switch (process)
+            {
+                case "c":
+                    if (clientsList.Count <= processNumber)
+                    {
+                        launchClient();
+                    }
+                    break;
+                case "m":
+                    if (!metadataLaunched[processNumber])
+                    {
+                        launchMetadata(processNumber);
+                    }
+                    break;
+                case "d":
+                    if (dataServersList.Count <= processNumber)
+                    {
+                        launchDataServer();
+                    }
+                    break;
+            }
+        }
+
+        public void copy(int selectedClient, int fileRegister1, string semantics, int fileRegister2, string salt)
+        {
+            clientsList[selectedClient].copy(fileRegister1, semantics, fileRegister2, salt);
         }
 
         public void setForm(Form1 form)

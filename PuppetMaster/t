@@ -15,13 +15,16 @@ CREATE c-1, f2, 1, 2, 2
 #open files
 OPEN c-1, f1
 OPEN c-1, f2
-# more data servers
-UNFREEZE d-2
-UNFREEZE d-3
-# more metadata servers
-UNFREEZE m-2
-UNFREEZE m-3
 #more operations...
 WRITE c-1, 0, "Text contents of the file. Contents are a string delimited by double quotes as this one"
 READ c-1, 0, monotonic, 0
+# The next write writes the contents of byte-array register 0
 WRITE c-1, 0, 0
+COPY c-1, 0, default, 1, " salt example"
+DUMP d-2
+CLOSE c-1, f1
+OPEN c-2, f2
+DUMP c-2
+CLOSE c-2, f2
+DUMP m-2
+CLOSE c-1, f2

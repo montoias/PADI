@@ -127,6 +127,16 @@ namespace ClientServer
         public FileData read(int fileRegister, string semantics, int byteRegister)
         {
             System.Console.WriteLine("Reading file from metadata info @ register: " + fileRegister);
+            FileData fileData = readOnly(fileRegister, semantics);
+            
+            byteRegisters[byteRegister] = fileData;
+
+            return fileData;
+             
+        }
+
+        private FileData readOnly(int fileRegister, string semantics)
+        {
             FileData fileData = null;
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
 
@@ -138,11 +148,7 @@ namespace ClientServer
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
                 fileData = dataServer.read(metadata.getLocalFilename(dsInfo), semantics);
             }
-            
-            byteRegisters[byteRegister] = fileData;
-
             return fileData;
-             
         }
 
         public void write(int fileRegister, string textFile)
@@ -200,13 +206,31 @@ namespace ClientServer
 
             toReturn += "  ByteRegisters\r\n";
 
-            //FIXME: entry.value -> make toString for fileData
             foreach (KeyValuePair<int, FileData> fileData in byteRegisters)
             {
                 toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + fileData.Value + "\r\n";  
             }
 
             return toReturn;
+        }
+
+
+        public void copy(int fileRegister1, string semantics, int fileRegister2, string salt)
+        {
+            FileData fileData = readOnly(fileRegister1, semantics);
+            write(fileRegister2, byteArrayToString(fileData.file) + salt);
+        }
+
+        public void exescript(string filename)
+        {
+            throw new NotImplementedException();
+        }
+
+        private string byteArrayToString(byte[] b)
+        {
+            char[] chars = new char[b.Length / sizeof(char)];
+            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
+            return new string(chars);
         }
     }
 }
