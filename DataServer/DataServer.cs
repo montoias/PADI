@@ -93,24 +93,24 @@ namespace DataServer
             if (File.Exists(path))
             {
                 System.Console.WriteLine("Opening file:" + filename);
-                FileData fileData = new FileData(System.IO.File.ReadAllBytes(path), 0);
-               
-                return fileData;
+                return Utils.deserializeObject<FileData>(path);
             }
             else
             {
                 System.Console.WriteLine("File doesn't exist:" + filename);
-                throw new FileDoesNotExistException();
+                return null;
             }
         }
 
-        //TODO: Attribute version
+        //TODO: Check semantics
         public void write(string filename, byte[] file)
         {
             checkFailure();
             System.Console.WriteLine("Writing the file:" + filename);
             string path = Path.Combine(fileFolder, filename);
-            File.WriteAllBytes(path, file);
+            FileData prev = read(filename, "");
+            FileData f = new FileData(file, prev == null ? 0 : prev.version+1);
+            Utils.serializeObject<FileData>(f, path);
         }
 
 

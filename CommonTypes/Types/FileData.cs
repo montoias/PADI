@@ -13,6 +13,8 @@ namespace CommonTypes
         public byte[] file;
         public int version;
 
+        private FileData(){}
+
         public FileData(byte[] file, int version)
         {
             this.file = file;

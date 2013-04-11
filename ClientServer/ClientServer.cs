@@ -24,6 +24,8 @@ namespace ClientServer
         private static string[] metadataLocation = new string[3];
         private static IMetadataServerClientServer primaryMetadata;
 
+        private int currentFileRegister = 0;
+
         static void Main(string[] args)
         {
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
@@ -73,23 +75,31 @@ namespace ClientServer
             System.Console.WriteLine("Creating the file:" + filename);
             if (!fileRegisters.Contains(filename)) //This verification may avoid one more message sent through the network.
             {
-                if (fileRegisters.Count == 10) 
-                {
-                    throw new TableSizeExcedeedException();
-                }
                 MetadataInfo info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
                 return info;
             }
             else 
             {
-                throw new FileAlreadyExistsException();
+                System.Console.WriteLine("File " + filename + " already exists!");
+                return null;
             }
         }
 
         public void delete(string filename)
         {
             System.Console.WriteLine("Deleting the file: " + filename);
-            primaryMetadata.delete(filename);
+            try
+            {
+                primaryMetadata.delete(filename);
+            }
+            catch (FileDoesNotExistException)
+            {
+                System.Console.WriteLine("File " + filename + " does not exist!");
+            }
+            catch (CannotDeleteFileException)
+            {
+                System.Console.WriteLine("The file " + filename + " cannot be deleted because is being used!");
+            }
         }
 
         public MetadataInfo open(string filename)
@@ -97,17 +107,15 @@ namespace ClientServer
             System.Console.WriteLine("Opening the file: " + filename);
             if (!fileRegisters.Contains(filename))
             {
-                if (fileRegisters.Count == 10) 
-                {
-                    throw new TableSizeExcedeedException();
-                }
+                
                 MetadataInfo info = primaryMetadata.open(filename);
-                fileRegisters.Add(filename, info);
+                fileRegisters.Insert((currentFileRegister++)%10, filename, info);
                 return info;
             }
             else 
             {
-                throw new FileAlreadyOpenedException();
+                System.Console.WriteLine("The file " + filename + " is already open!");
+                return null;
             }
         }
 
@@ -115,13 +123,9 @@ namespace ClientServer
         {
             System.Console.WriteLine("Closing the file: " + filename);
             if (fileRegisters.Contains(filename))
-            {
                 primaryMetadata.close(filename);
-            }
             else
-            {
-                throw new FileNotOpenedException();
-            }
+                System.Console.WriteLine("The file " + filename + " wasn't open!");
         }
 
         public FileData read(int fileRegister, string semantics, int byteRegister)
@@ -162,7 +166,7 @@ namespace ClientServer
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
-                dataServer.write(metadata.getLocalFilename(dsInfo), stringToByteArray(textFile));
+                dataServer.write(metadata.getLocalFilename(dsInfo), Utils.stringToByteArray(textFile));
             }
         }
 
@@ -180,13 +184,6 @@ namespace ClientServer
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
                 dataServer.write(metadata.getLocalFilename(dsInfo), fileData.file);
             }
-        }
-
-        private byte[] stringToByteArray(string s)
-        {
-            byte[] bytes = new byte[s.Length * sizeof(char)];
-            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
         }
        
         //TODO: print current metadata server
@@ -218,7 +215,7 @@ namespace ClientServer
         public void copy(int fileRegister1, string semantics, int fileRegister2, string salt)
         {
             FileData fileData = readOnly(fileRegister1, semantics);
-            write(fileRegister2, byteArrayToString(fileData.file) + salt);
+            write(fileRegister2, Utils.byteArrayToString(fileData.file) + salt);
         }
 
         public void exescript(string[] scriptInstructions)
@@ -276,13 +273,6 @@ namespace ClientServer
                     copy(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
                     break;
             }
-        }
-
-        private string byteArrayToString(byte[] b)
-        {
-            char[] chars = new char[b.Length / sizeof(char)];
-            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
-            return new string(chars);
         }
     }
 }

@@ -46,112 +46,56 @@ namespace PuppetMaster
 
         public void openFile(string filename, int selectedClient)
         {
-            try
-            {
-                form.showMetadata(clientsList[selectedClient].open(filename));
-            }
-            catch (FileAlreadyOpenedException) 
-            {
-                form.updateClientBox("File " + filename + " already opened!\r\n");
-            }
-            catch (TableSizeExcedeedException) 
-            {
-                form.updateClientBox("There are 10 slots occupied, you should close one before trying to open a file!\r\n");
-            }
-            catch (FileDoesNotExistException)
-            {
-                form.updateClientBox("The file: " + filename + " you've tried to open doesn't exist!\r\n");
-            }
+            MetadataInfo m = clientsList[selectedClient].open(filename);
+            if(m != null)
+                form.showMetadata(m);
         }
 
         public void closeFile(string filename, int selectedClient)
         {
-            try
-            {
-                clientsList[selectedClient].close(filename);
-            }
-            catch (FileNotOpenedException)
-            {
-                form.updateClientBox("File " + filename + " was not opened!\r\n");
-            }
+            clientsList[selectedClient].close(filename);
         }
 
         public void createFile(string filename, int nServers, int readQuorum, int writeQuorum, int selectedClient)
         {
-            try
-            {
-                form.showMetadata(clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum));
-            }
-            catch (TableSizeExcedeedException)
-            {
-                form.updateClientBox("There are 10 slots occupied, you should close one before trying to create a file!\r\n");
-            }
-            catch (FileAlreadyExistsException)
-            {
-                form.updateClientBox("File " + filename + " already created!\r\n");
-            }
-            catch (InsufficientDataServersException)
-            {
-                form.updateClientBox("There aren't enough servers for the request!\r\n");
-            }
+            MetadataInfo m = clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum);
+            if(m != null)
+                form.showMetadata(m);
         }
         
         public void deleteFile(string filename, int selectedClient)
         {
-            try
-            {
-                clientsList[selectedClient].delete(filename);
-            }
-            catch (FileDoesNotExistException) 
-            {
-                form.updateClientBox("File " + filename + " does not exist!\r\n");
-            }
-            catch (CannotDeleteFileException)
-            {
-                form.updateClientBox("The file cannot be deleted because is being used!\r\n");
-            }
+            clientsList[selectedClient].delete(filename);
         }
 
         public void writeFile(int fileRegister, string file, int selectedClient)
         {
-            try
-            {
-                clientsList[selectedClient].write(fileRegister, file);
-            }
-            catch (Exception e) //TODO: FileInUseException 
-            {
-                form.updateClientBox(e.StackTrace);
-            }
-            
+            clientsList[selectedClient].write(fileRegister, file);
         }
 
         public void writeFile(int fileRegister, int byteRegister, int selectedClient)
         {
-            try
-            {
-                clientsList[selectedClient].write(fileRegister, byteRegister);
-            }
-            catch (Exception e) //TODO: FileInUseException 
-            {
-                form.updateClientBox(e.Message);
-            }
-
+            clientsList[selectedClient].write(fileRegister, byteRegister);
         }
 
         public void readFile(int fileRegister, string semantics, int byteRegister, int selectedClient)
         {
-            FileData fileData = null;
-            try
-            {
-                fileData = clientsList[selectedClient].read(fileRegister, semantics, byteRegister);
-            }
-            catch (Exception e) 
-            {
-                form.updateClientBox(e.Message);
-            }
+            FileData fileData = clientsList[selectedClient].read(fileRegister, semantics, byteRegister);
+            
+            if(fileData != null)
+                form.updateFileText(Utils.byteArrayToString(fileData.file), fileData.version);
+        }
 
-            form.updateFileText(byteArrayToString(fileData.file), fileData.version);
+        public void copy(int selectedClient, int fileRegister1, string semantics, int fileRegister2, string salt)
+        {
+            clientsList[selectedClient].copy(fileRegister1, semantics, fileRegister2, salt);
+        }
 
+        public void exescript(int selectedClient, string filename)
+        {
+            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
+            string[] fileText = File.ReadAllLines(path);
+            clientsList[selectedClient].exescript(fileText);
         }
 
         public void dumpClient(int selectedClient)
@@ -351,7 +295,7 @@ namespace PuppetMaster
                     }
                     else if (processInfo[0].Equals("m"))
                     {
-                        failMetadata(processNumber);
+                        failMetadata(processNumber+1);
                     }
                     break;
                 case "RECOVER":
@@ -361,7 +305,7 @@ namespace PuppetMaster
                     }
                     else if (processInfo[0].Equals("m"))
                     {
-                        recoverMetadata(processNumber);
+                        recoverMetadata(processNumber+1);
                     }
                     break;
                 case "DUMP":
@@ -371,7 +315,7 @@ namespace PuppetMaster
                             dumpClient(processNumber);
                             break;
                         case "m":
-                            dumpMetadataServer(processNumber);
+                            dumpMetadataServer(processNumber+1);
                             break;
                         case "d":
                             dumpDataServer(processNumber);
@@ -388,12 +332,6 @@ namespace PuppetMaster
             }
         }
 
-        public void exescript(int selectedClient, string filename)
-        {
-            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
-            string[] fileText = File.ReadAllLines(path);
-            clientsList[selectedClient].exescript(fileText);
-        }
 
         private void launchProcessIfNeeded(string process, int processNumber)
         {
@@ -406,9 +344,9 @@ namespace PuppetMaster
                     }
                     break;
                 case "m":
-                    if (!metadataLaunched[processNumber])
+                    if (!metadataLaunched[processNumber+1])
                     {
-                        launchMetadata(processNumber);
+                        launchMetadata(processNumber+1);
                     }
                     break;
                 case "d":
@@ -418,11 +356,6 @@ namespace PuppetMaster
                     }
                     break;
             }
-        }
-
-        public void copy(int selectedClient, int fileRegister1, string semantics, int fileRegister2, string salt)
-        {
-            clientsList[selectedClient].copy(fileRegister1, semantics, fileRegister2, salt);
         }
 
         public void setForm(Form1 form)
@@ -448,13 +381,6 @@ namespace PuppetMaster
             clientPort = 8000;
             dataServerPort = 9000;
             metadataLaunched.SetAll(false);
-        }
-
-        private string byteArrayToString(byte[] b)
-        {
-            char[] chars = new char[b.Length / sizeof(char)];
-            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
-            return new string(chars);
-        }
+        }        
     }
 }

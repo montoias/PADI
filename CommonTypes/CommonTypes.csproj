@@ -43,7 +43,6 @@
   <ItemGroup>
     <Compile Include="Exceptions\CannotDeleteFileException.cs" />
     <Compile Include="Exceptions\MetadataFileDoesNotExistException.cs" />
-    <Compile Include="Exceptions\InsufficientDataServersException.cs" />
     <Compile Include="Exceptions\FileDoesNotExistException.cs" />
     <Compile Include="Exceptions\FileNotOpenedException.cs" />
     <Compile Include="Exceptions\FileAlreadyExistsException.cs" />
@@ -60,6 +59,7 @@
     <Compile Include="Interfaces\IMetadataServerPuppet.cs" />
     <Compile Include="Types\MetadataInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\Utils.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

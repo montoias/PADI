@@ -52,35 +52,33 @@ namespace MetadataServer
             MetadataInfo metadata;
             if (!metadataTable.ContainsKey(filename) && !File.Exists(path))
             {
-                if (numDataServers <= dataServersList.Count)
+                int tempNumServers = numDataServers;
+
+                if (numDataServers > dataServersList.Count)
                 {
-                    byte[] metadataBytes;
-
-                    System.Console.WriteLine("Creating file:" + filename + " Length:" + filename.Length);
-
-                    //TODO: Distribution algorithm
-                    ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
-                    List<string> locations = new List<string>();
-                    for (int i = 0; i < numDataServers; i++)
-                    {
-                        locations.Add((string)dataServersArray[i] + "," + generateLocalFileName());
-                    }
-
-                    metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
-
-                    fileCounter.Add(filename, 1);
-                    metadataTable.Add(filename, metadata);
-
-                    metadataBytes = stringToByteArray(metadata.ToString());
-                    File.WriteAllBytes(path, metadataBytes);
-
-                    return metadata;
+                    tempNumServers = dataServersList.Count;
+                    //TODO: add to processing queue
                 }
-                else 
+
+
+                System.Console.WriteLine("Creating file: " + filename);
+
+                //TODO: Distribution algorithm
+                ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
+                List<string> locations = new List<string>();
+                for (int i = 0; i < tempNumServers; i++)
                 {
-                    System.Console.WriteLine("There aren't enough servers for the request!");
-                    throw new InsufficientDataServersException(); //TODO: pass number of servers available
-                }                
+                    locations.Add((string)dataServersArray[i] + "," + generateLocalFileName());
+                }
+
+                metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
+
+                fileCounter.Add(filename, 1);
+                metadataTable.Add(filename, metadata);
+
+                Utils.serializeObject<MetadataInfo>(metadata, path);
+
+                return metadata;
             }
             else
             {
@@ -119,6 +117,7 @@ namespace MetadataServer
 
             if (metadataTable.ContainsKey(filename))
             {
+                System.Console.WriteLine("File in cache:" + filename);
                 int numberOfFiles = fileCounter[filename];
                 fileCounter[filename]++;
                 return metadataTable[filename];
@@ -127,18 +126,9 @@ namespace MetadataServer
             {
                 if (File.Exists(path))
                 {
-                    System.Console.WriteLine("Opening file:" + filename);
-                    string[] strings = byteArrayToString(File.ReadAllBytes(path)).Split('\n');
-                    string[] locations = strings[4].Split(' ');
-                    List<string> parsedLocations = new List<string>();
+                    System.Console.WriteLine("Opening file from disk:" + filename);
+                    MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
 
-                    foreach (string location in locations)
-                    {
-                        parsedLocations.Add(location);
-                    }
-
-                    MetadataInfo metadata = new MetadataInfo(filename, Convert.ToInt32(strings[1]), Convert.ToInt32(strings[2]),
-                                                                        Convert.ToInt32(strings[3]), parsedLocations);
                     metadataTable.Add(filename, metadata);
                     fileCounter.Add(filename, 1);
                     
@@ -235,21 +225,6 @@ namespace MetadataServer
             }
 
             return string.Format("{0:x}", i - DateTime.Now.Ticks);
-        }
-        
-
-        private byte[] stringToByteArray(string s)
-        {
-            byte[] bytes = new byte[s.Length * sizeof(char)];
-            System.Buffer.BlockCopy(s.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
-        }
-
-        private string byteArrayToString(byte[] b)
-        {
-            char[] chars = new char[b.Length / sizeof(char)];
-            System.Buffer.BlockCopy(b, 0, chars, 0, b.Length);
-            return new string(chars);
         }
     }
 }

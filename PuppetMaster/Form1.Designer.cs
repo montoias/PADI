@@ -51,7 +51,6 @@
             this.ByteRegisterTextBox = new System.Windows.Forms.TextBox();
             this.ByteRegisterLabel = new System.Windows.Forms.Label();
             this.FileRegisterLabel = new System.Windows.Forms.Label();
-            this.SemanticsTextBox = new System.Windows.Forms.TextBox();
             this.SemanticsLabel = new System.Windows.Forms.Label();
             this.FileTextbox = new System.Windows.Forms.TextBox();
             this.WriteQuorumTextBox = new System.Windows.Forms.TextBox();
@@ -84,6 +83,7 @@
             this.ClientEventsLabel = new System.Windows.Forms.Label();
             this.MetadataEventsLabel = new System.Windows.Forms.Label();
             this.DataServerEventsLabel = new System.Windows.Forms.Label();
+            this.SemanticsBox = new System.Windows.Forms.ComboBox();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -241,6 +241,7 @@
             // 
             // ClientGroupBox
             // 
+            this.ClientGroupBox.Controls.Add(this.SemanticsBox);
             this.ClientGroupBox.Controls.Add(this.DumpClientButton);
             this.ClientGroupBox.Controls.Add(this.UseTextFileOption);
             this.ClientGroupBox.Controls.Add(this.ByteRegisterOption);
@@ -248,7 +249,6 @@
             this.ClientGroupBox.Controls.Add(this.ByteRegisterTextBox);
             this.ClientGroupBox.Controls.Add(this.ByteRegisterLabel);
             this.ClientGroupBox.Controls.Add(this.FileRegisterLabel);
-            this.ClientGroupBox.Controls.Add(this.SemanticsTextBox);
             this.ClientGroupBox.Controls.Add(this.SemanticsLabel);
             this.ClientGroupBox.Controls.Add(this.FileTextbox);
             this.ClientGroupBox.Controls.Add(this.WriteQuorumTextBox);
@@ -327,7 +327,7 @@
             // ByteRegisterLabel
             // 
             this.ByteRegisterLabel.AutoSize = true;
-            this.ByteRegisterLabel.Location = new System.Drawing.Point(428, 92);
+            this.ByteRegisterLabel.Location = new System.Drawing.Point(384, 92);
             this.ByteRegisterLabel.Name = "ByteRegisterLabel";
             this.ByteRegisterLabel.Size = new System.Drawing.Size(70, 13);
             this.ByteRegisterLabel.TabIndex = 30;
@@ -336,26 +336,16 @@
             // FileRegisterLabel
             // 
             this.FileRegisterLabel.AutoSize = true;
-            this.FileRegisterLabel.Location = new System.Drawing.Point(428, 120);
+            this.FileRegisterLabel.Location = new System.Drawing.Point(384, 121);
             this.FileRegisterLabel.Name = "FileRegisterLabel";
             this.FileRegisterLabel.Size = new System.Drawing.Size(65, 13);
             this.FileRegisterLabel.TabIndex = 29;
             this.FileRegisterLabel.Text = "File Register";
             // 
-            // SemanticsTextBox
-            // 
-            this.SemanticsTextBox.Location = new System.Drawing.Point(515, 150);
-            this.SemanticsTextBox.MaxLength = 1;
-            this.SemanticsTextBox.Multiline = true;
-            this.SemanticsTextBox.Name = "SemanticsTextBox";
-            this.SemanticsTextBox.Size = new System.Drawing.Size(33, 20);
-            this.SemanticsTextBox.TabIndex = 28;
-            this.SemanticsTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.checkNumeric);
-            // 
             // SemanticsLabel
             // 
             this.SemanticsLabel.AutoSize = true;
-            this.SemanticsLabel.Location = new System.Drawing.Point(428, 150);
+            this.SemanticsLabel.Location = new System.Drawing.Point(384, 150);
             this.SemanticsLabel.Name = "SemanticsLabel";
             this.SemanticsLabel.Size = new System.Drawing.Size(56, 13);
             this.SemanticsLabel.TabIndex = 27;
@@ -399,20 +389,20 @@
             // ReadQuorumLabel
             // 
             this.ReadQuorumLabel.AutoSize = true;
-            this.ReadQuorumLabel.Location = new System.Drawing.Point(121, 92);
+            this.ReadQuorumLabel.Location = new System.Drawing.Point(168, 92);
             this.ReadQuorumLabel.Name = "ReadQuorumLabel";
-            this.ReadQuorumLabel.Size = new System.Drawing.Size(70, 13);
+            this.ReadQuorumLabel.Size = new System.Drawing.Size(23, 13);
             this.ReadQuorumLabel.TabIndex = 22;
-            this.ReadQuorumLabel.Text = "ReadQuorum";
+            this.ReadQuorumLabel.Text = "RQ";
             // 
             // WriteQuorumLabel
             // 
             this.WriteQuorumLabel.AutoSize = true;
-            this.WriteQuorumLabel.Location = new System.Drawing.Point(119, 128);
+            this.WriteQuorumLabel.Location = new System.Drawing.Point(165, 128);
             this.WriteQuorumLabel.Name = "WriteQuorumLabel";
-            this.WriteQuorumLabel.Size = new System.Drawing.Size(72, 13);
+            this.WriteQuorumLabel.Size = new System.Drawing.Size(26, 13);
             this.WriteQuorumLabel.TabIndex = 21;
-            this.WriteQuorumLabel.Text = "Write Quorum";
+            this.WriteQuorumLabel.Text = "WQ";
             // 
             // NServersLabel
             // 
@@ -666,6 +656,18 @@
             this.DataServerEventsLabel.TabIndex = 27;
             this.DataServerEventsLabel.Text = "Data Server Events:";
             // 
+            // SemanticsBox
+            // 
+            this.SemanticsBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.SemanticsBox.FormattingEnabled = true;
+            this.SemanticsBox.Items.AddRange(new object[] {
+            "default",
+            "monotonic"});
+            this.SemanticsBox.Location = new System.Drawing.Point(458, 147);
+            this.SemanticsBox.Name = "SemanticsBox";
+            this.SemanticsBox.Size = new System.Drawing.Size(91, 21);
+            this.SemanticsBox.TabIndex = 36;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -734,7 +736,6 @@
         private System.Windows.Forms.Label ReadQuorumLabel;
         private System.Windows.Forms.TextBox FileTextbox;
         private System.Windows.Forms.Button KillProcessesbutton;
-        private System.Windows.Forms.TextBox SemanticsTextBox;
         private System.Windows.Forms.Label SemanticsLabel;
         private System.Windows.Forms.GroupBox ScriptBox;
         private System.Windows.Forms.Button NextStepButton;
@@ -754,6 +755,7 @@
         private System.Windows.Forms.Label ClientEventsLabel;
         private System.Windows.Forms.Label MetadataEventsLabel;
         private System.Windows.Forms.Label DataServerEventsLabel;
+        private System.Windows.Forms.ComboBox SemanticsBox;
     }
 }
 

@@ -12,6 +12,8 @@ namespace CommonTypes
         public int writeQuorum;
         public List<string> dataServers = new List<string>();
 
+        private MetadataInfo() { }
+
         public MetadataInfo(string filename, int numDataServers, int readQuorum, int writeQuorum, List<string> dataServers)
         {
             this.filename = filename;
