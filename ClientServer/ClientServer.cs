@@ -11,6 +11,7 @@ using System.Collections.Specialized;
 
 using CommonTypes;
 using System.Text.RegularExpressions;
+using System.Runtime.Remoting.Messaging;
 
 
 namespace ClientServer
@@ -26,10 +27,17 @@ namespace ClientServer
 
         private int currentFileRegister = 0;
 
+        public delegate void WriteResult(IDataServerClientServer dataServer, string localFilename,  byte[] file);
+        public static WriteResult wr;
+        private static AsyncCallback writeCallback;
+
         static void Main(string[] args)
         {
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
             ChannelServices.RegisterChannel(channel, true);
+
+            wr = new WriteResult(getWriteResult);
+            writeCallback = new AsyncCallback(writeAsyncCallBack);
             setMetadataLocation(args);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
@@ -75,7 +83,17 @@ namespace ClientServer
             System.Console.WriteLine("Creating the file:" + filename);
             if (!fileRegisters.Contains(filename)) //This verification may avoid one more message sent through the network.
             {
-                MetadataInfo info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
+                MetadataInfo info = null;
+                try
+                {
+                    info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
+                }
+                catch (FileAlreadyExistsException)
+                {
+                    System.Console.WriteLine("File " + filename + " already exists!");
+                    return null;
+
+                }
                 return info;
             }
             else 
@@ -182,9 +200,27 @@ namespace ClientServer
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
-                dataServer.write(metadata.getLocalFilename(dsInfo), fileData.file);
+                string localFilename = metadata.getLocalFilename(dsInfo);
+                IAsyncResult RemAr = wr.BeginInvoke(dataServer, localFilename, fileData.file, writeCallback, null);
+                
+                
             }
         }
+
+        private static void getWriteResult(IDataServerClientServer dataServer, string localFilename, byte[] file)
+        {
+            dataServer.write(localFilename, file);
+        }
+
+        // This is the call that the AsyncCallBack delegate will reference.
+        public static void writeAsyncCallBack(IAsyncResult ar)
+        {
+            // Alternative 2: Use the callback to get the return value
+            WriteResult del = (WriteResult)((AsyncResult)ar).AsyncDelegate;
+
+            del.EndInvoke(ar);
+        }
+
        
         //TODO: print current metadata server
         public string dump()

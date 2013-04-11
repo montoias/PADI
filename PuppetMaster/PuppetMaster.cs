@@ -116,7 +116,6 @@ namespace PuppetMaster
 
         public void dumpMetadataServer(int selectedMetadata)
         {
-            //iterate through metadatas and dump each one
             form.updateMetadataBox(metadataList[selectedMetadata].dump());
         }
 
@@ -126,7 +125,7 @@ namespace PuppetMaster
          *******************************/
         public void freezeDataServer(int selectedDataServer)
         {
-            dataServersList[selectedDataServer].freeze();
+            //dataServersList[selectedDataServer].freeze();
         }
 
         public void unfreezeDataServer(int selectedDataServer)
