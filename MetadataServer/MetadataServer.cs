@@ -35,7 +35,7 @@ namespace MetadataServer
         {
             port = args[0];
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
-            fileFolder = Path.Combine(Application.StartupPath, "Files_");
+            fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
@@ -43,18 +43,19 @@ namespace MetadataServer
                 "MetadataServer",
                 WellKnownObjectMode.Singleton);
 
-            System.Console.Write(port + "!!!!!!!!!!");
+            createFolderFile();
+
             if (!port.Equals("8081"))
             {
-                sendNotify(args[0]);
                 IMetadataServer replica = (IMetadataServer)Activator.GetObject(
                 typeof(IMetadataServer),
                 "tcp://localhost:8081/MetadataServer");
 
                 backupReplicas.Add(replica);
+
+                sendNotify(port);
             }
 
-            createFolderFile();
 
             System.Console.WriteLine("press <enter> to exit...");
             System.Console.ReadLine();
@@ -68,6 +69,7 @@ namespace MetadataServer
 
         public void receiveNotify(string log)
         {
+            System.Console.WriteLine(log);
             executeInstructions(log);
         }
 
