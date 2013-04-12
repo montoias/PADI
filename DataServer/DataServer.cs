@@ -85,7 +85,7 @@ namespace DataServer
         }
 
         //TODO: Retrieve version
-        public FileData read(string filename, string semantics)
+        public FileData read(string filename)
         {
             checkFailure();
             string path = Path.Combine(fileFolder, filename);
@@ -108,7 +108,7 @@ namespace DataServer
             checkFailure();
             System.Console.WriteLine("Writing the file:" + filename);
             string path = Path.Combine(fileFolder, filename);
-            FileData prev = read(filename, "");
+            FileData prev = read(filename);
             FileData f = new FileData(file, prev == null ? 0 : prev.version+1);
             Utils.serializeObject<FileData>(f, path);
         }

@@ -29,7 +29,9 @@ namespace ClientServer
 
         public delegate void WriteResult(IDataServerClientServer dataServer, string localFilename,  byte[] file);
         public static WriteResult wr;
-        private static AsyncCallback writeCallback;
+
+        public delegate FileData ReadResult(IDataServerClientServer dataServer, string localFilename);
+        public static ReadResult rr;
 
         static void Main(string[] args)
         {
@@ -37,7 +39,6 @@ namespace ClientServer
             ChannelServices.RegisterChannel(channel, true);
 
             wr = new WriteResult(getWriteResult);
-            writeCallback = new AsyncCallback(writeAsyncCallBack);
             setMetadataLocation(args);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
@@ -161,6 +162,11 @@ namespace ClientServer
         {
             FileData fileData = null;
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            List<IAsyncResult> results = new List<IAsyncResult>();
+            Dictionary<int, FileData> versions = new Dictionary<int, FileData>(); 
+            Dictionary<int, int> count = new Dictionary<int,int>();
+
+            //int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -168,8 +174,24 @@ namespace ClientServer
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
-                fileData = dataServer.read(metadata.getLocalFilename(dsInfo), semantics);
+                string localFilename = metadata.getLocalFilename(dsInfo);
+                fileData = dataServer.read(metadata.getLocalFilename(dsInfo));
+                //results.Add(rr.BeginInvoke(dataServer, localFilename, null, null));
             }
+
+            /*while (numResults < metadata.writeQuorum)
+            {
+                foreach (IAsyncResult result in results)
+                {
+                    if (result.IsCompleted)
+                    {
+                        result.
+                        results.Remove(result);
+                        numResults++;
+                    }
+                }
+            }
+            */
             return fileData;
         }
 
@@ -178,13 +200,29 @@ namespace ClientServer
             System.Console.WriteLine("Writing file from metadata info @ register: " + fileRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            List<IAsyncResult> results = new List<IAsyncResult>();
+            int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
-                dataServer.write(metadata.getLocalFilename(dsInfo), Utils.stringToByteArray(textFile));
+                string localFilename = metadata.getLocalFilename(dsInfo);
+
+                results.Add(wr.BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
+            }
+
+            while (numResults < metadata.writeQuorum)
+            {
+                foreach (IAsyncResult result in results)
+                {
+                    if (result.IsCompleted)
+                    {
+                        results.Remove(result);
+                        numResults++;
+                    }
+                }
             }
         }
 
@@ -194,6 +232,8 @@ namespace ClientServer
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             FileData fileData = byteRegisters[byteRegister];
+            List<IAsyncResult> results = new List<IAsyncResult>();
+            int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -201,9 +241,20 @@ namespace ClientServer
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
                 string localFilename = metadata.getLocalFilename(dsInfo);
-                IAsyncResult RemAr = wr.BeginInvoke(dataServer, localFilename, fileData.file, writeCallback, null);
-                
-                
+
+                results.Add(wr.BeginInvoke(dataServer, localFilename, fileData.file, null, null));                
+            }
+
+            while (numResults < metadata.writeQuorum)
+            {
+                foreach (IAsyncResult result in results)
+                {
+                    if (result.IsCompleted)
+                    {
+                        results.Remove(result);
+                        numResults++;
+                    }
+                }
             }
         }
 
@@ -212,15 +263,10 @@ namespace ClientServer
             dataServer.write(localFilename, file);
         }
 
-        // This is the call that the AsyncCallBack delegate will reference.
-        public static void writeAsyncCallBack(IAsyncResult ar)
+        private static FileData getReadResult(IDataServerClientServer dataServer, string localFilename)
         {
-            // Alternative 2: Use the callback to get the return value
-            WriteResult del = (WriteResult)((AsyncResult)ar).AsyncDelegate;
-
-            del.EndInvoke(ar);
+            return dataServer.read(localFilename);
         }
-
        
         //TODO: print current metadata server
         public string dump()

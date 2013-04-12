@@ -108,10 +108,12 @@ namespace PuppetMaster
          ****************************/
         public void failMetadata(int selectedMetadata)
         {
+            metadataList[selectedMetadata].fail();
         }
 
         public void recoverMetadata(int selectedMetadata)
         {
+            metadataList[selectedMetadata].recover();
         }
 
         public void dumpMetadataServer(int selectedMetadata)
