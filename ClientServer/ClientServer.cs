@@ -1,107 +1,72 @@
-﻿using System;
+﻿using CommonTypes;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Specialized;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.IO;
-using System.Collections.Specialized;
-
-using CommonTypes;
 using System.Text.RegularExpressions;
-using System.Runtime.Remoting.Messaging;
-
 
 namespace ClientServer
 {
-    class ClientServer : MarshalByRefObject, IClientServerPuppet
+    class ClientServer : MarshalByRefObject, IClientServerPuppet, IClientServerMetadataServer
     {
         private OrderedDictionary fileRegisters = new OrderedDictionary();
         private Dictionary<int, FileData> byteRegisters = new Dictionary<int, FileData>();
+        private int currentFileRegister = 0;
 
         private static IMetadataServerClientServer[] metadataServer = new IMetadataServerClientServer[3];
         private static string[] metadataLocation = new string[3];
         private static IMetadataServerClientServer primaryMetadata;
+        private static string port;
 
-        private int currentFileRegister = 0;
-
-        public delegate void WriteResult(IDataServerClientServer dataServer, string localFilename,  byte[] file);
-        public static WriteResult wr;
-
-        public delegate FileData ReadResult(IDataServerClientServer dataServer, string localFilename);
-        public static ReadResult rr;
+        public delegate void WriteResult(IDataServerClientServer dataServer, string localFilename, byte[] file);
+        public static WriteResult writeResult = new WriteResult(getWriteResult);
 
         static void Main(string[] args)
         {
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
+            port = args[0];
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port), true);
             ChannelServices.RegisterChannel(channel, true);
-
-            wr = new WriteResult(getWriteResult);
-            setMetadataLocation(args);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(ClientServer),
                 "ClientServer",
                 WellKnownObjectMode.Singleton);
 
-            metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
-               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
+            //TODO: getPrimaryMetadata -> try any available metadata, and ask if its primary
+            setMetadataLocation(args);
+            getMetadataServer();
             primaryMetadata = metadataServer[0];
 
-            System.Console.WriteLine("press <enter> to exit...");
-            System.Console.ReadLine();
+            System.Console.WriteLine("Client " + (Convert.ToInt32(port) - 8000) + " was launched!...");
+            while (true)
+            {
+                System.Console.ReadLine();
+                System.Console.WriteLine("Client " + (Convert.ToInt32(port) - 8000));
+            }
 
         }
 
-        private static void setMetadataLocation(string[] args)
-        {
-            metadataLocation[0] = args[1];
-            metadataLocation[1] = args[2];
-            metadataLocation[2] = args[3];
-        }
-
-        private void getMetadataServer()
-        {
-            metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
-               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
-
-            metadataServer[1] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
-               "tcp://localhost:" + metadataLocation[1] + "/MetadataServer");
-
-            metadataServer[2] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
-               "tcp://localhost:" + metadataLocation[2] + "/MetadataServer");
-
-        }
+        /***************************
+        ********* METADATA *********
+        ****************************/
 
         public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
         {
             System.Console.WriteLine("Creating the file:" + filename);
-            if (!fileRegisters.Contains(filename)) //This verification may avoid one more message sent through the network.
+            MetadataInfo info = null;
+            try
             {
-                MetadataInfo info = null;
-                try
-                {
-                    info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
-                }
-                catch (FileAlreadyExistsException)
-                {
-                    System.Console.WriteLine("File " + filename + " already exists!");
-                    return null;
-
-                }
-                return info;
+                info = primaryMetadata.create(filename, numDataServers, readQuorum, writeQuorum);
             }
-            else 
+            catch (FileAlreadyExistsException)
             {
                 System.Console.WriteLine("File " + filename + " already exists!");
                 return null;
+
             }
+            return info;
         }
 
         public void delete(string filename)
@@ -124,16 +89,20 @@ namespace ClientServer
         public MetadataInfo open(string filename)
         {
             System.Console.WriteLine("Opening the file: " + filename);
-            if (!fileRegisters.Contains(filename))
+            try
             {
-                
-                MetadataInfo info = primaryMetadata.open(filename);
-                fileRegisters.Insert((currentFileRegister++)%10, filename, info);
+                MetadataInfo info = primaryMetadata.open(filename, 8000 - Convert.ToInt32(port));
+                fileRegisters.Insert((currentFileRegister++) % 10, filename, info);
                 return info;
             }
-            else 
+            catch (FileAlreadyOpenedException)
             {
                 System.Console.WriteLine("The file " + filename + " is already open!");
+                return null;
+            }
+            catch (FileDoesNotExistException)
+            {
+                System.Console.WriteLine("The file " + filename + " does not exist!");
                 return null;
             }
         }
@@ -141,63 +110,63 @@ namespace ClientServer
         public void close(string filename)
         {
             System.Console.WriteLine("Closing the file: " + filename);
-            if (fileRegisters.Contains(filename))
-                primaryMetadata.close(filename);
-            else
+            try
+            {
+                primaryMetadata.close(filename, 8000 - Convert.ToInt32(port));
+            }
+            catch (FileNotOpenedException)
+            {
                 System.Console.WriteLine("The file " + filename + " wasn't open!");
+            }
+            catch (FileDoesNotExistException)
+            {
+                System.Console.WriteLine("The file " + filename + " does not exist!");
+            }
         }
+
+        /******************************
+        ********* DATA SERVER *********
+        *******************************/
 
         public FileData read(int fileRegister, string semantics, int byteRegister)
         {
-            System.Console.WriteLine("Reading file from metadata info @ register: " + fileRegister);
+            System.Console.WriteLine("Reading metadata from file register " + fileRegister + " to byte register " + byteRegister);
             FileData fileData = readOnly(fileRegister, semantics);
-            
+
             byteRegisters[byteRegister] = fileData;
 
             return fileData;
-             
         }
 
+        /*
+         * This a different function than read, in order to be able to use the 'copy' function
+         * without changing the registers.
+         */
         private FileData readOnly(int fileRegister, string semantics)
         {
             FileData fileData = null;
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
-            List<IAsyncResult> results = new List<IAsyncResult>();
-            Dictionary<int, FileData> versions = new Dictionary<int, FileData>(); 
-            Dictionary<int, int> count = new Dictionary<int,int>();
-
-            //int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
-                System.Console.WriteLine("Reading from dataServer at port " + metadata.getDataServerLocation(dsInfo));
+                string serverLocation = metadata.getDataServerLocation(dsInfo);
+                string localFilename = metadata.getLocalFilename(dsInfo);
+
+                System.Console.WriteLine("Reading from dataServer " + (9000 - Convert.ToInt32(serverLocation)));
+
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
-                "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
-                string localFilename = metadata.getLocalFilename(dsInfo);
-                fileData = dataServer.read(metadata.getLocalFilename(dsInfo));
-                //results.Add(rr.BeginInvoke(dataServer, localFilename, null, null));
+                "tcp://localhost:" + serverLocation + "/DataServer");
+
+                fileData = dataServer.read(localFilename);
             }
 
-            /*while (numResults < metadata.writeQuorum)
-            {
-                foreach (IAsyncResult result in results)
-                {
-                    if (result.IsCompleted)
-                    {
-                        result.
-                        results.Remove(result);
-                        numResults++;
-                    }
-                }
-            }
-            */
             return fileData;
         }
 
         public void write(int fileRegister, string textFile)
         {
-            System.Console.WriteLine("Writing file from metadata info @ register: " + fileRegister);
+            System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             List<IAsyncResult> results = new List<IAsyncResult>();
@@ -205,30 +174,32 @@ namespace ClientServer
 
             foreach (string dsInfo in metadata.dataServers)
             {
-                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
-                typeof(IDataServerClientServer),
-                "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
+                string serverLocation = metadata.getDataServerLocation(dsInfo);
                 string localFilename = metadata.getLocalFilename(dsInfo);
 
-                results.Add(wr.BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
+                System.Console.WriteLine("Writing to dataServer " + (9000 - Convert.ToInt32(serverLocation)));
+
+                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(typeof(IDataServerClientServer),
+                    "tcp://localhost:" + serverLocation + "/DataServer");
+
+                results.Add(writeResult.BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
             }
 
             while (numResults < metadata.writeQuorum)
             {
-                foreach (IAsyncResult result in results)
-                {
-                    if (result.IsCompleted)
+                for (int i = results.Count - 1; i > -1; i--)
+                    if (results[i].IsCompleted)
                     {
-                        results.Remove(result);
+                        results.RemoveAt(i);
                         numResults++;
                     }
-                }
             }
         }
 
         public void write(int fileRegister, int byteRegister)
         {
-            System.Console.WriteLine("Writing file from metadata info @ register: " + fileRegister);
+            System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
+            System.Console.WriteLine("Contents to write were from byte register " + byteRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             FileData fileData = byteRegisters[byteRegister];
@@ -237,24 +208,26 @@ namespace ClientServer
 
             foreach (string dsInfo in metadata.dataServers)
             {
-                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
-                typeof(IDataServerClientServer),
-                "tcp://localhost:" + metadata.getDataServerLocation(dsInfo) + "/DataServer");
+                string serverLocation = metadata.getDataServerLocation(dsInfo);
                 string localFilename = metadata.getLocalFilename(dsInfo);
 
-                results.Add(wr.BeginInvoke(dataServer, localFilename, fileData.file, null, null));                
+                System.Console.WriteLine("Writing to dataServer " + (9000 - Convert.ToInt32(serverLocation)));
+
+                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
+                typeof(IDataServerClientServer),
+                "tcp://localhost:" + serverLocation + "/DataServer");
+
+                results.Add(writeResult.BeginInvoke(dataServer, localFilename, fileData.file, null, null));
             }
 
             while (numResults < metadata.writeQuorum)
             {
-                foreach (IAsyncResult result in results)
-                {
-                    if (result.IsCompleted)
+                for (int i = results.Count - 1; i > -1; i--)
+                    if (results[i].IsCompleted)
                     {
-                        results.Remove(result);
+                        results.RemoveAt(i);
                         numResults++;
                     }
-                }
             }
         }
 
@@ -263,11 +236,32 @@ namespace ClientServer
             dataServer.write(localFilename, file);
         }
 
-        private static FileData getReadResult(IDataServerClientServer dataServer, string localFilename)
+        /**************************
+         ********* CLIENT *********
+         **************************/
+
+        private static void getMetadataServer()
         {
-            return dataServer.read(localFilename);
+            metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
+               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
+
+            metadataServer[1] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
+               "tcp://localhost:" + metadataLocation[1] + "/MetadataServer");
+
+            metadataServer[2] = (IMetadataServerClientServer)Activator.GetObject(
+               typeof(IMetadataServerClientServer),
+               "tcp://localhost:" + metadataLocation[2] + "/MetadataServer");
         }
-       
+
+        private static void setMetadataLocation(string[] args)
+        {
+            metadataLocation[0] = args[1];
+            metadataLocation[1] = args[2];
+            metadataLocation[2] = args[3];
+        }
+
         //TODO: print current metadata server
         public string dump()
         {
@@ -280,19 +274,18 @@ namespace ClientServer
             fileRegisters.Keys.CopyTo(keys, 0);
             for (int i = 0; i < fileRegisters.Keys.Count; i++)
             {
-                toReturn += "    FileRegister: " + i + "\r\n" + fileRegisters[i] + "\r\n";  
+                toReturn += "    FileRegister: " + i + "\r\n" + fileRegisters[i] + "\r\n";
             }
 
             toReturn += "  ByteRegisters\r\n";
 
             foreach (KeyValuePair<int, FileData> fileData in byteRegisters)
             {
-                toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + fileData.Value + "\r\n";  
+                toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + fileData.Value + "\r\n";
             }
 
             return toReturn;
         }
-
 
         public void copy(int fileRegister1, string semantics, int fileRegister2, string salt)
         {
@@ -303,12 +296,8 @@ namespace ClientServer
         public void exescript(string[] scriptInstructions)
         {
             foreach (string instruction in scriptInstructions)
-            {
                 if (!instruction[0].Equals('#'))
-                {
                     interpretInstruction(instruction);
-                }
-            }
         }
 
         private void interpretInstruction(string command)
@@ -318,7 +307,6 @@ namespace ClientServer
             string instruction = processInst[0];
             string[] processInfo = processInst[1].Split('-');
             int processNumber = Convert.ToInt32(processInfo[1]) - 1;
-
 
             switch (instruction)
             {
@@ -355,6 +343,16 @@ namespace ClientServer
                     copy(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
                     break;
             }
+        }
+
+        /*
+         * This function is invoked by the metadata server, when a new data server becomes available 
+         * and the client requested for a file that didn't have enough servers.
+         */
+        public void updateMetadata(string filename, MetadataInfo m)
+        {
+            if (fileRegisters.Contains(filename))
+                fileRegisters[filename] = m;
         }
     }
 }

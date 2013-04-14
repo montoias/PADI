@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CommonTypes;
+using System;
+using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.IO;
+using System.Threading;
 using System.Windows.Forms;
-using CommonTypes;
 
 namespace DataServer
 {
@@ -19,22 +16,25 @@ namespace DataServer
         private static IMetadataServerDataServer[] metadataServer = new IMetadataServerDataServer[3];
         private static IMetadataServerDataServer primaryMetadata;
         private bool ignoringMessages = false;
+        private bool isFrozen = false;
 
         static void Main(string[] args)
         {
             string port = args[0];
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port), true);
             ChannelServices.RegisterChannel(channel, true);
-            setMetadataLocation(args);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(DataServer),
                 "DataServer",
                 WellKnownObjectMode.Singleton);
 
+            setMetadataLocation(args);
+
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             createFolderFile();
 
+            //TODO: Find primary
             metadataServer[0] = (IMetadataServerDataServer)Activator.GetObject(
                typeof(IMetadataServerDataServer),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
@@ -42,10 +42,112 @@ namespace DataServer
 
             primaryMetadata.register(port);
 
-            System.Console.WriteLine("press <enter> to exit...");
-            System.Console.ReadLine();
+            System.Console.WriteLine("Data Server " + (Convert.ToInt32(port) - 9000) + " was launched!...");
 
+            while (true)
+            {
+                System.Console.ReadLine();
+                System.Console.WriteLine("Data Server " + (Convert.ToInt32(port) - 9000));
+            }
         }
+
+        /**************************
+         ********* CLIENT *********
+         **************************/
+
+        public FileData read(string filename)
+        {
+            lock (this)
+            {
+                if (isFrozen)
+                {
+                    Monitor.Wait(this);
+                }
+
+                checkFailure();
+                string path = Path.Combine(fileFolder, filename);
+
+                if (File.Exists(path))
+                {
+                    System.Console.WriteLine("Opening file:" + filename);
+                    return Utils.deserializeObject<FileData>(path);
+                }
+                else
+                {
+                    System.Console.WriteLine("File doesn't exist:" + filename);
+                    return null;
+                }
+            }
+        }
+
+        //TODO: Check semantics
+        public void write(string filename, byte[] file)
+        {
+            lock (this)
+            {
+                if (isFrozen)
+                {
+                    Monitor.Wait(this);
+                }
+
+                checkFailure();
+                System.Console.WriteLine("Writing the file:" + filename);
+                string path = Path.Combine(fileFolder, filename);
+                FileData prev = read(filename);
+                FileData f = new FileData(file, prev == null ? 0 : prev.version + 1);
+                Utils.serializeObject<FileData>(f, path);
+
+            }
+        }
+
+        /********************************
+        ********* PUPPET MASTER *********
+        *********************************/
+
+        public void freeze()
+        {
+            lock (this)
+            {
+                isFrozen = true;
+            }
+        }
+
+        public void unfreeze()
+        {
+            lock (this)
+            {
+                if (isFrozen)
+                {
+                    Monitor.PulseAll(this);
+                    isFrozen = false;
+                }
+            }
+        }
+
+        public void fail()
+        {
+            System.Console.WriteLine("Now ignoring messages.");
+            ignoringMessages = true;
+        }
+
+        public void recover()
+        {
+            System.Console.WriteLine("Accepting messages again");
+            ignoringMessages = false;
+        }
+
+        private void checkFailure()
+        {
+            System.Console.WriteLine("Checking for failure... It is " + ignoringMessages);
+            if (ignoringMessages)
+            {
+                throw new RemotingException();
+            }
+        }
+
+        /******************************
+        ********* DATA SERVER *********
+        *******************************/
 
         private static void setMetadataLocation(string[] args)
         {
@@ -61,68 +163,6 @@ namespace DataServer
             if (!folderExists)
                 Directory.CreateDirectory(fileFolder);
         }
-
-        public void freeze()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void unfreeze()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void fail()
-        {
-            System.Console.WriteLine("Now ignoring messages.");
-            ignoringMessages = true;
-        }
-
-        public void recover()
-        {
-            System.Console.WriteLine("Accepting messages again");
-            ignoringMessages = false;
-        }
-
-        //TODO: Retrieve version
-        public FileData read(string filename)
-        {
-            checkFailure();
-            string path = Path.Combine(fileFolder, filename);
-
-            if (File.Exists(path))
-            {
-                System.Console.WriteLine("Opening file:" + filename);
-                return Utils.deserializeObject<FileData>(path);
-            }
-            else
-            {
-                System.Console.WriteLine("File doesn't exist:" + filename);
-                return null;
-            }
-        }
-
-        //TODO: Check semantics
-        public void write(string filename, byte[] file)
-        {
-            checkFailure();
-            System.Console.WriteLine("Writing the file:" + filename);
-            string path = Path.Combine(fileFolder, filename);
-            FileData prev = read(filename);
-            FileData f = new FileData(file, prev == null ? 0 : prev.version+1);
-            Utils.serializeObject<FileData>(f, path);
-        }
-
-
-        private void checkFailure()
-        {
-            System.Console.WriteLine("Checking for failure... It is " + ignoringMessages);
-            if (ignoringMessages)
-            {
-                throw new RemotingException();
-            }
-        }
-
 
         public string dump()
         {

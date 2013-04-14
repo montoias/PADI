@@ -1,29 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Diagnostics;
-using System.IO;
-using System.Net.Sockets;
-using System.Collections;
-
-using CommonTypes;
 
 namespace PuppetMaster
 {
-
     public partial class Form1 : Form
     {
         private PuppetMaster puppetMaster;
-        private int selectedMetadata = 0;
-        private int writeMode = 0;
         private int clientCounter = 0;
         private int dataServerCounter = 0;
+        private int metadataServerCounter = 0;
+
+        private const int NUM_ITEMS = 10;
 
         /*
          * Class constructor. Passes a puppetMaster as an argument, which is the one used
@@ -33,6 +20,23 @@ namespace PuppetMaster
         {
             this.puppetMaster = puppetMaster;
             InitializeComponent();
+
+            for (int i = 0; i < NUM_ITEMS; i++)
+            {
+                WriteQuorumBox.Items.Add(i);
+                ReadQuorumBox.Items.Add(i);
+                NServersBox.Items.Add(i);
+                FileRegisterBox.Items.Add(i);
+                ByteRegisterBox.Items.Add(i);
+            }
+
+            WriteQuorumBox.SelectedIndex = 0;
+            ReadQuorumBox.SelectedIndex = 0;
+            NServersBox.SelectedIndex = 0;
+            FileRegisterBox.SelectedIndex = 0;
+            ByteRegisterBox.SelectedIndex = 0;
+            WriteModeBox.SelectedIndex = 0;
+            SemanticsBox.SelectedIndex = 0;
         }
 
 
@@ -40,104 +44,118 @@ namespace PuppetMaster
          ********* PUPPET MASTER *********
          *********************************/
 
-        private void LaunchClient_Click(object sender, EventArgs e)
+        private void LaunchClientButton_Click(object sender, EventArgs e)
         {
             puppetMaster.launchClient();
+            ClientBox.Items.Add("c-" + clientCounter);
+            ClientBox.SelectedIndex = clientCounter++;
         }
 
         private void LaunchMetadataButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.launchMetadata(selectedMetadata);
+            if (metadataServerCounter < 3)
+            {
+                puppetMaster.launchMetadata(metadataServerCounter);
+                MetadataBox.Items.Add("m-" + metadataServerCounter);
+                MetadataBox.SelectedIndex = metadataServerCounter++;
+            }
         }
 
         private void LaunchDataServerButton_Click(object sender, EventArgs e)
         {
             puppetMaster.launchDataServer();
-        }
-
-        private void OpenFile_Click(object sender, EventArgs e)
-        {
-            if (FilenameBox.Text.Equals(""))
-                ClientEventBox.Text += "Please, specify a filename.\r\n";
-            else
-                puppetMaster.openFile(FilenameBox.Text, ClientListBox.SelectedIndex);
-        }
-        
-        private void CloseFileButton_Click(object sender, EventArgs e)
-        {
-            if (FilenameBox.Text.Equals(""))
-                ClientEventBox.Text += "Please, specify a filename.\r\n";
-            else
-                puppetMaster.closeFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            DataServerBox.Items.Add("d-" + dataServerCounter);
+            DataServerBox.SelectedIndex = dataServerCounter++;
         }
 
         private void CreateFileButton_Click(object sender, EventArgs e)
         {
-            if (FilenameBox.Text.Equals("") || NServersTextBox.Text.Equals("") || ReadQuorumTextBox.Text.Equals("") ||
-                WriteQuorumTextBox.Text.Equals(""))
-            {
-                ClientEventBox.Text += "Please, fill up all the fields necessary to create a file.\r\n";
-            }
-            else
-            {
-                puppetMaster.createFile(FilenameBox.Text, Convert.ToInt32(NServersTextBox.Text),
-                    Convert.ToInt32(ReadQuorumTextBox.Text), Convert.ToInt32(WriteQuorumTextBox.Text), ClientListBox.SelectedIndex);
-            }
+            puppetMaster.createFile(FilenameBox.Text, NServersBox.SelectedIndex,
+                ReadQuorumBox.SelectedIndex, WriteQuorumBox.SelectedIndex, ClientBox.SelectedIndex);
         }
 
         private void DeleteFileButton_Click(object sender, EventArgs e)
         {
-            if (FilenameBox.Text.Equals(""))
-                ClientEventBox.Text += "Please, specify a filename.\r\n";
-            else
-                puppetMaster.deleteFile(FilenameBox.Text, ClientListBox.SelectedIndex);
+            puppetMaster.deleteFile(FilenameBox.Text, ClientBox.SelectedIndex);
         }
 
-        private void WriteFileButton_Click(object sender, EventArgs e)
+        private void OpenFileButton_Click(object sender, EventArgs e)
         {
-            if (writeMode == 0)
-                puppetMaster.writeFile(Convert.ToInt32(FileRegisterTextBox.Text), FileTextbox.Text, ClientListBox.SelectedIndex);
-            else
-                puppetMaster.writeFile(Convert.ToInt32(FileRegisterTextBox.Text), Convert.ToInt32(ByteRegisterTextBox.Text), ClientListBox.SelectedIndex);
+            puppetMaster.openFile(FilenameBox.Text, ClientBox.SelectedIndex);
+        }
+
+        private void CloseFileButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.closeFile(FilenameBox.Text, ClientBox.SelectedIndex);
         }
 
         private void ReadFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.readFile(Convert.ToInt32(FileRegisterTextBox.Text), SemanticsBox.SelectedText, Convert.ToInt32(FileRegisterTextBox.Text), ClientListBox.SelectedIndex);
+            puppetMaster.readFile(FileRegisterBox.SelectedIndex, SemanticsBox.SelectedText, FileRegisterBox.SelectedIndex, ClientBox.SelectedIndex);
+        }
+
+        private void WriteFileButton_Click(object sender, EventArgs e)
+        {
+            if (WriteModeBox.SelectedIndex == 0)
+                puppetMaster.writeFile(FileRegisterBox.SelectedIndex, FileTextbox.Text, ClientBox.SelectedIndex);
+            else
+                puppetMaster.writeFile(FileRegisterBox.SelectedIndex, ByteRegisterBox.SelectedIndex, ClientBox.SelectedIndex);
+        }
+
+        private void DumpClientButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.dumpClient(ClientBox.SelectedIndex);
         }
 
         private void FailMetadataButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.failMetadata(selectedMetadata);
+            puppetMaster.failMetadata(MetadataBox.SelectedIndex);
         }
 
         private void RecoverMetadataServerButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.recoverMetadata(selectedMetadata);
+            puppetMaster.recoverMetadata(MetadataBox.SelectedIndex);
         }
 
         private void DumpMetadataButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.dumpMetadataServer(selectedMetadata);
+            puppetMaster.dumpMetadataServer(MetadataBox.SelectedIndex);
         }
 
         private void KillProcessesButton_Click(object sender, EventArgs e)
         {
             clientCounter = 0;
             dataServerCounter = 0;
-            ClientListBox.Items.Clear();
-            DataServerListBox.Items.Clear();
+            metadataServerCounter = 0;
+            ClientBox.Items.Clear();
+            DataServerBox.Items.Clear();
+            MetadataBox.Items.Clear();
             puppetMaster.killProcesses();
         }
 
         private void FailDataServerButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.failDataServer(DataServerListBox.SelectedIndex);
+            puppetMaster.failDataServer(DataServerBox.SelectedIndex);
         }
 
         private void RecoverDataServerButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.recoverDataServer(DataServerListBox.SelectedIndex);
+            puppetMaster.recoverDataServer(DataServerBox.SelectedIndex);
+        }
+
+        private void FreezeDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.freezeDataServer(DataServerBox.SelectedIndex);
+        }
+
+        private void UnfreezeDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.unfreezeDataServer(DataServerBox.SelectedIndex);
+        }
+
+        private void DumpDataServerButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.dumpDataServer(DataServerBox.SelectedIndex);
         }
 
         private void LoadScriptButton_Click(object sender, EventArgs e)
@@ -150,98 +168,24 @@ namespace PuppetMaster
             puppetMaster.runScript();
         }
 
+        private void ContinueScriptButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
         private void NextStepButton_Click(object sender, EventArgs e)
         {
             puppetMaster.nextStep();
-        }        
+        }
 
         /***********************
          ********* GUI *********
          ***********************/
-
-        private void UseTextFileOption_CheckedChanged(object sender, EventArgs e)
-        {
-            writeMode = 0;
-        }
-
-        private void ByteRegisterOption_CheckedChanged(object sender, EventArgs e)
-        {
-            writeMode = 1;
-        }
-
-        private void MetadataOption1_CheckedChanged(object sender, EventArgs e)
-        {
-            selectedMetadata = 0;
-        }
-
-        private void MetadataOption2_CheckedChanged(object sender, EventArgs e)
-        {
-            selectedMetadata = 1;
-        }
-
-        private void MetadataOption3_CheckedChanged(object sender, EventArgs e)
-        {
-            selectedMetadata = 2;
-        }
-
-        public void showMetadata(MetadataInfo newMetadata)
-        {
-            ClientEventBox.Text += "-------------------\r\nMETADATA\r\n";
-            ClientEventBox.Text += "Filename:" + newMetadata.filename + "\r\n";
-            ClientEventBox.Text += "NumDataServers:" + newMetadata.numDataServers + "\r\n";
-            ClientEventBox.Text += "ReadQuorum:" + newMetadata.readQuorum + "\r\n";
-            ClientEventBox.Text += "WriteQuorum:" + newMetadata.writeQuorum + "\r\n";
-            ClientEventBox.Text += "DataServers:" + newMetadata.dataServersToString() + "\r\n";
-        }
-
-        private void checkNumeric(object sender, KeyPressEventArgs e)
-        {
-            const char Delete = (char)8;
-            e.Handled = !Char.IsDigit(e.KeyChar) && e.KeyChar != Delete;
-        }
-
-        public void addClient()
-        {
-            ClientListBox.Items.Add("c-" + clientCounter);
-            ClientListBox.SetSelected(clientCounter++, true);
-        }
-
-        public void addDataServer()
-        {
-            DataServerListBox.Items.Add("d-" + dataServerCounter);
-            DataServerListBox.SetSelected(dataServerCounter++, true);
-        }
-
-        public void updateClientBox(string msg)
-        {
-            ClientEventBox.Text += msg;
-        }
-
-        public void updateMetadataBox(string msg)
-        {
-            MetadataEventBox.Text += msg;
-        }
-
-        public void updateDataServerBox(string msg)
-        {
-            DataServerEventBox.Text += msg;
-        }
 
         public void updateFileText(string msg, int version)
         {
             FileTextbox.Clear();
             FileTextbox.Text += msg;
         }
-
-        private void DumpClientButton_Click(object sender, EventArgs e)
-        {
-            puppetMaster.dumpClient(ClientListBox.SelectedIndex);
-        }
-
-        private void DumpDataServerButton_Click(object sender, EventArgs e)
-        {
-            puppetMaster.dumpDataServer(DataServerListBox.SelectedIndex);
-        }
-
     }
 }

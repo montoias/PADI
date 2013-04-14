@@ -10,9 +10,9 @@ namespace CommonTypes
     public interface IMetadataServer
     {
         void checkState();
-        void notify(string notifier); //Should send the log to the other metadata
         void sendInstruction(string instruction);
         void receiveInstruction(string instruction);
-        void receiveNotify(string log);
+        void receiveLog(string notifier); 
+        void requestLog(string log);
     }
 }

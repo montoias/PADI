@@ -48,6 +48,7 @@
     <Compile Include="Exceptions\FileAlreadyExistsException.cs" />
     <Compile Include="Exceptions\FileAlreadyOpenedException.cs" />
     <Compile Include="Exceptions\TableSizeExcedeedException.cs" />
+    <Compile Include="Interfaces\IClientServerMetadataServer.cs" />
     <Compile Include="Interfaces\IMetadataServer.cs" />
     <Compile Include="Interfaces\IDataServerMetadataServer.cs" />
     <Compile Include="Types\FileData.cs" />

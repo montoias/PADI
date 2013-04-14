@@ -1,22 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CommonTypes;
+using System;
 using System.Collections;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Tcp;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-
-using CommonTypes;
+using System.Runtime.Remoting.Channels;
+using System.Runtime.Remoting.Channels.Tcp;
 using System.Text.RegularExpressions;
-using System.Text;
 
 namespace PuppetMaster
 {
-    public class PuppetMaster 
+    public class PuppetMaster
     {
 
         private Form1 form;
+
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+        private string metadataExec = "MetadataServer\\bin\\Debug\\MetadataServer.exe";
+        private string dataServerExec = "DataServer\\bin\\Debug\\DataServer.exe";
+        private string clientExec = "ClientServer\\bin\\Debug\\ClientServer.exe";
+
         private string[] scriptInstructions;
         private int currentInstruction;
 
@@ -26,7 +29,7 @@ namespace PuppetMaster
         private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
         private string[] metadataLocation = { "8081", "8082", "8083" };
         private BitArray metadataLaunched = new BitArray(3);
-        
+
         private int clientPort = 8000;
         private int dataServerPort = 9000;
 
@@ -46,9 +49,7 @@ namespace PuppetMaster
 
         public void openFile(string filename, int selectedClient)
         {
-            MetadataInfo m = clientsList[selectedClient].open(filename);
-            if(m != null)
-                form.showMetadata(m);
+            clientsList[selectedClient].open(filename);
         }
 
         public void closeFile(string filename, int selectedClient)
@@ -58,11 +59,9 @@ namespace PuppetMaster
 
         public void createFile(string filename, int nServers, int readQuorum, int writeQuorum, int selectedClient)
         {
-            MetadataInfo m = clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum);
-            if(m != null)
-                form.showMetadata(m);
+            clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum);
         }
-        
+
         public void deleteFile(string filename, int selectedClient)
         {
             clientsList[selectedClient].delete(filename);
@@ -81,8 +80,8 @@ namespace PuppetMaster
         public void readFile(int fileRegister, string semantics, int byteRegister, int selectedClient)
         {
             FileData fileData = clientsList[selectedClient].read(fileRegister, semantics, byteRegister);
-            
-            if(fileData != null)
+
+            if (fileData != null)
                 form.updateFileText(Utils.byteArrayToString(fileData.file), fileData.version);
         }
 
@@ -100,7 +99,7 @@ namespace PuppetMaster
 
         public void dumpClient(int selectedClient)
         {
-            form.updateClientBox(clientsList[selectedClient].dump());
+            clientsList[selectedClient].dump();
         }
 
         /****************************
@@ -108,19 +107,18 @@ namespace PuppetMaster
          ****************************/
         public void failMetadata(int selectedMetadata)
         {
-            metadataList[selectedMetadata].fail();
+            //metadataList[selectedMetadata].fail();
         }
 
         public void recoverMetadata(int selectedMetadata)
         {
-            metadataList[selectedMetadata].recover();
+            //metadataList[selectedMetadata].recover();
         }
 
         public void dumpMetadataServer(int selectedMetadata)
         {
-            form.updateMetadataBox(metadataList[selectedMetadata].dump());
+            metadataList[selectedMetadata].dump();
         }
-
 
         /*******************************
          ********* DATA SERVER *********
@@ -147,7 +145,7 @@ namespace PuppetMaster
 
         public void dumpDataServer(int selectedDataServer)
         {
-            form.updateDataServerBox(dataServersList[selectedDataServer].dump());
+            dataServersList[selectedDataServer].dump();
         }
 
         /*********************************
@@ -163,14 +161,13 @@ namespace PuppetMaster
         {
             string args = clientPort + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-            Process.Start(Path.Combine(projectFolder, "ClientServer\\bin\\Debug\\ClientServer.exe"), args);
+            Process.Start(Path.Combine(projectFolder, clientExec), args);
 
             IClientServerPuppet newClient = (IClientServerPuppet)Activator.GetObject(
                 typeof(IClientServerPuppet),
                 "tcp://localhost:" + clientPort + "/ClientServer");
 
             clientsList.Add(newClient);
-            form.addClient();
             clientPort++;
         }
 
@@ -178,19 +175,12 @@ namespace PuppetMaster
         {
             string location = metadataLocation[selectedMetadata];
 
-            if (!metadataLaunched[selectedMetadata])
-            {
-                Process.Start(Path.Combine(projectFolder, "MetadataServer\\bin\\Debug\\MetadataServer.exe"), location);
-                IMetadataServerPuppet newMetadata = (IMetadataServerPuppet)Activator.GetObject(
-                   typeof(IMetadataServerPuppet),
-                   "tcp://localhost:" + location + "/MetadataServer");
-                metadataList[selectedMetadata] = newMetadata;
-                metadataLaunched[selectedMetadata] = true;
-            }
-            else
-            {
-                form.updateClientBox("Metadata Server " + selectedMetadata + " already launched!\r\n");
-            }
+            Process.Start(Path.Combine(projectFolder, metadataExec), location);
+            IMetadataServerPuppet newMetadata = (IMetadataServerPuppet)Activator.GetObject(
+               typeof(IMetadataServerPuppet),
+               "tcp://localhost:" + location + "/MetadataServer");
+            metadataList[selectedMetadata] = newMetadata;
+            metadataLaunched[selectedMetadata] = true;
         }
 
         /*
@@ -202,12 +192,12 @@ namespace PuppetMaster
         {
             string args = dataServerPort + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-            Process.Start(Path.Combine(projectFolder, "DataServer\\bin\\Debug\\DataServer.exe"), args);
+            Process.Start(Path.Combine(projectFolder, dataServerExec), args);
             IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
                 typeof(IDataServerPuppet),
                 "tcp://localhost:" + dataServerPort + "/DataServer");
+
             dataServersList.Add(newDataServer);
-            form.addDataServer();
             dataServerPort++;
         }
 
@@ -227,12 +217,8 @@ namespace PuppetMaster
         public void runScript()
         {
             foreach (string instruction in scriptInstructions)
-            {
                 if (!instruction[0].Equals('#'))
-                {
                     interpretInstruction(instruction);
-                }
-            }
         }
 
         public void nextStep()
@@ -242,17 +228,17 @@ namespace PuppetMaster
 
             interpretInstruction(scriptInstructions[currentInstruction++]);
         }
-        
+
         private void interpretInstruction(string command)
         {
             string[] parameters = Regex.Split(command, ", ");
             string[] processInst = parameters[0].Split(' ');
             string instruction = processInst[0];
             string[] processInfo = processInst[1].Split('-');
-            int processNumber = Convert.ToInt32(processInfo[1])-1;
-            
+            int processNumber = Convert.ToInt32(processInfo[1]) - 1;
+
             launchProcessIfNeeded(processInfo[0], processNumber);
-            
+
             switch (instruction)
             {
                 case "WRITE":
@@ -269,45 +255,37 @@ namespace PuppetMaster
 
                     break;
                 case "READ":
-                        readFile(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), processNumber);
+                    readFile(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), processNumber);
                     break;
                 case "OPEN":
-                        openFile(parameters[1], processNumber);
+                    openFile(parameters[1], processNumber);
                     break;
                 case "CLOSE":
-                        closeFile(parameters[1], processNumber);
+                    closeFile(parameters[1], processNumber);
                     break;
                 case "CREATE":
-                        createFile(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]), processNumber);
+                    createFile(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]), processNumber);
                     break;
                 case "DELETE":
-                        deleteFile(parameters[1], processNumber);
+                    deleteFile(parameters[1], processNumber);
                     break;
                 case "FREEZE":
-                        freezeDataServer(processNumber);
+                    freezeDataServer(processNumber);
                     break;
                 case "UNFREEZE":
-                        unfreezeDataServer(processNumber);
+                    unfreezeDataServer(processNumber);
                     break;
                 case "FAIL":
                     if (processInfo[0].Equals("d"))
-                    {
                         failDataServer(processNumber);
-                    }
                     else if (processInfo[0].Equals("m"))
-                    {
-                        failMetadata(processNumber+1);
-                    }
+                        failMetadata(processNumber + 1);
                     break;
                 case "RECOVER":
                     if (processInfo[0].Equals("d"))
-                    {
                         recoverDataServer(processNumber);
-                    }
                     else if (processInfo[0].Equals("m"))
-                    {
-                        recoverMetadata(processNumber+1);
-                    }
+                        recoverMetadata(processNumber + 1);
                     break;
                 case "DUMP":
                     switch (processInfo[0])
@@ -316,7 +294,7 @@ namespace PuppetMaster
                             dumpClient(processNumber);
                             break;
                         case "m":
-                            dumpMetadataServer(processNumber+1);
+                            dumpMetadataServer(processNumber + 1);
                             break;
                         case "d":
                             dumpDataServer(processNumber);
@@ -340,21 +318,15 @@ namespace PuppetMaster
             {
                 case "c":
                     if (clientsList.Count <= processNumber)
-                    {
                         launchClient();
-                    }
                     break;
                 case "m":
-                    if (!metadataLaunched[processNumber+1])
-                    {
-                        launchMetadata(processNumber+1);
-                    }
+                    if (!metadataLaunched[processNumber + 1])
+                        launchMetadata(processNumber + 1);
                     break;
                 case "d":
                     if (dataServersList.Count <= processNumber)
-                    {
                         launchDataServer();
-                    }
                     break;
             }
         }
@@ -367,21 +339,17 @@ namespace PuppetMaster
         public void killProcesses()
         {
             foreach (Process proc in Process.GetProcessesByName("DataServer"))
-            {
                 proc.Kill();
-            }
+
             foreach (Process proc in Process.GetProcessesByName("ClientServer"))
-            {
                 proc.Kill();
-            }
+
             foreach (Process proc in Process.GetProcessesByName("MetadataServer"))
-            {
                 proc.Kill();
-            }
 
             clientPort = 8000;
             dataServerPort = 9000;
             metadataLaunched.SetAll(false);
-        }        
+        }
     }
 }
