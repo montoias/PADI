@@ -10,7 +10,8 @@ namespace PuppetMaster
         private int dataServerCounter = 0;
         private int metadataServerCounter = 0;
 
-        private const int NUM_ITEMS = 10;
+        private const int NUM_REGISTERS = 10;
+        private const int MAX_ITEMS = 10;
 
         /*
          * Class constructor. Passes a puppetMaster as an argument, which is the one used
@@ -21,13 +22,17 @@ namespace PuppetMaster
             this.puppetMaster = puppetMaster;
             InitializeComponent();
 
-            for (int i = 0; i < NUM_ITEMS; i++)
+            for (int i = 0; i < NUM_REGISTERS; i++)
+            {
+                FileRegisterBox.Items.Add(i);
+                ByteRegisterBox.Items.Add(i);
+            }
+
+            for (int i = 0; i < MAX_ITEMS; i++)
             {
                 WriteQuorumBox.Items.Add(i);
                 ReadQuorumBox.Items.Add(i);
                 NServersBox.Items.Add(i);
-                FileRegisterBox.Items.Add(i);
-                ByteRegisterBox.Items.Add(i);
             }
 
             WriteQuorumBox.SelectedIndex = 0;
@@ -47,6 +52,10 @@ namespace PuppetMaster
         private void LaunchClientButton_Click(object sender, EventArgs e)
         {
             puppetMaster.launchClient();
+        }
+
+        public void addClient()
+        {
             ClientBox.Items.Add("c-" + clientCounter);
             ClientBox.SelectedIndex = clientCounter++;
         }
@@ -56,6 +65,13 @@ namespace PuppetMaster
             if (metadataServerCounter < 3)
             {
                 puppetMaster.launchMetadata(metadataServerCounter);
+            }
+        }
+
+        public void addMetadataServer()
+        {
+            if (metadataServerCounter < 3)
+            {
                 MetadataBox.Items.Add("m-" + metadataServerCounter);
                 MetadataBox.SelectedIndex = metadataServerCounter++;
             }
@@ -64,6 +80,10 @@ namespace PuppetMaster
         private void LaunchDataServerButton_Click(object sender, EventArgs e)
         {
             puppetMaster.launchDataServer();
+        }
+
+        public void addDataServer()
+        {
             DataServerBox.Items.Add("d-" + dataServerCounter);
             DataServerBox.SelectedIndex = dataServerCounter++;
         }
@@ -165,17 +185,12 @@ namespace PuppetMaster
 
         private void RunScriptButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.runScript();
-        }
-
-        private void ContinueScriptButton_Click(object sender, EventArgs e)
-        {
-
+            CurrentInstructionBox.Text = puppetMaster.runScript(RunInstructionLineBox.SelectedIndex).ToString();
         }
 
         private void NextStepButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.nextStep();
+            CurrentInstructionBox.Text = puppetMaster.nextStep().ToString();
         }
 
         /***********************
@@ -185,7 +200,19 @@ namespace PuppetMaster
         public void updateFileText(string msg, int version)
         {
             FileTextbox.Clear();
-            FileTextbox.Text += msg;
+            FileTextbox.Text += version + "\r\n" + msg;
+        }
+
+        public void updateScriptText(string msg, int numInst)
+        {
+            int i;
+            EventBox.Clear();
+            EventBox.Text += msg;
+
+            for (i = 0; i < numInst; i++)
+                RunInstructionLineBox.Items.Add(i);
+
+            RunInstructionLineBox.SelectedIndex = i-1;
         }
     }
 }

@@ -33,6 +33,14 @@
             this.FailMetadataServerButton = new System.Windows.Forms.Button();
             this.RecoverMetadataServerButton = new System.Windows.Forms.Button();
             this.ClientGroupBox = new System.Windows.Forms.GroupBox();
+            this.LaunchClientButton = new System.Windows.Forms.Button();
+            this.WriteFileButton = new System.Windows.Forms.Button();
+            this.CloseFileButton = new System.Windows.Forms.Button();
+            this.DeleteFileButton = new System.Windows.Forms.Button();
+            this.DumpClientButton = new System.Windows.Forms.Button();
+            this.OpenFileButton = new System.Windows.Forms.Button();
+            this.ReadFileButton = new System.Windows.Forms.Button();
+            this.CreateFileButton = new System.Windows.Forms.Button();
             this.ClientLabel = new System.Windows.Forms.Label();
             this.ClientBox = new System.Windows.Forms.ComboBox();
             this.MetadataServerGroupBox = new System.Windows.Forms.GroupBox();
@@ -50,9 +58,9 @@
             this.FailDataServerButton = new System.Windows.Forms.Button();
             this.KillProcessesbutton = new System.Windows.Forms.Button();
             this.ScriptBox = new System.Windows.Forms.GroupBox();
+            this.CurrentInstructionBox = new System.Windows.Forms.TextBox();
             this.RunInstructionLineBox = new System.Windows.Forms.ComboBox();
             this.GoToLabel = new System.Windows.Forms.Label();
-            this.NextInstructionLabel = new System.Windows.Forms.Label();
             this.CurrentInstructionLabel = new System.Windows.Forms.Label();
             this.NextStepButton = new System.Windows.Forms.Button();
             this.RunScriptButton = new System.Windows.Forms.Button();
@@ -78,15 +86,6 @@
             this.WriteModeLabel = new System.Windows.Forms.Label();
             this.FileRegisterBox = new System.Windows.Forms.ComboBox();
             this.ByteRegisterBox = new System.Windows.Forms.ComboBox();
-            this.CreateFileButton = new System.Windows.Forms.Button();
-            this.DeleteFileButton = new System.Windows.Forms.Button();
-            this.CloseFileButton = new System.Windows.Forms.Button();
-            this.OpenFileButton = new System.Windows.Forms.Button();
-            this.ReadFileButton = new System.Windows.Forms.Button();
-            this.DumpClientButton = new System.Windows.Forms.Button();
-            this.LaunchClientButton = new System.Windows.Forms.Button();
-            this.WriteFileButton = new System.Windows.Forms.Button();
-            this.ContinueScriptButton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -153,6 +152,86 @@
             this.ClientGroupBox.TabIndex = 19;
             this.ClientGroupBox.TabStop = false;
             this.ClientGroupBox.Text = "Client";
+            // 
+            // LaunchClientButton
+            // 
+            this.LaunchClientButton.Location = new System.Drawing.Point(91, 178);
+            this.LaunchClientButton.Name = "LaunchClientButton";
+            this.LaunchClientButton.Size = new System.Drawing.Size(68, 30);
+            this.LaunchClientButton.TabIndex = 67;
+            this.LaunchClientButton.Text = "Launch";
+            this.LaunchClientButton.UseVisualStyleBackColor = true;
+            this.LaunchClientButton.Click += new System.EventHandler(this.LaunchClientButton_Click);
+            // 
+            // WriteFileButton
+            // 
+            this.WriteFileButton.Location = new System.Drawing.Point(92, 142);
+            this.WriteFileButton.Name = "WriteFileButton";
+            this.WriteFileButton.Size = new System.Drawing.Size(67, 30);
+            this.WriteFileButton.TabIndex = 68;
+            this.WriteFileButton.Text = "Write";
+            this.WriteFileButton.UseVisualStyleBackColor = true;
+            this.WriteFileButton.Click += new System.EventHandler(this.WriteFileButton_Click);
+            // 
+            // CloseFileButton
+            // 
+            this.CloseFileButton.Location = new System.Drawing.Point(92, 104);
+            this.CloseFileButton.Name = "CloseFileButton";
+            this.CloseFileButton.Size = new System.Drawing.Size(67, 30);
+            this.CloseFileButton.TabIndex = 13;
+            this.CloseFileButton.Text = "Close";
+            this.CloseFileButton.UseVisualStyleBackColor = true;
+            this.CloseFileButton.Click += new System.EventHandler(this.CloseFileButton_Click);
+            // 
+            // DeleteFileButton
+            // 
+            this.DeleteFileButton.Location = new System.Drawing.Point(92, 66);
+            this.DeleteFileButton.Name = "DeleteFileButton";
+            this.DeleteFileButton.Size = new System.Drawing.Size(67, 30);
+            this.DeleteFileButton.TabIndex = 65;
+            this.DeleteFileButton.Text = "Delete";
+            this.DeleteFileButton.UseVisualStyleBackColor = true;
+            this.DeleteFileButton.Click += new System.EventHandler(this.DeleteFileButton_Click);
+            // 
+            // DumpClientButton
+            // 
+            this.DumpClientButton.Location = new System.Drawing.Point(17, 178);
+            this.DumpClientButton.Name = "DumpClientButton";
+            this.DumpClientButton.Size = new System.Drawing.Size(67, 30);
+            this.DumpClientButton.TabIndex = 66;
+            this.DumpClientButton.Text = "Dump";
+            this.DumpClientButton.UseVisualStyleBackColor = true;
+            this.DumpClientButton.Click += new System.EventHandler(this.DumpClientButton_Click);
+            // 
+            // OpenFileButton
+            // 
+            this.OpenFileButton.Location = new System.Drawing.Point(17, 104);
+            this.OpenFileButton.Name = "OpenFileButton";
+            this.OpenFileButton.Size = new System.Drawing.Size(67, 30);
+            this.OpenFileButton.TabIndex = 66;
+            this.OpenFileButton.Text = "Open";
+            this.OpenFileButton.UseVisualStyleBackColor = true;
+            this.OpenFileButton.Click += new System.EventHandler(this.OpenFileButton_Click);
+            // 
+            // ReadFileButton
+            // 
+            this.ReadFileButton.Location = new System.Drawing.Point(17, 144);
+            this.ReadFileButton.Name = "ReadFileButton";
+            this.ReadFileButton.Size = new System.Drawing.Size(67, 30);
+            this.ReadFileButton.TabIndex = 65;
+            this.ReadFileButton.Text = "Read";
+            this.ReadFileButton.UseVisualStyleBackColor = true;
+            this.ReadFileButton.Click += new System.EventHandler(this.ReadFileButton_Click);
+            // 
+            // CreateFileButton
+            // 
+            this.CreateFileButton.Location = new System.Drawing.Point(17, 66);
+            this.CreateFileButton.Name = "CreateFileButton";
+            this.CreateFileButton.Size = new System.Drawing.Size(67, 30);
+            this.CreateFileButton.TabIndex = 65;
+            this.CreateFileButton.Text = "Create";
+            this.CreateFileButton.UseVisualStyleBackColor = true;
+            this.CreateFileButton.Click += new System.EventHandler(this.CreateFileButton_Click);
             // 
             // ClientLabel
             // 
@@ -252,9 +331,9 @@
             // 
             // DumpDataServerButton
             // 
-            this.DumpDataServerButton.Location = new System.Drawing.Point(99, 163);
+            this.DumpDataServerButton.Location = new System.Drawing.Point(22, 163);
             this.DumpDataServerButton.Name = "DumpDataServerButton";
-            this.DumpDataServerButton.Size = new System.Drawing.Size(68, 30);
+            this.DumpDataServerButton.Size = new System.Drawing.Size(69, 30);
             this.DumpDataServerButton.TabIndex = 24;
             this.DumpDataServerButton.Text = "Dump ";
             this.DumpDataServerButton.UseVisualStyleBackColor = true;
@@ -262,7 +341,7 @@
             // 
             // LaunchDataServerButton
             // 
-            this.LaunchDataServerButton.Location = new System.Drawing.Point(22, 162);
+            this.LaunchDataServerButton.Location = new System.Drawing.Point(99, 162);
             this.LaunchDataServerButton.Name = "LaunchDataServerButton";
             this.LaunchDataServerButton.Size = new System.Drawing.Size(69, 31);
             this.LaunchDataServerButton.TabIndex = 23;
@@ -322,10 +401,9 @@
             // 
             // ScriptBox
             // 
-            this.ScriptBox.Controls.Add(this.ContinueScriptButton);
+            this.ScriptBox.Controls.Add(this.CurrentInstructionBox);
             this.ScriptBox.Controls.Add(this.RunInstructionLineBox);
             this.ScriptBox.Controls.Add(this.GoToLabel);
-            this.ScriptBox.Controls.Add(this.NextInstructionLabel);
             this.ScriptBox.Controls.Add(this.CurrentInstructionLabel);
             this.ScriptBox.Controls.Add(this.NextStepButton);
             this.ScriptBox.Controls.Add(this.RunScriptButton);
@@ -339,6 +417,14 @@
             this.ScriptBox.TabIndex = 23;
             this.ScriptBox.TabStop = false;
             this.ScriptBox.Text = "Script Options";
+            // 
+            // CurrentInstructionBox
+            // 
+            this.CurrentInstructionBox.Location = new System.Drawing.Point(267, 57);
+            this.CurrentInstructionBox.Name = "CurrentInstructionBox";
+            this.CurrentInstructionBox.ReadOnly = true;
+            this.CurrentInstructionBox.Size = new System.Drawing.Size(31, 20);
+            this.CurrentInstructionBox.TabIndex = 14;
             // 
             // RunInstructionLineBox
             // 
@@ -358,19 +444,10 @@
             this.GoToLabel.TabIndex = 9;
             this.GoToLabel.Text = "Run Until Line: ";
             // 
-            // NextInstructionLabel
-            // 
-            this.NextInstructionLabel.AutoSize = true;
-            this.NextInstructionLabel.Location = new System.Drawing.Point(203, 83);
-            this.NextInstructionLabel.Name = "NextInstructionLabel";
-            this.NextInstructionLabel.Size = new System.Drawing.Size(52, 13);
-            this.NextInstructionLabel.TabIndex = 6;
-            this.NextInstructionLabel.Text = "Next Inst.";
-            // 
             // CurrentInstructionLabel
             // 
             this.CurrentInstructionLabel.AutoSize = true;
-            this.CurrentInstructionLabel.Location = new System.Drawing.Point(192, 55);
+            this.CurrentInstructionLabel.Location = new System.Drawing.Point(192, 61);
             this.CurrentInstructionLabel.Name = "CurrentInstructionLabel";
             this.CurrentInstructionLabel.Size = new System.Drawing.Size(64, 13);
             this.CurrentInstructionLabel.TabIndex = 5;
@@ -378,9 +455,9 @@
             // 
             // NextStepButton
             // 
-            this.NextStepButton.Location = new System.Drawing.Point(84, 57);
+            this.NextStepButton.Location = new System.Drawing.Point(84, 19);
             this.NextStepButton.Name = "NextStepButton";
-            this.NextStepButton.Size = new System.Drawing.Size(67, 30);
+            this.NextStepButton.Size = new System.Drawing.Size(67, 29);
             this.NextStepButton.TabIndex = 4;
             this.NextStepButton.Text = "Next Step";
             this.NextStepButton.UseVisualStyleBackColor = true;
@@ -388,7 +465,7 @@
             // 
             // RunScriptButton
             // 
-            this.RunScriptButton.Location = new System.Drawing.Point(84, 19);
+            this.RunScriptButton.Location = new System.Drawing.Point(11, 19);
             this.RunScriptButton.Name = "RunScriptButton";
             this.RunScriptButton.Size = new System.Drawing.Size(67, 29);
             this.RunScriptButton.TabIndex = 3;
@@ -414,7 +491,7 @@
             // 
             // LoadScriptButton
             // 
-            this.LoadScriptButton.Location = new System.Drawing.Point(6, 19);
+            this.LoadScriptButton.Location = new System.Drawing.Point(11, 57);
             this.LoadScriptButton.Name = "LoadScriptButton";
             this.LoadScriptButton.Size = new System.Drawing.Size(67, 29);
             this.LoadScriptButton.TabIndex = 0;
@@ -613,96 +690,6 @@
             this.ByteRegisterBox.Size = new System.Drawing.Size(43, 21);
             this.ByteRegisterBox.TabIndex = 65;
             // 
-            // CreateFileButton
-            // 
-            this.CreateFileButton.Location = new System.Drawing.Point(17, 66);
-            this.CreateFileButton.Name = "CreateFileButton";
-            this.CreateFileButton.Size = new System.Drawing.Size(67, 30);
-            this.CreateFileButton.TabIndex = 65;
-            this.CreateFileButton.Text = "Create";
-            this.CreateFileButton.UseVisualStyleBackColor = true;
-            this.CreateFileButton.Click += new System.EventHandler(this.CreateFileButton_Click);
-            // 
-            // DeleteFileButton
-            // 
-            this.DeleteFileButton.Location = new System.Drawing.Point(92, 66);
-            this.DeleteFileButton.Name = "DeleteFileButton";
-            this.DeleteFileButton.Size = new System.Drawing.Size(67, 30);
-            this.DeleteFileButton.TabIndex = 65;
-            this.DeleteFileButton.Text = "Delete";
-            this.DeleteFileButton.UseVisualStyleBackColor = true;
-            this.DeleteFileButton.Click += new System.EventHandler(this.DeleteFileButton_Click);
-            // 
-            // CloseFileButton
-            // 
-            this.CloseFileButton.Location = new System.Drawing.Point(92, 104);
-            this.CloseFileButton.Name = "CloseFileButton";
-            this.CloseFileButton.Size = new System.Drawing.Size(67, 30);
-            this.CloseFileButton.TabIndex = 13;
-            this.CloseFileButton.Text = "Close";
-            this.CloseFileButton.UseVisualStyleBackColor = true;
-            this.CloseFileButton.Click += new System.EventHandler(this.CloseFileButton_Click);
-            // 
-            // OpenFileButton
-            // 
-            this.OpenFileButton.Location = new System.Drawing.Point(17, 104);
-            this.OpenFileButton.Name = "OpenFileButton";
-            this.OpenFileButton.Size = new System.Drawing.Size(67, 30);
-            this.OpenFileButton.TabIndex = 66;
-            this.OpenFileButton.Text = "Open";
-            this.OpenFileButton.UseVisualStyleBackColor = true;
-            this.OpenFileButton.Click += new System.EventHandler(this.OpenFileButton_Click);
-            // 
-            // ReadFileButton
-            // 
-            this.ReadFileButton.Location = new System.Drawing.Point(17, 144);
-            this.ReadFileButton.Name = "ReadFileButton";
-            this.ReadFileButton.Size = new System.Drawing.Size(67, 30);
-            this.ReadFileButton.TabIndex = 65;
-            this.ReadFileButton.Text = "Read";
-            this.ReadFileButton.UseVisualStyleBackColor = true;
-            this.ReadFileButton.Click += new System.EventHandler(this.ReadFileButton_Click);
-            // 
-            // DumpClientButton
-            // 
-            this.DumpClientButton.Location = new System.Drawing.Point(17, 178);
-            this.DumpClientButton.Name = "DumpClientButton";
-            this.DumpClientButton.Size = new System.Drawing.Size(67, 30);
-            this.DumpClientButton.TabIndex = 66;
-            this.DumpClientButton.Text = "Dump";
-            this.DumpClientButton.UseVisualStyleBackColor = true;
-            this.DumpClientButton.Click += new System.EventHandler(this.DumpClientButton_Click);
-            // 
-            // LaunchClientButton
-            // 
-            this.LaunchClientButton.Location = new System.Drawing.Point(91, 178);
-            this.LaunchClientButton.Name = "LaunchClientButton";
-            this.LaunchClientButton.Size = new System.Drawing.Size(68, 30);
-            this.LaunchClientButton.TabIndex = 67;
-            this.LaunchClientButton.Text = "Launch";
-            this.LaunchClientButton.UseVisualStyleBackColor = true;
-            this.LaunchClientButton.Click += new System.EventHandler(this.LaunchClientButton_Click);
-            // 
-            // WriteFileButton
-            // 
-            this.WriteFileButton.Location = new System.Drawing.Point(92, 142);
-            this.WriteFileButton.Name = "WriteFileButton";
-            this.WriteFileButton.Size = new System.Drawing.Size(67, 30);
-            this.WriteFileButton.TabIndex = 68;
-            this.WriteFileButton.Text = "Write";
-            this.WriteFileButton.UseVisualStyleBackColor = true;
-            this.WriteFileButton.Click += new System.EventHandler(this.WriteFileButton_Click);
-            // 
-            // ContinueScriptButton
-            // 
-            this.ContinueScriptButton.Location = new System.Drawing.Point(6, 57);
-            this.ContinueScriptButton.Name = "ContinueScriptButton";
-            this.ContinueScriptButton.Size = new System.Drawing.Size(67, 30);
-            this.ContinueScriptButton.TabIndex = 13;
-            this.ContinueScriptButton.Text = "Continue";
-            this.ContinueScriptButton.UseVisualStyleBackColor = true;
-            this.ContinueScriptButton.Click += new System.EventHandler(this.ContinueScriptButton_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -757,7 +744,6 @@
         private System.Windows.Forms.Button LoadScriptButton;
         private System.Windows.Forms.Button DumpDataServerButton;
         private System.Windows.Forms.Label GoToLabel;
-        private System.Windows.Forms.Label NextInstructionLabel;
         private System.Windows.Forms.Label CurrentInstructionLabel;
         private System.Windows.Forms.Label ClientLabel;
         private System.Windows.Forms.ComboBox ClientBox;
@@ -793,7 +779,7 @@
         private System.Windows.Forms.Button OpenFileButton;
         private System.Windows.Forms.Button ReadFileButton;
         private System.Windows.Forms.Button CreateFileButton;
-        private System.Windows.Forms.Button ContinueScriptButton;
+        private System.Windows.Forms.TextBox CurrentInstructionBox;
     }
 }
 

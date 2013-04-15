@@ -451,5 +451,10 @@ namespace MetadataServer
                     break;
             }
         }
+
+        public override object InitializeLifetimeService()
+        {
+            return null;
+        }
     }
 }

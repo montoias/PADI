@@ -60,11 +60,10 @@ namespace DataServer
             lock (this)
             {
                 if (isFrozen)
-                {
                     Monitor.Wait(this);
-                }
+                else
+                    checkFailure();
 
-                checkFailure();
                 string path = Path.Combine(fileFolder, filename);
 
                 if (File.Exists(path))
@@ -86,11 +85,10 @@ namespace DataServer
             lock (this)
             {
                 if (isFrozen)
-                {
                     Monitor.Wait(this);
-                }
+                else
+                    checkFailure();
 
-                checkFailure();
                 System.Console.WriteLine("Writing the file:" + filename);
                 string path = Path.Combine(fileFolder, filename);
                 FileData prev = read(filename);
@@ -106,8 +104,10 @@ namespace DataServer
 
         public void freeze()
         {
+            
             lock (this)
             {
+                System.Console.WriteLine("Now delaying messages.");
                 isFrozen = true;
             }
         }
@@ -116,11 +116,9 @@ namespace DataServer
         {
             lock (this)
             {
-                if (isFrozen)
-                {
-                    Monitor.PulseAll(this);
-                    isFrozen = false;
-                }
+                System.Console.WriteLine("Receiving messages normally again.");
+                Monitor.PulseAll(this);
+                isFrozen = false;
             }
         }
 
@@ -138,11 +136,8 @@ namespace DataServer
 
         private void checkFailure()
         {
-            System.Console.WriteLine("Checking for failure... It is " + ignoringMessages);
             if (ignoringMessages)
-            {
                 throw new RemotingException();
-            }
         }
 
         /******************************
@@ -171,6 +166,11 @@ namespace DataServer
                 contents += filename + "\r\n";
 
             return contents;
+        }
+
+        public override object InitializeLifetimeService()
+        {
+            return null;
         }
     }
 }

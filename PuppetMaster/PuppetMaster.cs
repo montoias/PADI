@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text.RegularExpressions;
+using System.Runtime.Remoting.Messaging;
 
 namespace PuppetMaster
 {
@@ -20,7 +21,7 @@ namespace PuppetMaster
         private string dataServerExec = "DataServer\\bin\\Debug\\DataServer.exe";
         private string clientExec = "ClientServer\\bin\\Debug\\ClientServer.exe";
 
-        private string[] scriptInstructions;
+        private List<string> scriptInstructions = new List<string>();
         private int currentInstruction;
 
         private List<IClientServerPuppet> clientsList = new List<IClientServerPuppet>();
@@ -32,6 +33,8 @@ namespace PuppetMaster
 
         private int clientPort = 8000;
         private int dataServerPort = 9000;
+
+        public delegate void ExescriptDelegate(int selectedClient, string filename);
 
         /*
          * Class constructor. Used to initialize its tcp channel, which is used to 
@@ -90,6 +93,11 @@ namespace PuppetMaster
             clientsList[selectedClient].copy(fileRegister1, semantics, fileRegister2, salt);
         }
 
+        public void dumpClient(int selectedClient)
+        {
+            clientsList[selectedClient].dump();
+        }
+
         public void exescript(int selectedClient, string filename)
         {
             string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
@@ -97,11 +105,17 @@ namespace PuppetMaster
             clientsList[selectedClient].exescript(fileText);
         }
 
-        public void dumpClient(int selectedClient)
+        private void exescriptAsync(int selectedClient, string filename)
         {
-            clientsList[selectedClient].dump();
+            exescript(selectedClient, filename);
         }
 
+        private void exescriptAsyncCallBack(IAsyncResult ar)
+        {
+            ExescriptDelegate exescriptDelegate = (ExescriptDelegate)((AsyncResult)ar).AsyncDelegate;
+            exescriptDelegate.EndInvoke(ar);
+        }
+        
         /****************************
          ********* METADATA *********
          ****************************/
@@ -125,12 +139,12 @@ namespace PuppetMaster
          *******************************/
         public void freezeDataServer(int selectedDataServer)
         {
-            //dataServersList[selectedDataServer].freeze();
+            dataServersList[selectedDataServer].freeze();
         }
 
         public void unfreezeDataServer(int selectedDataServer)
         {
-            //dataServersList[selectedDataServer].unfreeze();
+            dataServersList[selectedDataServer].unfreeze();
         }
 
         public void failDataServer(int selectedDataServer)
@@ -168,6 +182,7 @@ namespace PuppetMaster
                 "tcp://localhost:" + clientPort + "/ClientServer");
 
             clientsList.Add(newClient);
+            form.addClient();
             clientPort++;
         }
 
@@ -181,6 +196,7 @@ namespace PuppetMaster
                "tcp://localhost:" + location + "/MetadataServer");
             metadataList[selectedMetadata] = newMetadata;
             metadataLaunched[selectedMetadata] = true;
+            form.addMetadataServer();
         }
 
         /*
@@ -198,6 +214,7 @@ namespace PuppetMaster
                 "tcp://localhost:" + dataServerPort + "/DataServer");
 
             dataServersList.Add(newDataServer);
+            form.addDataServer();
             dataServerPort++;
         }
 
@@ -207,26 +224,40 @@ namespace PuppetMaster
         public void loadScript(string scriptFile)
         {
             string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, scriptFile);
-            scriptInstructions = File.ReadAllLines(path);
+            string scriptText = "";
+            int i = 0;
+            string[] scriptLines = File.ReadAllLines(path);
             currentInstruction = 0;
+
+            foreach (string instruction in scriptLines)
+                if (!instruction[0].Equals('#'))
+                {
+                    scriptInstructions.Add(instruction);
+                    scriptText += i++ + ": " + instruction + "\r\n";
+                }
+
+            form.updateScriptText(scriptText, i);
         }
 
         /*
          * Runs a previously loaded script while ignoring the lines with an hash (comment)
          */
-        public void runScript()
+        public int runScript(int line)
         {
-            foreach (string instruction in scriptInstructions)
-                if (!instruction[0].Equals('#'))
-                    interpretInstruction(instruction);
+            if (line <= currentInstruction)
+                return currentInstruction;
+
+            for (int i = currentInstruction; i <= line; i++) 
+                interpretInstruction(scriptInstructions[i]);
+
+            currentInstruction = line;
+            return currentInstruction++;
         }
 
-        public void nextStep()
+        public int nextStep()
         {
-            while ((scriptInstructions[currentInstruction][0]).Equals('#'))
-                currentInstruction++;
-
-            interpretInstruction(scriptInstructions[currentInstruction++]);
+            interpretInstruction(scriptInstructions[currentInstruction]);
+            return currentInstruction++;
         }
 
         private void interpretInstruction(string command)
@@ -306,11 +337,12 @@ namespace PuppetMaster
                     copy(processNumber, Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
                     break;
                 case "EXESCRIPT":
-                    exescript(processNumber, processInst[2]);
+                    ExescriptDelegate exescriptDelegate = new ExescriptDelegate(exescriptAsync);
+                    AsyncCallback exescriptCallback = new AsyncCallback(exescriptAsyncCallBack);
+                    exescriptDelegate.BeginInvoke(processNumber, processInst[2], exescriptCallback, null);
                     break;
             }
         }
-
 
         private void launchProcessIfNeeded(string process, int processNumber)
         {

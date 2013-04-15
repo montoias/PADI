@@ -6,6 +6,8 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text.RegularExpressions;
+using System.Runtime.Remoting.Messaging;
+using System.Threading;
 
 namespace ClientServer
 {
@@ -20,8 +22,8 @@ namespace ClientServer
         private static IMetadataServerClientServer primaryMetadata;
         private static string port;
 
-        public delegate void WriteResult(IDataServerClientServer dataServer, string localFilename, byte[] file);
-        public static WriteResult writeResult = new WriteResult(getWriteResult);
+        public delegate void WriteDelegate(IDataServerClientServer dataServer, string localFilename, byte[] file);
+        public delegate FileData ReadDelegate(IDataServerClientServer dataServer, string localFilename);
 
         static void Main(string[] args)
         {
@@ -128,6 +130,11 @@ namespace ClientServer
         ********* DATA SERVER *********
         *******************************/
 
+        private FileData readAsync(IDataServerClientServer dataServer, string localFilename)
+        {
+            return dataServer.read(localFilename);
+        }
+
         public FileData read(int fileRegister, string semantics, int byteRegister)
         {
             System.Console.WriteLine("Reading metadata from file register " + fileRegister + " to byte register " + byteRegister);
@@ -138,14 +145,16 @@ namespace ClientServer
             return fileData;
         }
 
+
         /*
          * This a different function than read, in order to be able to use the 'copy' function
          * without changing the registers.
          */
         private FileData readOnly(int fileRegister, string semantics)
         {
-            FileData fileData = null;
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            List<IAsyncResult> results = new List<IAsyncResult>();
+            int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -158,10 +167,37 @@ namespace ClientServer
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + serverLocation + "/DataServer");
 
-                fileData = dataServer.read(localFilename);
+                results.Add((new ReadDelegate(readAsync)).BeginInvoke(dataServer, localFilename, null, null));
             }
 
+            return readQuorum(metadata, results, numResults);
+        }
+
+        private FileData readQuorum(MetadataInfo metadata, List<IAsyncResult> results, int numResults)
+        {
+            FileData fileData = null;
+
+            while (numResults < metadata.writeQuorum)
+            {
+                System.Console.WriteLine("Waiting for quorum");
+                for (int i = results.Count - 1; i > -1; i--)
+                {
+                    if (results[i].IsCompleted)
+                    {
+                        ReadDelegate readDelegate = (ReadDelegate)((AsyncResult)results[i]).AsyncDelegate;
+                        fileData = readDelegate.EndInvoke(results[i]);
+                        results.RemoveAt(i);
+                        numResults++;
+                    }
+                }
+            }
             return fileData;
+        }
+
+
+        private void writeAsync(IDataServerClientServer dataServer, string localFilename, byte[] file)
+        {
+            dataServer.write(localFilename, file);
         }
 
         public void write(int fileRegister, string textFile)
@@ -177,23 +213,15 @@ namespace ClientServer
                 string serverLocation = metadata.getDataServerLocation(dsInfo);
                 string localFilename = metadata.getLocalFilename(dsInfo);
 
-                System.Console.WriteLine("Writing to dataServer " + (9000 - Convert.ToInt32(serverLocation)));
+                System.Console.WriteLine("Writing to dataServer " + (Convert.ToInt32(serverLocation) - 9000));
 
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(typeof(IDataServerClientServer),
                     "tcp://localhost:" + serverLocation + "/DataServer");
 
-                results.Add(writeResult.BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
+                results.Add((new WriteDelegate(writeAsync)).BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
             }
 
-            while (numResults < metadata.writeQuorum)
-            {
-                for (int i = results.Count - 1; i > -1; i--)
-                    if (results[i].IsCompleted)
-                    {
-                        results.RemoveAt(i);
-                        numResults++;
-                    }
-            }
+            writeQuorum(metadata, results, numResults);
         }
 
         public void write(int fileRegister, int byteRegister)
@@ -203,6 +231,7 @@ namespace ClientServer
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             FileData fileData = byteRegisters[byteRegister];
+
             List<IAsyncResult> results = new List<IAsyncResult>();
             int numResults = 0;
 
@@ -211,29 +240,34 @@ namespace ClientServer
                 string serverLocation = metadata.getDataServerLocation(dsInfo);
                 string localFilename = metadata.getLocalFilename(dsInfo);
 
-                System.Console.WriteLine("Writing to dataServer " + (9000 - Convert.ToInt32(serverLocation)));
+                System.Console.WriteLine("Writing to dataServer " + (Convert.ToInt32(serverLocation) - 9000));
 
                 IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
                 typeof(IDataServerClientServer),
                 "tcp://localhost:" + serverLocation + "/DataServer");
 
-                results.Add(writeResult.BeginInvoke(dataServer, localFilename, fileData.file, null, null));
+                results.Add((new WriteDelegate(writeAsync)).BeginInvoke(dataServer, localFilename, fileData.file, null, null));
             }
 
+            writeQuorum(metadata, results, numResults);
+        }
+
+        private void writeQuorum(MetadataInfo metadata, List<IAsyncResult> results, int numResults)
+        {
             while (numResults < metadata.writeQuorum)
             {
+                System.Console.WriteLine("Waiting for quorum");
                 for (int i = results.Count - 1; i > -1; i--)
+                {
                     if (results[i].IsCompleted)
                     {
+                        /*WriteDelegate writeDelegate = (WriteDelegate)((AsyncResult)results[i]).AsyncDelegate;
+                        writeDelegate.EndInvoke(results[i]);*/
                         results.RemoveAt(i);
                         numResults++;
                     }
+                }
             }
-        }
-
-        private static void getWriteResult(IDataServerClientServer dataServer, string localFilename, byte[] file)
-        {
-            dataServer.write(localFilename, file);
         }
 
         /**************************
@@ -353,6 +387,11 @@ namespace ClientServer
         {
             if (fileRegisters.Contains(filename))
                 fileRegisters[filename] = m;
+        }
+
+        public override object InitializeLifetimeService()
+        {
+            return null;
         }
     }
 }
