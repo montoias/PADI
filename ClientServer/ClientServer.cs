@@ -191,6 +191,7 @@ namespace ClientServer
                     }
                 }
             }
+            System.Console.WriteLine("Version " + fileData.version + ": " + Utils.byteArrayToString(fileData.file));
             return fileData;
         }
 
@@ -261,8 +262,8 @@ namespace ClientServer
                 {
                     if (results[i].IsCompleted)
                     {
-                        /*WriteDelegate writeDelegate = (WriteDelegate)((AsyncResult)results[i]).AsyncDelegate;
-                        writeDelegate.EndInvoke(results[i]);*/
+                        WriteDelegate writeDelegate = (WriteDelegate)((AsyncResult)results[i]).AsyncDelegate;
+                        writeDelegate.EndInvoke(results[i]);
                         results.RemoveAt(i);
                         numResults++;
                     }

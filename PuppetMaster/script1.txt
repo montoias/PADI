@@ -4,4 +4,4 @@
 # at the end of the sample_script_syntax.txt and
 # sample_script_checkpoint.txt script file.
 # The client may ignore the PROCESS parameter in all commands.
-WRITE c-1, 0, "Text contents of the file. Contents are a string delimited by double quotes as this one"
+READ c-1, 0, default, 0
