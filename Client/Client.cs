@@ -161,7 +161,7 @@ namespace Client
                 string serverLocation = metadata.getDataServerLocation(dsInfo);
                 string localFilename = metadata.getLocalFilename(dsInfo);
 
-                System.Console.WriteLine("Reading from dataServer " + (9000 - Convert.ToInt32(serverLocation)));
+                System.Console.WriteLine("Reading from dataServer " + (Convert.ToInt32(serverLocation) - 9000 ));
 
                 IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(
                 typeof(IDataServerClient),

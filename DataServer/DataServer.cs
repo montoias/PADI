@@ -74,8 +74,9 @@ namespace DataServer
                 }
                 else
                 {
-                    System.Console.WriteLine("File doesn't exist:" + filename);
-                    return null;
+                    FileData f = new FileData(Utils.stringToByteArray(""), 0);
+                    Utils.serializeObject<FileData>(f, path);
+                    return f;
                 }
             }
         }
