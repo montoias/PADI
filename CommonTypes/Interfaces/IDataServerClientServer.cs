@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
-    public interface IDataServerClientServer
+    public interface IDataServerClient
     {
         FileData read(string filename);
         void write(string filename, byte[]file);

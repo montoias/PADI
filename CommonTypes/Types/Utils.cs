@@ -40,5 +40,13 @@ namespace CommonTypes
             return bytes;
         }
 
+        public static void createFolderFile(string fileFolder)
+        {
+            if (Directory.Exists(fileFolder))
+                Directory.Delete(fileFolder, true);
+
+            Directory.CreateDirectory(fileFolder);
+        }
+
     }
 }

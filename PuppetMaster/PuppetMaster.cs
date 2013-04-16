@@ -19,12 +19,12 @@ namespace PuppetMaster
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
         private string metadataExec = "MetadataServer\\bin\\Debug\\MetadataServer.exe";
         private string dataServerExec = "DataServer\\bin\\Debug\\DataServer.exe";
-        private string clientExec = "ClientServer\\bin\\Debug\\ClientServer.exe";
+        private string clientExec = "Client\\bin\\Debug\\Client.exe";
 
         private List<string> scriptInstructions = new List<string>();
         private int currentInstruction;
 
-        private List<IClientServerPuppet> clientsList = new List<IClientServerPuppet>();
+        private List<IClientPuppet> clientsList = new List<IClientPuppet>();
         private List<IDataServerPuppet> dataServersList = new List<IDataServerPuppet>();
 
         private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
@@ -98,16 +98,18 @@ namespace PuppetMaster
             clientsList[selectedClient].dump();
         }
 
-        public void exescript(int selectedClient, string filename)
+        public void executeExescript(int processNumber, string filename)
         {
-            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
-            string[] fileText = File.ReadAllLines(path);
-            clientsList[selectedClient].exescript(fileText);
+            ExescriptDelegate exescriptDelegate = new ExescriptDelegate(exescriptAsync);
+            AsyncCallback exescriptCallback = new AsyncCallback(exescriptAsyncCallBack);
+            exescriptDelegate.BeginInvoke(processNumber, filename, exescriptCallback, null);
         }
 
         private void exescriptAsync(int selectedClient, string filename)
         {
-            exescript(selectedClient, filename);
+            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
+            string[] fileText = File.ReadAllLines(path);
+            clientsList[selectedClient].exescript(fileText);
         }
 
         private void exescriptAsyncCallBack(IAsyncResult ar)
@@ -121,12 +123,12 @@ namespace PuppetMaster
          ****************************/
         public void failMetadata(int selectedMetadata)
         {
-            //metadataList[selectedMetadata].fail();
+            metadataList[selectedMetadata].fail();
         }
 
         public void recoverMetadata(int selectedMetadata)
         {
-            //metadataList[selectedMetadata].recover();
+            metadataList[selectedMetadata].recover();
         }
 
         public void dumpMetadataServer(int selectedMetadata)
@@ -177,9 +179,9 @@ namespace PuppetMaster
 
             Process.Start(Path.Combine(projectFolder, clientExec), args);
 
-            IClientServerPuppet newClient = (IClientServerPuppet)Activator.GetObject(
-                typeof(IClientServerPuppet),
-                "tcp://localhost:" + clientPort + "/ClientServer");
+            IClientPuppet newClient = (IClientPuppet)Activator.GetObject(
+                typeof(IClientPuppet),
+                "tcp://localhost:" + clientPort + "/Client");
 
             clientsList.Add(newClient);
             form.addClient();
@@ -337,9 +339,7 @@ namespace PuppetMaster
                     copy(processNumber, Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
                     break;
                 case "EXESCRIPT":
-                    ExescriptDelegate exescriptDelegate = new ExescriptDelegate(exescriptAsync);
-                    AsyncCallback exescriptCallback = new AsyncCallback(exescriptAsyncCallBack);
-                    exescriptDelegate.BeginInvoke(processNumber, processInst[2], exescriptCallback, null);
+                    executeExescript(processNumber, processInst[2]);
                     break;
             }
         }
@@ -373,7 +373,7 @@ namespace PuppetMaster
             foreach (Process proc in Process.GetProcessesByName("DataServer"))
                 proc.Kill();
 
-            foreach (Process proc in Process.GetProcessesByName("ClientServer"))
+            foreach (Process proc in Process.GetProcessesByName("Client"))
                 proc.Kill();
 
             foreach (Process proc in Process.GetProcessesByName("MetadataServer"))

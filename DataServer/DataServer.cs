@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace DataServer
 {
-    public class DataServer : MarshalByRefObject, IDataServerClientServer, IDataServerPuppet, IDataServerMetadataServer
+    public class DataServer : MarshalByRefObject, IDataServerClient, IDataServerPuppet, IDataServerMetadataServer
     {
         private static string fileFolder;
         private static string[] metadataLocation = new string[3];
@@ -32,7 +32,7 @@ namespace DataServer
             setMetadataLocation(args);
 
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
-            createFolderFile();
+            Utils.createFolderFile(fileFolder);
 
             //TODO: Find primary
             metadataServer[0] = (IMetadataServerDataServer)Activator.GetObject(
@@ -55,6 +55,7 @@ namespace DataServer
          ********* CLIENT *********
          **************************/
 
+        //TODO: NullPointerException when exescript is running for the first time
         public FileData read(string filename)
         {
             lock (this)
@@ -79,7 +80,6 @@ namespace DataServer
             }
         }
 
-        //TODO: Check semantics
         public void write(string filename, byte[] file)
         {
             lock (this)
@@ -103,8 +103,7 @@ namespace DataServer
         *********************************/
 
         public void freeze()
-        {
-            
+        {            
             lock (this)
             {
                 System.Console.WriteLine("Now delaying messages.");
@@ -116,9 +115,12 @@ namespace DataServer
         {
             lock (this)
             {
-                System.Console.WriteLine("Receiving messages normally again.");
-                Monitor.PulseAll(this);
-                isFrozen = false;
+                if (isFrozen)
+                {
+                    System.Console.WriteLine("Receiving messages normally again.");
+                    Monitor.PulseAll(this);
+                    isFrozen = false;
+                }
             }
         }
 
@@ -149,14 +151,6 @@ namespace DataServer
             metadataLocation[0] = args[1];
             metadataLocation[1] = args[2];
             metadataLocation[2] = args[3];
-        }
-
-        private static void createFolderFile()
-        {
-            bool folderExists = Directory.Exists(fileFolder);
-
-            if (!folderExists)
-                Directory.CreateDirectory(fileFolder);
         }
 
         public string dump()

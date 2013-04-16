@@ -7,7 +7,7 @@ using System.IO;
 
 namespace CommonTypes
 {
-    public interface IClientServerPuppet
+    public interface IClientPuppet
     {
         MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum);
         MetadataInfo open(string filename);

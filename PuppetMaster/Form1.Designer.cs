@@ -86,6 +86,7 @@
             this.WriteModeLabel = new System.Windows.Forms.Label();
             this.FileRegisterBox = new System.Windows.Forms.ComboBox();
             this.ByteRegisterBox = new System.Windows.Forms.ComboBox();
+            this.ExescriptButton = new System.Windows.Forms.Button();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -148,14 +149,14 @@
             this.ClientGroupBox.Controls.Add(this.ClientBox);
             this.ClientGroupBox.Location = new System.Drawing.Point(12, 12);
             this.ClientGroupBox.Name = "ClientGroupBox";
-            this.ClientGroupBox.Size = new System.Drawing.Size(177, 214);
+            this.ClientGroupBox.Size = new System.Drawing.Size(177, 229);
             this.ClientGroupBox.TabIndex = 19;
             this.ClientGroupBox.TabStop = false;
             this.ClientGroupBox.Text = "Client";
             // 
             // LaunchClientButton
             // 
-            this.LaunchClientButton.Location = new System.Drawing.Point(91, 178);
+            this.LaunchClientButton.Location = new System.Drawing.Point(92, 182);
             this.LaunchClientButton.Name = "LaunchClientButton";
             this.LaunchClientButton.Size = new System.Drawing.Size(68, 30);
             this.LaunchClientButton.TabIndex = 67;
@@ -165,7 +166,7 @@
             // 
             // WriteFileButton
             // 
-            this.WriteFileButton.Location = new System.Drawing.Point(92, 142);
+            this.WriteFileButton.Location = new System.Drawing.Point(92, 143);
             this.WriteFileButton.Name = "WriteFileButton";
             this.WriteFileButton.Size = new System.Drawing.Size(67, 30);
             this.WriteFileButton.TabIndex = 68;
@@ -195,7 +196,7 @@
             // 
             // DumpClientButton
             // 
-            this.DumpClientButton.Location = new System.Drawing.Point(17, 178);
+            this.DumpClientButton.Location = new System.Drawing.Point(17, 182);
             this.DumpClientButton.Name = "DumpClientButton";
             this.DumpClientButton.Size = new System.Drawing.Size(67, 30);
             this.DumpClientButton.TabIndex = 66;
@@ -215,7 +216,7 @@
             // 
             // ReadFileButton
             // 
-            this.ReadFileButton.Location = new System.Drawing.Point(17, 144);
+            this.ReadFileButton.Location = new System.Drawing.Point(17, 143);
             this.ReadFileButton.Name = "ReadFileButton";
             this.ReadFileButton.Size = new System.Drawing.Size(67, 30);
             this.ReadFileButton.TabIndex = 65;
@@ -304,9 +305,9 @@
             this.DataServerGroupBox.Controls.Add(this.FreezeDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.RecoverDataServerButton);
             this.DataServerGroupBox.Controls.Add(this.FailDataServerButton);
-            this.DataServerGroupBox.Location = new System.Drawing.Point(591, 185);
+            this.DataServerGroupBox.Location = new System.Drawing.Point(591, 173);
             this.DataServerGroupBox.Name = "DataServerGroupBox";
-            this.DataServerGroupBox.Size = new System.Drawing.Size(200, 214);
+            this.DataServerGroupBox.Size = new System.Drawing.Size(200, 210);
             this.DataServerGroupBox.TabIndex = 21;
             this.DataServerGroupBox.TabStop = false;
             this.DataServerGroupBox.Text = "Data Server";
@@ -331,7 +332,7 @@
             // 
             // DumpDataServerButton
             // 
-            this.DumpDataServerButton.Location = new System.Drawing.Point(22, 163);
+            this.DumpDataServerButton.Location = new System.Drawing.Point(22, 157);
             this.DumpDataServerButton.Name = "DumpDataServerButton";
             this.DumpDataServerButton.Size = new System.Drawing.Size(69, 30);
             this.DumpDataServerButton.TabIndex = 24;
@@ -341,7 +342,7 @@
             // 
             // LaunchDataServerButton
             // 
-            this.LaunchDataServerButton.Location = new System.Drawing.Point(99, 162);
+            this.LaunchDataServerButton.Location = new System.Drawing.Point(99, 156);
             this.LaunchDataServerButton.Name = "LaunchDataServerButton";
             this.LaunchDataServerButton.Size = new System.Drawing.Size(69, 31);
             this.LaunchDataServerButton.TabIndex = 23;
@@ -351,7 +352,7 @@
             // 
             // UnfreezeDataServerButton
             // 
-            this.UnfreezeDataServerButton.Location = new System.Drawing.Point(99, 120);
+            this.UnfreezeDataServerButton.Location = new System.Drawing.Point(99, 114);
             this.UnfreezeDataServerButton.Name = "UnfreezeDataServerButton";
             this.UnfreezeDataServerButton.Size = new System.Drawing.Size(68, 30);
             this.UnfreezeDataServerButton.TabIndex = 21;
@@ -361,7 +362,7 @@
             // 
             // FreezeDataServerButton
             // 
-            this.FreezeDataServerButton.Location = new System.Drawing.Point(22, 120);
+            this.FreezeDataServerButton.Location = new System.Drawing.Point(22, 114);
             this.FreezeDataServerButton.Name = "FreezeDataServerButton";
             this.FreezeDataServerButton.Size = new System.Drawing.Size(69, 30);
             this.FreezeDataServerButton.TabIndex = 20;
@@ -371,7 +372,7 @@
             // 
             // RecoverDataServerButton
             // 
-            this.RecoverDataServerButton.Location = new System.Drawing.Point(99, 78);
+            this.RecoverDataServerButton.Location = new System.Drawing.Point(99, 72);
             this.RecoverDataServerButton.Name = "RecoverDataServerButton";
             this.RecoverDataServerButton.Size = new System.Drawing.Size(68, 30);
             this.RecoverDataServerButton.TabIndex = 19;
@@ -381,7 +382,7 @@
             // 
             // FailDataServerButton
             // 
-            this.FailDataServerButton.Location = new System.Drawing.Point(22, 78);
+            this.FailDataServerButton.Location = new System.Drawing.Point(22, 72);
             this.FailDataServerButton.Name = "FailDataServerButton";
             this.FailDataServerButton.Size = new System.Drawing.Size(69, 30);
             this.FailDataServerButton.TabIndex = 18;
@@ -401,6 +402,7 @@
             // 
             // ScriptBox
             // 
+            this.ScriptBox.Controls.Add(this.ExescriptButton);
             this.ScriptBox.Controls.Add(this.CurrentInstructionBox);
             this.ScriptBox.Controls.Add(this.RunInstructionLineBox);
             this.ScriptBox.Controls.Add(this.GoToLabel);
@@ -411,9 +413,9 @@
             this.ScriptBox.Controls.Add(this.EventBox);
             this.ScriptBox.Controls.Add(this.ScriptFileLabel);
             this.ScriptBox.Controls.Add(this.LoadScriptButton);
-            this.ScriptBox.Location = new System.Drawing.Point(10, 261);
+            this.ScriptBox.Location = new System.Drawing.Point(12, 247);
             this.ScriptBox.Name = "ScriptBox";
-            this.ScriptBox.Size = new System.Drawing.Size(561, 138);
+            this.ScriptBox.Size = new System.Drawing.Size(561, 136);
             this.ScriptBox.TabIndex = 23;
             this.ScriptBox.TabStop = false;
             this.ScriptBox.Text = "Script Options";
@@ -540,7 +542,7 @@
             // 
             // FileTextbox
             // 
-            this.FileTextbox.Location = new System.Drawing.Point(18, 137);
+            this.FileTextbox.Location = new System.Drawing.Point(20, 143);
             this.FileTextbox.Multiline = true;
             this.FileTextbox.Name = "FileTextbox";
             this.FileTextbox.Size = new System.Drawing.Size(138, 57);
@@ -690,11 +692,21 @@
             this.ByteRegisterBox.Size = new System.Drawing.Size(43, 21);
             this.ByteRegisterBox.TabIndex = 65;
             // 
+            // ExescriptButton
+            // 
+            this.ExescriptButton.Location = new System.Drawing.Point(84, 57);
+            this.ExescriptButton.Name = "ExescriptButton";
+            this.ExescriptButton.Size = new System.Drawing.Size(67, 29);
+            this.ExescriptButton.TabIndex = 65;
+            this.ExescriptButton.Text = "Exescript";
+            this.ExescriptButton.UseVisualStyleBackColor = true;
+            this.ExescriptButton.Click += new System.EventHandler(this.ExescriptButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(815, 415);
+            this.ClientSize = new System.Drawing.Size(815, 393);
             this.Controls.Add(this.FileInfoGroupBox);
             this.Controls.Add(this.MetadataInfoGroupBox);
             this.Controls.Add(this.ScriptBox);
@@ -780,6 +792,7 @@
         private System.Windows.Forms.Button ReadFileButton;
         private System.Windows.Forms.Button CreateFileButton;
         private System.Windows.Forms.TextBox CurrentInstructionBox;
+        private System.Windows.Forms.Button ExescriptButton;
     }
 }
 

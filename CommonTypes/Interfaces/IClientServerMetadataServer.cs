@@ -7,7 +7,7 @@ using System.IO;
 
 namespace CommonTypes
 {
-    public interface  IClientServerMetadataServer
+    public interface  IClientMetadataServer
     {
         void updateMetadata(string filename, MetadataInfo m);
     }

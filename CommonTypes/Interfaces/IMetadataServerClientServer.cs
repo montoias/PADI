@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CommonTypes
 {
-    public interface IMetadataServerClientServer
+    public interface IMetadataServerClient
     {
         MetadataInfo open(string filename, int location);
         void close(string filename, int location);

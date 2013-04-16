@@ -1,15 +1,15 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{CE5ECFBB-239A-4D7F-8D43-6D88DCE3BF4B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTypes", "CommonTypes\CommonTypes.csproj", "{27D0E9FA-A545-4FFB-A0AB-63F44A4A1DFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientServer", "ClientServer\ClientServer.csproj", "{A44F324F-B14A-416F-844D-0179D948CC2C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataServer", "DataServer\DataServer.csproj", "{31F4ADC2-1E3F-49A8-A701-8618AE97D221}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetadataServer", "MetadataServer\MetadataServer.csproj", "{16784F19-29CD-4F1D-8D63-6AF0756307AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{A44F324F-B14A-416F-844D-0179D948CC2C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,16 +41,6 @@ Global
 		{27D0E9FA-A545-4FFB-A0AB-63F44A4A1DFE}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{27D0E9FA-A545-4FFB-A0AB-63F44A4A1DFE}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{27D0E9FA-A545-4FFB-A0AB-63F44A4A1DFE}.Release|x86.ActiveCfg = Release|Any CPU
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|x86.ActiveCfg = Debug|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|x86.Build.0 = Debug|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|Any CPU.ActiveCfg = Release|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|Mixed Platforms.Build.0 = Release|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|x86.ActiveCfg = Release|x86
-		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|x86.Build.0 = Release|x86
 		{31F4ADC2-1E3F-49A8-A701-8618AE97D221}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{31F4ADC2-1E3F-49A8-A701-8618AE97D221}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{31F4ADC2-1E3F-49A8-A701-8618AE97D221}.Debug|Mixed Platforms.Build.0 = Debug|x86
@@ -71,6 +61,16 @@ Global
 		{16784F19-29CD-4F1D-8D63-6AF0756307AE}.Release|Mixed Platforms.Build.0 = Release|x86
 		{16784F19-29CD-4F1D-8D63-6AF0756307AE}.Release|x86.ActiveCfg = Release|x86
 		{16784F19-29CD-4F1D-8D63-6AF0756307AE}.Release|x86.Build.0 = Release|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|x86.ActiveCfg = Debug|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Debug|x86.Build.0 = Debug|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|Any CPU.ActiveCfg = Release|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|Mixed Platforms.Build.0 = Release|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|x86.ActiveCfg = Release|x86
+		{A44F324F-B14A-416F-844D-0179D948CC2C}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

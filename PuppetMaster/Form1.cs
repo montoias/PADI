@@ -193,6 +193,11 @@ namespace PuppetMaster
             CurrentInstructionBox.Text = puppetMaster.nextStep().ToString();
         }
 
+        private void ExescriptButton_Click(object sender, EventArgs e)
+        {
+            puppetMaster.executeExescript(ClientBox.SelectedIndex, ScriptFileBox.Text);
+        }
+
         /***********************
          ********* GUI *********
          ***********************/

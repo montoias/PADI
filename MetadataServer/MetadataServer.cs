@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace MetadataServer
 {
-    class MetadataServer : MarshalByRefObject, IMetadataServerClientServer, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
+    class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
     {
         private static string fileFolder;
         private static string port;
@@ -37,7 +37,7 @@ namespace MetadataServer
             ChannelServices.RegisterChannel(channel, true);
 
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
-            createFolderFile();
+            Utils.createFolderFile(fileFolder);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(MetadataServer),
@@ -99,6 +99,7 @@ namespace MetadataServer
                 metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
                 if (numDataServers > dataServersList.Count)
                 {
+                    System.Console.WriteLine("Adding to data server queue: " + filename);
                     queueMetadata.Add(filename, metadata);
                     metadata = new MetadataInfo(filename, tempNumServers, tempNumServers, tempNumServers, locations);
                 }
@@ -214,40 +215,37 @@ namespace MetadataServer
                typeof(IDataServerMetadataServer),
                "tcp://localhost:" + location + "/DataServer"));
 
-            //processMetadataQueue(location);
+            processMetadataQueue(location);
         }
 
         private void processMetadataQueue(string location)
         {
-            /* string pair = location + "," + generateLocalFileName();
+            string pair = location + "," + generateLocalFileName();
+            ArrayList fileList = new ArrayList(queueMetadata.Keys);
+            foreach (string filename in fileList)
+            {
+                System.Console.WriteLine("processing files in the queue: " + filename);
+                List<int> clientIDs = openedFiles[filename];
 
-             foreach (string filename in queueMetadata.Keys)
-             {
-                 System.Console.WriteLine("processing files in the queue:" + filename);
-                 string path = Path.Combine(fileFolder, filename);
-                 MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
-                 metadata.dataServers.Add(pair);
-                 Utils.serializeObject<MetadataInfo>(metadata, path);
-                 List<int> clientIDs = null;
-                 try
-                 {
-                     clientIDs = openedFiles[filename];
-                 }
-                 catch (Exception e)
-                 {
-                     System.Console.WriteLine(e.StackTrace);
-                 }
-                 //TODO: Inneficient, store objects at registering
-                 foreach (int clientID in clientIDs)
-                 {
-                     int loc = clientID + 8000;
-                     System.Console.WriteLine("updating clientID :" + loc);
-                     IClientServerMetadataServer client = (IClientServerMetadataServer)Activator.GetObject(
-                            typeof(IClientServerMetadataServer), "tcp://localhost:" + loc + "/DataServer");
+                string path = Path.Combine(fileFolder, filename);
+                MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
+                metadata.dataServers.Add(pair);
+                Utils.serializeObject<MetadataInfo>(metadata, path);
 
-                     client.updateMetadata(filename, metadata);
-                 }
-             }*/
+                //TODO: Inneficient, store objects at registering
+                foreach (int clientID in clientIDs)
+                {
+                    int loc = clientID + 8000;
+                    System.Console.WriteLine("updating client at port :" + loc);
+                    IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
+                           typeof(IClientMetadataServer), "tcp://localhost:" + loc + "/Client");
+
+                    client.updateMetadata(filename, metadata);
+                }
+
+                if (queueMetadata[filename].numDataServers == dataServersList.Count)
+                    queueMetadata.Remove(filename);
+            }
         }
 
         /********************************
@@ -307,14 +305,6 @@ namespace MetadataServer
         /****************************
          ********* METADATA *********
          ****************************/
-
-        private static void createFolderFile()
-        {
-            bool folderExists = Directory.Exists(fileFolder);
-
-            if (!folderExists)
-                Directory.CreateDirectory(fileFolder);
-        }
 
         private string generateLocalFileName()
         {

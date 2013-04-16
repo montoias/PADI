@@ -9,21 +9,21 @@ using System.Text.RegularExpressions;
 using System.Runtime.Remoting.Messaging;
 using System.Threading;
 
-namespace ClientServer
+namespace Client
 {
-    class ClientServer : MarshalByRefObject, IClientServerPuppet, IClientServerMetadataServer
+    class Client : MarshalByRefObject, IClientPuppet, IClientMetadataServer
     {
         private OrderedDictionary fileRegisters = new OrderedDictionary();
         private Dictionary<int, FileData> byteRegisters = new Dictionary<int, FileData>();
         private int currentFileRegister = 0;
 
-        private static IMetadataServerClientServer[] metadataServer = new IMetadataServerClientServer[3];
+        private static IMetadataServerClient[] metadataServer = new IMetadataServerClient[3];
         private static string[] metadataLocation = new string[3];
-        private static IMetadataServerClientServer primaryMetadata;
+        private static IMetadataServerClient primaryMetadata;
         private static string port;
 
-        public delegate void WriteDelegate(IDataServerClientServer dataServer, string localFilename, byte[] file);
-        public delegate FileData ReadDelegate(IDataServerClientServer dataServer, string localFilename);
+        public delegate void WriteDelegate(IDataServerClient dataServer, string localFilename, byte[] file);
+        public delegate FileData ReadDelegate(IDataServerClient dataServer, string localFilename);
 
         static void Main(string[] args)
         {
@@ -32,8 +32,8 @@ namespace ClientServer
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
-                typeof(ClientServer),
-                "ClientServer",
+                typeof(Client),
+                "Client",
                 WellKnownObjectMode.Singleton);
 
             //TODO: getPrimaryMetadata -> try any available metadata, and ask if its primary
@@ -130,7 +130,7 @@ namespace ClientServer
         ********* DATA SERVER *********
         *******************************/
 
-        private FileData readAsync(IDataServerClientServer dataServer, string localFilename)
+        private FileData readAsync(IDataServerClient dataServer, string localFilename)
         {
             return dataServer.read(localFilename);
         }
@@ -145,7 +145,6 @@ namespace ClientServer
             return fileData;
         }
 
-
         /*
          * This a different function than read, in order to be able to use the 'copy' function
          * without changing the registers.
@@ -153,6 +152,7 @@ namespace ClientServer
         private FileData readOnly(int fileRegister, string semantics)
         {
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            ReadDelegate readDelegate = new ReadDelegate(readAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
             int numResults = 0;
 
@@ -163,11 +163,11 @@ namespace ClientServer
 
                 System.Console.WriteLine("Reading from dataServer " + (9000 - Convert.ToInt32(serverLocation)));
 
-                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
-                typeof(IDataServerClientServer),
+                IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(
+                typeof(IDataServerClient),
                 "tcp://localhost:" + serverLocation + "/DataServer");
 
-                results.Add((new ReadDelegate(readAsync)).BeginInvoke(dataServer, localFilename, null, null));
+                results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
             }
 
             return readQuorum(metadata, results, numResults);
@@ -179,24 +179,24 @@ namespace ClientServer
 
             while (numResults < metadata.writeQuorum)
             {
+                Thread.Sleep(1000);
                 System.Console.WriteLine("Waiting for quorum");
                 for (int i = results.Count - 1; i > -1; i--)
                 {
                     if (results[i].IsCompleted)
                     {
-                        ReadDelegate readDelegate = (ReadDelegate)((AsyncResult)results[i]).AsyncDelegate;
-                        fileData = readDelegate.EndInvoke(results[i]);
+                        fileData = ((ReadDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
                         results.RemoveAt(i);
                         numResults++;
                     }
                 }
             }
-            System.Console.WriteLine("Version " + fileData.version + ": " + Utils.byteArrayToString(fileData.file));
+            System.Console.WriteLine("File Read. \r\nVersion " + fileData.version + ": " + Utils.byteArrayToString(fileData.file));
             return fileData;
         }
 
 
-        private void writeAsync(IDataServerClientServer dataServer, string localFilename, byte[] file)
+        private void writeAsync(IDataServerClient dataServer, string localFilename, byte[] file)
         {
             dataServer.write(localFilename, file);
         }
@@ -206,6 +206,7 @@ namespace ClientServer
             System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
             int numResults = 0;
 
@@ -216,10 +217,10 @@ namespace ClientServer
 
                 System.Console.WriteLine("Writing to dataServer " + (Convert.ToInt32(serverLocation) - 9000));
 
-                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(typeof(IDataServerClientServer),
+                IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(typeof(IDataServerClient),
                     "tcp://localhost:" + serverLocation + "/DataServer");
 
-                results.Add((new WriteDelegate(writeAsync)).BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
+                results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
             }
 
             writeQuorum(metadata, results, numResults);
@@ -231,6 +232,7 @@ namespace ClientServer
             System.Console.WriteLine("Contents to write were from byte register " + byteRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
+            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
             FileData fileData = byteRegisters[byteRegister];
 
             List<IAsyncResult> results = new List<IAsyncResult>();
@@ -243,11 +245,11 @@ namespace ClientServer
 
                 System.Console.WriteLine("Writing to dataServer " + (Convert.ToInt32(serverLocation) - 9000));
 
-                IDataServerClientServer dataServer = (IDataServerClientServer)Activator.GetObject(
-                typeof(IDataServerClientServer),
+                IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(
+                typeof(IDataServerClient),
                 "tcp://localhost:" + serverLocation + "/DataServer");
 
-                results.Add((new WriteDelegate(writeAsync)).BeginInvoke(dataServer, localFilename, fileData.file, null, null));
+                results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, fileData.file, null, null));
             }
 
             writeQuorum(metadata, results, numResults);
@@ -257,18 +259,20 @@ namespace ClientServer
         {
             while (numResults < metadata.writeQuorum)
             {
+                Thread.Sleep(1000);
                 System.Console.WriteLine("Waiting for quorum");
                 for (int i = results.Count - 1; i > -1; i--)
                 {
                     if (results[i].IsCompleted)
                     {
-                        WriteDelegate writeDelegate = (WriteDelegate)((AsyncResult)results[i]).AsyncDelegate;
-                        writeDelegate.EndInvoke(results[i]);
+                        ((WriteDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
                         results.RemoveAt(i);
                         numResults++;
                     }
                 }
             }
+
+            System.Console.WriteLine("File " + metadata.filename + " written.");
         }
 
         /**************************
@@ -277,16 +281,16 @@ namespace ClientServer
 
         private static void getMetadataServer()
         {
-            metadataServer[0] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
+            metadataServer[0] = (IMetadataServerClient)Activator.GetObject(
+               typeof(IMetadataServerClient),
                "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
 
-            metadataServer[1] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
+            metadataServer[1] = (IMetadataServerClient)Activator.GetObject(
+               typeof(IMetadataServerClient),
                "tcp://localhost:" + metadataLocation[1] + "/MetadataServer");
 
-            metadataServer[2] = (IMetadataServerClientServer)Activator.GetObject(
-               typeof(IMetadataServerClientServer),
+            metadataServer[2] = (IMetadataServerClient)Activator.GetObject(
+               typeof(IMetadataServerClient),
                "tcp://localhost:" + metadataLocation[2] + "/MetadataServer");
         }
 
@@ -303,22 +307,25 @@ namespace ClientServer
             string toReturn = "";
 
             System.Console.WriteLine("Dumping Client information");
-            toReturn += "  FileRegisters\r\n";
+            toReturn += "FileRegisters\r\n";
 
             object[] keys = new object[fileRegisters.Keys.Count];
             fileRegisters.Keys.CopyTo(keys, 0);
             for (int i = 0; i < fileRegisters.Keys.Count; i++)
             {
-                toReturn += "    FileRegister: " + i + "\r\n" + fileRegisters[i] + "\r\n";
+                toReturn += "FileRegister: " + i + "\r\n" + fileRegisters[i] + "\r\n";
             }
 
-            toReturn += "  ByteRegisters\r\n";
+            toReturn += "\r\n\r\nByteRegisters\r\n";
 
             foreach (KeyValuePair<int, FileData> fileData in byteRegisters)
             {
-                toReturn += "    ByteRegister: " + fileData.Key + "\r\n" + fileData.Value + "\r\n";
+                toReturn += "ByteRegister: " + fileData.Key + "\r\n";
+                toReturn += "Version:" + fileData.Value.version + "\r\n";
+                toReturn += Utils.byteArrayToString(fileData.Value.file) + "\r\n";
             }
 
+            System.Console.WriteLine(toReturn);
             return toReturn;
         }
 
