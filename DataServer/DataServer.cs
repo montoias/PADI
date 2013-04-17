@@ -160,6 +160,7 @@ namespace DataServer
             foreach (string filename in Directory.GetFiles(fileFolder))
                 contents += filename + "\r\n";
 
+            System.Console.WriteLine(contents);
             return contents;
         }
 

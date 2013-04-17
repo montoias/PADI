@@ -277,7 +277,7 @@ namespace MetadataServer
         {
             int numCacheFiles = metadataTable.Count;
             string contents = "";
-            /*
+            
             System.Console.WriteLine("Dumping metadata table");
             contents += "METADATA CACHE\r\n";
 
@@ -297,8 +297,9 @@ namespace MetadataServer
             contents += "METADATA FOLDER\r\n";
 
             foreach (string filename in Directory.GetFiles(fileFolder))
-                contents += filename + "\r\n";*/
+                contents += filename + "\r\n";
 
+            System.Console.WriteLine(contents);
             return contents;
         }
 
