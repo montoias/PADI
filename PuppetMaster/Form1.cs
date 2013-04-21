@@ -111,7 +111,7 @@ namespace PuppetMaster
 
         private void ReadFileButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.readFile(FileRegisterBox.SelectedIndex, SemanticsBox.SelectedText, FileRegisterBox.SelectedIndex, ClientBox.SelectedIndex);
+            puppetMaster.readFile(FileRegisterBox.SelectedIndex, SemanticsBox.SelectedItem.ToString(), FileRegisterBox.SelectedIndex, ClientBox.SelectedIndex);
         }
 
         private void WriteFileButton_Click(object sender, EventArgs e)

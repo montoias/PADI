@@ -154,7 +154,6 @@ namespace Client
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             ReadDelegate readDelegate = new ReadDelegate(readAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
-            int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -170,14 +169,18 @@ namespace Client
                 results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
             }
 
-            return readQuorum(metadata, results, numResults);
+            return readQuorum(metadata, results, semantics);
         }
 
-        private FileData readQuorum(MetadataInfo metadata, List<IAsyncResult> results, int numResults)
+        private FileData readQuorum(MetadataInfo metadata, List<IAsyncResult> results, string semantics)
         {
-            FileData fileData = null;
+            Dictionary<int, FileData> versionResults = new Dictionary<int, FileData>();
+            Dictionary<int, int> versionCounter = new Dictionary<int, int>();
+            FileData fileData;
+            int numResults = 0;
+            int maxVersion = 0;
 
-            while (numResults < metadata.writeQuorum)
+            while (numResults < metadata.writeQuorum && results.Count > 0)
             {
                 Thread.Sleep(1000);
                 System.Console.WriteLine("Waiting for quorum");
@@ -185,12 +188,58 @@ namespace Client
                 {
                     if (results[i].IsCompleted)
                     {
-                        fileData = ((ReadDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
+                        try
+                        {
+                            FileData tempFile = ((ReadDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
+                            if (versionCounter.ContainsKey(tempFile.version))
+                            {
+                                versionCounter[tempFile.version]++;
+                            }
+                            else
+                            {
+                                versionResults.Add(tempFile.version, tempFile);
+                                versionCounter.Add(tempFile.version, 1);
+                            }
+                            numResults++;
+                        }
+                        catch (Exception)
+                        {
+                            //Possibly send request to next available server
+                        }
                         results.RemoveAt(i);
-                        numResults++;
                     }
                 }
             }
+
+            if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
+                return null;
+
+            System.Console.WriteLine("Semantics: " + semantics);
+            if (semantics.Equals("default"))
+            {
+                int maxResults = 0;
+                System.Console.WriteLine("Default Read");
+                foreach (int version in versionCounter.Keys)
+                {
+                    System.Console.WriteLine("Version:" + version);
+                    if (versionCounter[version] > maxResults)
+                    {
+                        maxResults = versionCounter[version];
+                        maxVersion = version;
+                    }
+                }
+            }
+            else
+            {
+                //TODO: Store previously read version of a file
+                //Return most recent file that has a quorum
+
+                System.Console.WriteLine("Monotonic Read");
+            }
+
+            System.Console.WriteLine("Max Version is: " + maxVersion);
+            fileData = versionResults[maxVersion];
+
             System.Console.WriteLine("File Read. \r\nVersion " + fileData.version + ": " + Utils.byteArrayToString(fileData.file));
             return fileData;
         }
