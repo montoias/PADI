@@ -15,6 +15,7 @@ namespace Client
     {
         private OrderedDictionary fileRegisters = new OrderedDictionary();
         private Dictionary<int, FileData> byteRegisters = new Dictionary<int, FileData>();
+        private Dictionary<string, int> fileVersions = new Dictionary<string, int>();
         private int currentFileRegister = 0;
 
         private static IMetadataServerClient[] metadataServer = new IMetadataServerClient[3];
@@ -146,7 +147,7 @@ namespace Client
         }
 
         /*
-         * This a different function than read, in order to be able to use the 'copy' function
+         * This is a different function than read, in order to be able to use the 'copy' function
          * without changing the registers.
          */
         private FileData readOnly(int fileRegister, string semantics)
@@ -154,6 +155,7 @@ namespace Client
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             ReadDelegate readDelegate = new ReadDelegate(readAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
+            FileData fileData;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -169,7 +171,9 @@ namespace Client
                 results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
             }
 
-            return readQuorum(metadata, results, semantics);
+            fileData = readQuorum(metadata, results, semantics);
+            //TODO: fileVersions[metadata.filename] = fileData.version;
+            return fileData;
         }
 
         private FileData readQuorum(MetadataInfo metadata, List<IAsyncResult> results, string semantics)
@@ -214,11 +218,9 @@ namespace Client
             if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
                 return null;
 
-            System.Console.WriteLine("Semantics: " + semantics);
             if (semantics.Equals("default"))
             {
                 int maxResults = 0;
-                System.Console.WriteLine("Default Read");
                 foreach (int version in versionCounter.Keys)
                 {
                     System.Console.WriteLine("Version:" + version);
@@ -233,8 +235,6 @@ namespace Client
             {
                 //TODO: Store previously read version of a file
                 //Return most recent file that has a quorum
-
-                System.Console.WriteLine("Monotonic Read");
             }
 
             System.Console.WriteLine("Max Version is: " + maxVersion);
@@ -314,11 +314,21 @@ namespace Client
                 {
                     if (results[i].IsCompleted)
                     {
-                        ((WriteDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
-                        results.RemoveAt(i);
-                        numResults++;
+                        try
+                        {
+                            ((WriteDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
+                            results.RemoveAt(i);
+                            numResults++;
+                        }
+                        catch (Exception) //Specify exception
+                        {
+                            //Possibly send request to next available server
+                        }
                     }
                 }
+
+                if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
+                    System.Console.WriteLine("Error in writeQuorum: not enough results"); 
             }
 
             System.Console.WriteLine("File " + metadata.filename + " written.");
