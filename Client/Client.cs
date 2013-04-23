@@ -67,7 +67,10 @@ namespace Client
             {
                 System.Console.WriteLine("File " + filename + " already exists!");
                 return null;
-
+            }
+            catch (InsufficientDataServersException)
+            {
+                System.Console.WriteLine("The file was not created because there aren't enough data servers!");
             }
             return info;
         }
@@ -162,7 +165,7 @@ namespace Client
                 string serverLocation = metadata.getDataServerLocation(dsInfo);
                 string localFilename = metadata.getLocalFilename(dsInfo);
 
-                System.Console.WriteLine("Reading from dataServer " + (Convert.ToInt32(serverLocation) - 9000 ));
+                System.Console.WriteLine("Reading from dataServer " + (Convert.ToInt32(serverLocation) - 9000));
 
                 IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(
                 typeof(IDataServerClient),
@@ -172,7 +175,17 @@ namespace Client
             }
 
             fileData = readQuorum(metadata, results, semantics);
-            //TODO: fileVersions[metadata.filename] = fileData.version;
+            if (fileData == null)
+                return null;
+
+            if (semantics.Equals("monotonic") && fileVersions.ContainsKey(metadata.filename) && (fileVersions[metadata.filename] >= fileData.version))
+            {
+                System.Console.WriteLine("Monotonic read was requested: The file obtained was older than the one read before!");
+                return null;
+            }
+
+            fileVersions[metadata.filename] = fileData.version;
+            System.Console.WriteLine("File Read. \r\nVersion " + fileData.version + ": " + Utils.byteArrayToString(fileData.file));
             return fileData;
         }
 
@@ -180,8 +193,8 @@ namespace Client
         {
             Dictionary<int, FileData> versionResults = new Dictionary<int, FileData>();
             Dictionary<int, int> versionCounter = new Dictionary<int, int>();
-            FileData fileData;
             int numResults = 0;
+            int maxResults = 0;
             int maxVersion = 0;
 
             while (numResults < metadata.writeQuorum && results.Count > 0)
@@ -196,9 +209,7 @@ namespace Client
                         {
                             FileData tempFile = ((ReadDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
                             if (versionCounter.ContainsKey(tempFile.version))
-                            {
                                 versionCounter[tempFile.version]++;
-                            }
                             else
                             {
                                 versionResults.Add(tempFile.version, tempFile);
@@ -216,32 +227,24 @@ namespace Client
             }
 
             if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
+            {
+                System.Console.WriteLine("Error in writeQuorum: not enough results");
                 return null;
-
-            if (semantics.Equals("default"))
-            {
-                int maxResults = 0;
-                foreach (int version in versionCounter.Keys)
-                {
-                    System.Console.WriteLine("Version:" + version);
-                    if (versionCounter[version] > maxResults)
-                    {
-                        maxResults = versionCounter[version];
-                        maxVersion = version;
-                    }
-                }
             }
-            else
+
+            foreach (int version in versionCounter.Keys)
             {
-                //TODO: Store previously read version of a file
-                //Return most recent file that has a quorum
+                System.Console.WriteLine("Version:" + version);
+                if (versionCounter[version] > maxResults)
+                {
+                    maxResults = versionCounter[version];
+                    maxVersion = version;
+                }
             }
 
             System.Console.WriteLine("Max Version is: " + maxVersion);
-            fileData = versionResults[maxVersion];
 
-            System.Console.WriteLine("File Read. \r\nVersion " + fileData.version + ": " + Utils.byteArrayToString(fileData.file));
-            return fileData;
+            return versionResults[maxVersion];
         }
 
 
@@ -257,7 +260,6 @@ namespace Client
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
             WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
-            int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -272,7 +274,7 @@ namespace Client
                 results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, Utils.stringToByteArray(textFile), null, null));
             }
 
-            writeQuorum(metadata, results, numResults);
+            writeQuorum(metadata, results);
         }
 
         public void write(int fileRegister, int byteRegister)
@@ -285,7 +287,6 @@ namespace Client
             FileData fileData = byteRegisters[byteRegister];
 
             List<IAsyncResult> results = new List<IAsyncResult>();
-            int numResults = 0;
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -301,11 +302,13 @@ namespace Client
                 results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, fileData.file, null, null));
             }
 
-            writeQuorum(metadata, results, numResults);
+            writeQuorum(metadata, results);
         }
 
-        private void writeQuorum(MetadataInfo metadata, List<IAsyncResult> results, int numResults)
+        private void writeQuorum(MetadataInfo metadata, List<IAsyncResult> results)
         {
+            int numResults = 0;
+
             while (numResults < metadata.writeQuorum)
             {
                 Thread.Sleep(1000);
@@ -328,7 +331,7 @@ namespace Client
                 }
 
                 if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
-                    System.Console.WriteLine("Error in writeQuorum: not enough results"); 
+                    System.Console.WriteLine("Error in writeQuorum: not enough results");
             }
 
             System.Console.WriteLine("File " + metadata.filename + " written.");
