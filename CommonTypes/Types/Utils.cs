@@ -42,8 +42,8 @@ namespace CommonTypes
 
         public static void createFolderFile(string fileFolder)
         {
-            /*if (Directory.Exists(fileFolder))
-                Directory.Delete(fileFolder, true);*/
+            if (Directory.Exists(fileFolder))
+                Directory.Delete(fileFolder, true);
 
             Directory.CreateDirectory(fileFolder);
         }

@@ -6,13 +6,15 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Threading;
 using System.Windows.Forms;
+using System.Net.Sockets;
 
 namespace DataServer
 {
     public class DataServer : MarshalByRefObject, IDataServerClient, IDataServerPuppet, IDataServerMetadataServer
     {
         private static string fileFolder;
-        private static string[] metadataLocation = new string[3];
+        private static int dataServerId;
+        private static string[] metadataLocations = new string[3];
         private static IMetadataServerDataServer[] metadataServer = new IMetadataServerDataServer[3];
         private static IMetadataServerDataServer primaryMetadata;
         private bool ignoringMessages = false;
@@ -21,6 +23,7 @@ namespace DataServer
         static void Main(string[] args)
         {
             string port = args[0];
+            dataServerId = Convert.ToInt32(port) - 9000;
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port), true);
             ChannelServices.RegisterChannel(channel, true);
 
@@ -34,20 +37,28 @@ namespace DataServer
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             Utils.createFolderFile(fileFolder);
 
-            //TODO: Find primary
-            metadataServer[0] = (IMetadataServerDataServer)Activator.GetObject(
-               typeof(IMetadataServerDataServer),
-               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
-            primaryMetadata = metadataServer[0];
+            findPrimaryMetadata();
+            registerDataServer(port);
 
-            primaryMetadata.register(port);
-
-            System.Console.WriteLine("Data Server " + (Convert.ToInt32(port) - 9000) + " was launched!...");
+            System.Console.WriteLine("Data Server " + dataServerId + " was launched!...");
 
             while (true)
             {
                 System.Console.ReadLine();
-                System.Console.WriteLine("Data Server " + (Convert.ToInt32(port) - 9000));
+                System.Console.WriteLine("Data Server " + dataServerId);
+            }
+        }
+
+        private static void registerDataServer(string port)
+        {
+            try
+            {
+                primaryMetadata.register(port);
+            }
+            catch (SocketException)
+            {
+                findPrimaryMetadata();
+                registerDataServer(port);
             }
         }
 
@@ -55,7 +66,6 @@ namespace DataServer
          ********* CLIENT *********
          **************************/
 
-        //TODO: NullPointerException when exescript is running for the first time
         public FileData read(string filename)
         {
             lock (this)
@@ -104,7 +114,7 @@ namespace DataServer
         *********************************/
 
         public void freeze()
-        {            
+        {
             lock (this)
             {
                 System.Console.WriteLine("Now delaying messages.");
@@ -140,18 +150,48 @@ namespace DataServer
         private void checkFailure()
         {
             if (ignoringMessages)
-                throw new RemotingException();
+                throw new SocketException();
         }
 
         /******************************
         ********* DATA SERVER *********
         *******************************/
 
+        private static void findPrimaryMetadata()
+        {
+            System.Console.WriteLine("Finding available metadatas...");
+
+            foreach (string location in metadataLocations)
+            {
+                try
+                {
+                    IMetadataServerDataServer replica = getMetadataServer(location);
+                    string primaryServerLocation = replica.getPrimaryMetadataLocation(); //hack : triggering an exception
+                    primaryMetadata = primaryServerLocation.Equals(location) ? replica : getMetadataServer(primaryServerLocation);
+                    return;
+                }
+                catch (SocketException)
+                {
+                    //ignore, means the server is down
+                }
+            }
+
+            Thread.Sleep(1000);
+        }
+
+        private static IMetadataServerDataServer getMetadataServer(string location)
+        {
+            IMetadataServerDataServer replica = (IMetadataServerDataServer)Activator.GetObject(
+                typeof(IMetadataServerDataServer),
+                "tcp://localhost:" + location + "/MetadataServer");
+            return replica;
+        }
+
         private static void setMetadataLocation(string[] args)
         {
-            metadataLocation[0] = args[1];
-            metadataLocation[1] = args[2];
-            metadataLocation[2] = args[3];
+            metadataLocations[0] = args[1];
+            metadataLocations[1] = args[2];
+            metadataLocations[2] = args[3];
         }
 
         public string dump()

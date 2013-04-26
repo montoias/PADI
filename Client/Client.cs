@@ -8,6 +8,7 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.Text.RegularExpressions;
 using System.Runtime.Remoting.Messaging;
 using System.Threading;
+using System.Net.Sockets;
 
 namespace Client
 {
@@ -19,9 +20,9 @@ namespace Client
         private int currentFileRegister = 0;
 
         private static IMetadataServerClient[] metadataServer = new IMetadataServerClient[3];
-        private static string[] metadataLocation = new string[3];
         private static IMetadataServerClient primaryMetadata;
         private static string port;
+        private static int clientID;
 
         public delegate void WriteDelegate(IDataServerClient dataServer, string localFilename, byte[] file);
         public delegate FileData ReadDelegate(IDataServerClient dataServer, string localFilename);
@@ -29,6 +30,8 @@ namespace Client
         static void Main(string[] args)
         {
             port = args[0];
+            clientID = 8000 - Convert.ToInt32(port);
+
             TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port), true);
             ChannelServices.RegisterChannel(channel, true);
 
@@ -37,16 +40,14 @@ namespace Client
                 "Client",
                 WellKnownObjectMode.Singleton);
 
-            //TODO: getPrimaryMetadata -> try any available metadata, and ask if its primary
-            setMetadataLocation(args);
-            getMetadataServer();
-            primaryMetadata = metadataServer[0];
+            setMetadataServers(args);
+            getPrimaryMetadata();
 
-            System.Console.WriteLine("Client " + (Convert.ToInt32(port) - 8000) + " was launched!...");
+            System.Console.WriteLine("Client " + clientID + " was launched!...");
             while (true)
             {
                 System.Console.ReadLine();
-                System.Console.WriteLine("Client " + (Convert.ToInt32(port) - 8000));
+                System.Console.WriteLine("Client " + clientID);
             }
 
         }
@@ -68,9 +69,11 @@ namespace Client
                 System.Console.WriteLine("File " + filename + " already exists!");
                 return null;
             }
-            catch (InsufficientDataServersException)
+            catch (SocketException)
             {
-                System.Console.WriteLine("The file was not created because there aren't enough data servers!");
+                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+                getPrimaryMetadata();
+                create(filename, numDataServers, readQuorum, writeQuorum);
             }
             return info;
         }
@@ -97,8 +100,9 @@ namespace Client
             System.Console.WriteLine("Opening the file: " + filename);
             try
             {
-                MetadataInfo info = primaryMetadata.open(filename, 8000 - Convert.ToInt32(port));
-                fileRegisters.Insert((currentFileRegister++) % 10, filename, info);
+                MetadataInfo info = primaryMetadata.open(filename, clientID);
+                if(!fileRegisters.Contains(filename))
+                    fileRegisters.Insert((currentFileRegister++) % 10, filename, info);
                 return info;
             }
             catch (FileAlreadyOpenedException)
@@ -118,7 +122,7 @@ namespace Client
             System.Console.WriteLine("Closing the file: " + filename);
             try
             {
-                primaryMetadata.close(filename, 8000 - Convert.ToInt32(port));
+                primaryMetadata.close(filename, clientID);
             }
             catch (FileNotOpenedException)
             {
@@ -144,6 +148,9 @@ namespace Client
             System.Console.WriteLine("Reading metadata from file register " + fileRegister + " to byte register " + byteRegister);
             FileData fileData = readOnly(fileRegister, semantics);
 
+            if (fileData == null)
+                return null;
+
             byteRegisters[byteRegister] = fileData;
 
             return fileData;
@@ -159,6 +166,12 @@ namespace Client
             ReadDelegate readDelegate = new ReadDelegate(readAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
             FileData fileData;
+
+            if (metadata.dataServers.Count < metadata.numDataServers)
+            {
+                System.Console.WriteLine("There aren't enough servers to execute the request!");
+                return null;
+            }
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -261,6 +274,13 @@ namespace Client
             WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
 
+            if (metadata.dataServers.Count < metadata.numDataServers)
+            {
+                System.Console.WriteLine("There aren't enough servers to execute the request!");
+                return;
+            }
+
+
             foreach (string dsInfo in metadata.dataServers)
             {
                 string serverLocation = metadata.getDataServerLocation(dsInfo);
@@ -283,10 +303,15 @@ namespace Client
             System.Console.WriteLine("Contents to write were from byte register " + byteRegister);
 
             MetadataInfo metadata = (MetadataInfo)fileRegisters[fileRegister];
-            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
             FileData fileData = byteRegisters[byteRegister];
-
+            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
             List<IAsyncResult> results = new List<IAsyncResult>();
+
+            if (metadata.dataServers.Count < metadata.numDataServers)
+            {
+                System.Console.WriteLine("There aren't enough servers to execute the request!");
+                return;
+            }
 
             foreach (string dsInfo in metadata.dataServers)
             {
@@ -341,34 +366,41 @@ namespace Client
          ********* CLIENT *********
          **************************/
 
-        private static void getMetadataServer()
+        private static void setMetadataServers(string [] args)
         {
             metadataServer[0] = (IMetadataServerClient)Activator.GetObject(
                typeof(IMetadataServerClient),
-               "tcp://localhost:" + metadataLocation[0] + "/MetadataServer");
+               "tcp://localhost:" + args[1] + "/MetadataServer");
 
             metadataServer[1] = (IMetadataServerClient)Activator.GetObject(
                typeof(IMetadataServerClient),
-               "tcp://localhost:" + metadataLocation[1] + "/MetadataServer");
+               "tcp://localhost:" + args[2] + "/MetadataServer");
 
             metadataServer[2] = (IMetadataServerClient)Activator.GetObject(
                typeof(IMetadataServerClient),
-               "tcp://localhost:" + metadataLocation[2] + "/MetadataServer");
+               "tcp://localhost:" + args[3] + "/MetadataServer");
         }
 
-        private static void setMetadataLocation(string[] args)
+        private static void getPrimaryMetadata()
         {
-            metadataLocation[0] = args[1];
-            metadataLocation[1] = args[2];
-            metadataLocation[2] = args[3];
+            foreach (IMetadataServerClient server in metadataServer)
+            {
+                try
+                {
+                    string location = server.getPrimaryMetadataLocation();
+                    primaryMetadata = metadataServer[Convert.ToInt32(location) - 8081];
+                    return;
+                }
+                catch (SocketException) { }
+            }
         }
 
-        //TODO: print current metadata server
         public string dump()
         {
             string toReturn = "";
 
             System.Console.WriteLine("Dumping Client information");
+            toReturn += "Primary Metadata: " + primaryMetadata.getPrimaryMetadataLocation() + "\r\n";
             toReturn += "FileRegisters\r\n";
 
             object[] keys = new object[fileRegisters.Keys.Count];

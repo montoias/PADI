@@ -9,7 +9,10 @@ namespace CommonTypes
 {
     public interface IMetadataServer
     {
-        void checkState();
+        void checkpoint();
+        void isAlive();
+        string notifyMetadataServers(string location);
+        int getMetadataID();
         void sendInstruction(string instruction);
         void receiveInstruction(string instruction);
         void receiveLog(string notifier); 

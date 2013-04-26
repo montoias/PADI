@@ -19,7 +19,6 @@ namespace CommonTypes
             serverProv.TypeFilterLevel = TypeFilterLevel.Full;
             IDictionary propBag = new Hashtable();
             propBag["port"] = tcpPort;
-            propBag["timeout"] = 60000; // in milliseconds
             propBag["typeFilterLevel"] = TypeFilterLevel.Full;
             propBag["name"] = Guid.NewGuid().ToString();
             if (isSecure)
