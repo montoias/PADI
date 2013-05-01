@@ -61,6 +61,7 @@
     <Compile Include="Interfaces\IMetadataServerPuppet.cs" />
     <Compile Include="Types\MetadataInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\MetadataState.cs" />
     <Compile Include="Types\Utils.cs" />
   </ItemGroup>
   <ItemGroup />

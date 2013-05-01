@@ -15,6 +15,7 @@ namespace MetadataServer
     class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
     {
         private static string fileFolder;
+        private static string metadataState;
         private static string port;
         private static int metadataID;
 
@@ -23,7 +24,6 @@ namespace MetadataServer
 
         private Dictionary<string, List<int>> openedFiles = new Dictionary<string, List<int>>();
         private Dictionary<string, MetadataInfo> queueMetadata = new Dictionary<string, MetadataInfo>();
-
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
 
         private Dictionary<string, IDataServerMetadataServer> dataServersList = new Dictionary<string, IDataServerMetadataServer>();
@@ -34,7 +34,7 @@ namespace MetadataServer
         //TODO: pass metadatalist on process create
         private static string[] metadataLocations = { "8081", "8082", "8083" };
 
-        private static string log = "";
+        private static List<string> log = new List<string>();
 
         public static string primaryServerLocation;
         private static IMetadataServer primaryServer;
@@ -47,7 +47,10 @@ namespace MetadataServer
             ChannelServices.RegisterChannel(channel, true);
 
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
+            metadataState = Path.Combine(Application.StartupPath, "State_" + port);
             Utils.createFolderFile(fileFolder);
+            Utils.createFolderFile(metadataState);
+            metadataState = Path.Combine(metadataState, "metadata_state");
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(MetadataServer),
@@ -81,9 +84,9 @@ namespace MetadataServer
             string path = Path.Combine(fileFolder, filename);
             MetadataInfo metadata;
 
-            string inst = "CREATE" + "," + filename + "," + numDataServers + "," + readQuorum + "," + writeQuorum;
-            sendInstruction(inst);
-            log += inst + "-";
+            string instruction = "CREATE" + "," + filename + "," + numDataServers + "," + readQuorum + "," + writeQuorum;
+            sendInstruction(instruction);
+            log.Add(instruction);
 
 
             if (!metadataTable.ContainsKey(filename) && !File.Exists(path))
@@ -124,9 +127,9 @@ namespace MetadataServer
             isAlive();
 
             string path = Path.Combine(fileFolder, filename);
-            string inst = "DELETE" + "," + filename;
-            sendInstruction(inst);
-            log += inst + "-";
+            string instruction = "DELETE" + "," + filename;
+            sendInstruction(instruction);
+            log.Add(instruction);
 
             if (File.Exists(path))
             {
@@ -153,13 +156,13 @@ namespace MetadataServer
 
             string path = Path.Combine(fileFolder, filename);
             MetadataInfo metadata;
-            string inst = "OPEN" + "," + filename + "," + location;
+            string instruction = "OPEN" + "," + filename + "," + location;
 
             if (openedFiles.ContainsKey(filename) && openedFiles[filename].Contains(location))
                 throw new FileAlreadyOpenedException();
 
-            sendInstruction(inst);
-            log += inst + "-";
+            sendInstruction(instruction);
+            log.Add(instruction);
 
             if (metadataTable.ContainsKey(filename))
             {
@@ -198,9 +201,9 @@ namespace MetadataServer
         {
             isAlive();
 
-            string inst = "CLOSE" + "," + filename;
-            sendInstruction(inst);
-            log += inst + "-";
+            string instruction = "CLOSE" + "," + filename;
+            sendInstruction(instruction);
+            log.Add(instruction);
 
             if (!openedFiles.ContainsKey(filename) || !openedFiles[filename].Contains(location))
                 throw new FileNotOpenedException();
@@ -218,9 +221,9 @@ namespace MetadataServer
             isAlive();
 
             System.Console.WriteLine("Registering new data server at tcp://localhost:" + location + "/DataServer");
-            string inst = "REGISTER" + "," + location;
-            sendInstruction(inst);
-            log += inst + "-";
+            string instruction = "REGISTER" + "," + location;
+            sendInstruction(instruction);
+            log.Add(instruction);
 
             dataServersList.Add(location, (IDataServerMetadataServer)Activator.GetObject(
                typeof(IDataServerMetadataServer),
@@ -299,6 +302,13 @@ namespace MetadataServer
             int numCacheFiles = metadataTable.Count;
             string contents = "";
 
+            contents += "Primary metadata @ " + primaryServerLocation + "\r\n";
+            contents += "Known active replicas \r\n";
+            foreach (KeyValuePair<string, IMetadataServer> entry in backupReplicas)
+            {
+                contents += entry.Key + "\r\n";
+            }
+
             System.Console.WriteLine("Dumping metadata table");
             contents += "METADATA CACHE\r\n";
 
@@ -347,16 +357,25 @@ namespace MetadataServer
                 if (backupReplicas.Count > 0)
                 {
                     List<string> list = new List<string>(backupReplicas.Keys);
-
-                    if (metadataID > backupReplicas[list[0]].getMetadataID())
+                    try
                     {
-                        primaryServer = backupReplicas[list[0]];
-                        primaryServerLocation = list[0];
-                        timer.Change(tickerPeriod, tickerPeriod);
+
+                        if (metadataID > backupReplicas[list[0]].getMetadataID())
+                        {
+                            primaryServer = backupReplicas[list[0]];
+                            primaryServerLocation = list[0];
+                            timer.Change(tickerPeriod, tickerPeriod);
+                        }
+                        else
+                        {
+                            System.Console.WriteLine("I'm the new primary metadata.");
+                            primaryServerLocation = port;
+                        }
                     }
-                    else
+                    catch (SocketException)
                     {
                         System.Console.WriteLine("I'm the new primary metadata.");
+                        backupReplicas.Clear();
                         primaryServerLocation = port;
                     }
                 }
@@ -467,7 +486,7 @@ namespace MetadataServer
          * Upon a request, the primary metadata sends a log, that is immediately
          * executed.
          */
-        public void receiveLog(string log)
+        public void receiveLog(List<string> log)
         {
             isAlive();
 
@@ -487,14 +506,29 @@ namespace MetadataServer
 
             if (port.Equals(primaryServerLocation))
             {
-                foreach (IMetadataServer replica in backupReplicas.Values)
-                    replica.receiveInstruction(instruction);
+                List<string> toRemoval = new List<string>();
+                foreach (KeyValuePair<string, IMetadataServer> entry in backupReplicas)
+                {
+                    try
+                    {
+                        entry.Value.receiveInstruction(instruction);
+                    }
+                    catch (SocketException)
+                    {
+                        //If replica isn't available, we should remove it from the list!
+                        toRemoval.Add(entry.Key);
+                    }
+                }
+
+                foreach (string remove in toRemoval)
+                {
+                    backupReplicas.Remove(remove);
+                }
             }
         }
-        private void executeInstructions(string log)
+        private void executeInstructions(List<string> log)
         {
-            string[] instructions = log.Split('-');
-            foreach (string instruction in instructions)
+            foreach (string instruction in log)
             {
                 try
                 {
@@ -542,6 +576,7 @@ namespace MetadataServer
 
         public int getMetadataID()
         {
+            isAlive();
             return metadataID;
         }
 

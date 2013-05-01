@@ -19,7 +19,7 @@ namespace Client
         private Dictionary<string, int> fileVersions = new Dictionary<string, int>();
         private int currentFileRegister = 0;
 
-        private static IMetadataServerClient[] metadataServer = new IMetadataServerClient[3];
+        private static string[] metadataLocations = new string[3];
         private static IMetadataServerClient primaryMetadata;
         private static string port;
         private static int clientID;
@@ -40,7 +40,7 @@ namespace Client
                 "Client",
                 WellKnownObjectMode.Singleton);
 
-            setMetadataServers(args);
+            setMetadataLocation(args);
             getPrimaryMetadata();
 
             System.Console.WriteLine("Client " + clientID + " was launched!...");
@@ -73,7 +73,8 @@ namespace Client
             {
                 System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
                 getPrimaryMetadata();
-                create(filename, numDataServers, readQuorum, writeQuorum);
+                Thread.Sleep(1000);
+                return create(filename, numDataServers, readQuorum, writeQuorum);
             }
             return info;
         }
@@ -92,6 +93,13 @@ namespace Client
             catch (CannotDeleteFileException)
             {
                 System.Console.WriteLine("The file " + filename + " cannot be deleted because is being used!");
+            }
+            catch (SocketException)
+            {
+                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+                getPrimaryMetadata();
+                Thread.Sleep(1000);
+                delete(filename);
             }
         }
 
@@ -115,6 +123,13 @@ namespace Client
                 System.Console.WriteLine("The file " + filename + " does not exist!");
                 return null;
             }
+            catch (SocketException)
+            {
+                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+                getPrimaryMetadata();
+                Thread.Sleep(1000);
+                return open(filename);
+            }
         }
 
         public void close(string filename)
@@ -131,6 +146,13 @@ namespace Client
             catch (FileDoesNotExistException)
             {
                 System.Console.WriteLine("The file " + filename + " does not exist!");
+            }
+            catch (SocketException)
+            {
+                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+                getPrimaryMetadata();
+                Thread.Sleep(1000);
+                close(filename);
             }
         }
 
@@ -366,33 +388,41 @@ namespace Client
          ********* CLIENT *********
          **************************/
 
-        private static void setMetadataServers(string [] args)
-        {
-            metadataServer[0] = (IMetadataServerClient)Activator.GetObject(
-               typeof(IMetadataServerClient),
-               "tcp://localhost:" + args[1] + "/MetadataServer");
-
-            metadataServer[1] = (IMetadataServerClient)Activator.GetObject(
-               typeof(IMetadataServerClient),
-               "tcp://localhost:" + args[2] + "/MetadataServer");
-
-            metadataServer[2] = (IMetadataServerClient)Activator.GetObject(
-               typeof(IMetadataServerClient),
-               "tcp://localhost:" + args[3] + "/MetadataServer");
-        }
-
         private static void getPrimaryMetadata()
         {
-            foreach (IMetadataServerClient server in metadataServer)
+            System.Console.WriteLine("Finding available metadatas...");
+
+            foreach (string location in metadataLocations)
             {
                 try
                 {
-                    string location = server.getPrimaryMetadataLocation();
-                    primaryMetadata = metadataServer[Convert.ToInt32(location) - 8081];
+                    IMetadataServerClient replica = getMetadataServer(location);
+                    string primaryServerLocation = replica.getPrimaryMetadataLocation(); //hack : triggering an exception
+                    primaryMetadata = primaryServerLocation.Equals(location) ? replica : getMetadataServer(primaryServerLocation);
                     return;
                 }
-                catch (SocketException) { }
+                catch (SocketException)
+                {
+                    //ignore, means the server is down
+                }
             }
+
+            Thread.Sleep(1000); //FIXME: Why do I have this?
+        }
+
+        private static IMetadataServerClient getMetadataServer(string location)
+        {
+            IMetadataServerClient replica = (IMetadataServerClient)Activator.GetObject(
+                typeof(IMetadataServerClient),
+                "tcp://localhost:" + location + "/MetadataServer");
+            return replica;
+        }
+
+        private static void setMetadataLocation(string[] args)
+        {
+            metadataLocations[0] = args[1];
+            metadataLocations[1] = args[2];
+            metadataLocations[2] = args[3];
         }
 
         public string dump()

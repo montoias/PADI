@@ -15,7 +15,7 @@ namespace CommonTypes
         int getMetadataID();
         void sendInstruction(string instruction);
         void receiveInstruction(string instruction);
-        void receiveLog(string notifier); 
-        void requestLog(string log);
+        void receiveLog(List<string> log);
+        void requestLog(string notifier);
     }
 }

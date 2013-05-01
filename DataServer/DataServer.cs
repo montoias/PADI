@@ -53,11 +53,15 @@ namespace DataServer
         {
             try
             {
+                System.Console.WriteLine("Object:" + primaryMetadata.GetHashCode());
                 primaryMetadata.register(port);
+
             }
             catch (SocketException)
             {
                 findPrimaryMetadata();
+                System.Console.WriteLine("Object:" + primaryMetadata.GetHashCode());
+                Thread.Sleep(1000);
                 registerDataServer(port);
             }
         }
@@ -157,6 +161,7 @@ namespace DataServer
         ********* DATA SERVER *********
         *******************************/
 
+        //TODO: call this method recursively if no metadata is found!!
         private static void findPrimaryMetadata()
         {
             System.Console.WriteLine("Finding available metadatas...");
@@ -166,13 +171,17 @@ namespace DataServer
                 try
                 {
                     IMetadataServerDataServer replica = getMetadataServer(location);
+                    System.Console.WriteLine("Checking replica @ " + location);
                     string primaryServerLocation = replica.getPrimaryMetadataLocation(); //hack : triggering an exception
+                    System.Console.WriteLine("Primary @ " + primaryServerLocation);
                     primaryMetadata = primaryServerLocation.Equals(location) ? replica : getMetadataServer(primaryServerLocation);
+                    System.Console.WriteLine("Object:" + primaryMetadata.GetHashCode());
                     return;
                 }
                 catch (SocketException)
                 {
                     //ignore, means the server is down
+                    System.Console.WriteLine("Replica down @ "+  location);
                 }
             }
 
@@ -196,7 +205,21 @@ namespace DataServer
 
         public string dump()
         {
-            string contents = "DATA SERVER FOLDER\r\n";
+            string contents = "";
+            
+            contents += "Primary metadata @: ";
+
+            try
+            {
+                contents += primaryMetadata.getPrimaryMetadataLocation() + "\r\n";
+            }
+            catch (SocketException)
+            {
+                contents += "Undetermined location \r\n";
+            }
+
+
+            contents += "DATA SERVER FOLDER\r\n";
             foreach (string filename in Directory.GetFiles(fileFolder))
                 contents += filename + "\r\n";
 
