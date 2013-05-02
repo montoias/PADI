@@ -11,11 +11,11 @@ namespace CommonTypes
     {
         void checkpoint();
         void isAlive();
-        string notifyMetadataServers(string location);
+        int notifyMetadataServers(int location);
         int getMetadataID();
         void sendInstruction(string instruction);
         void receiveInstruction(string instruction);
         void receiveLog(List<string> log);
-        void requestLog(string notifier);
+        void requestLog(int notifier);
     }
 }

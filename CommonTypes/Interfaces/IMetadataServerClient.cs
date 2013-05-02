@@ -12,6 +12,6 @@ namespace CommonTypes
         void close(string filename, int location);
         MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum);
         void delete(string filename);
-        string getPrimaryMetadataLocation();
+        int getPrimaryMetadataLocation();
     }
 }

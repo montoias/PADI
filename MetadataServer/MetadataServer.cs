@@ -12,11 +12,11 @@ using System.Threading;
 
 namespace MetadataServer
 {
-    class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
+    public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
     {
         private static string fileFolder;
         private static string metadataState;
-        private static string port;
+        private static int port;
         private static int metadataID;
 
         private static System.Threading.Timer timer = new System.Threading.Timer(Tick, null, Timeout.Infinite, Timeout.Infinite);
@@ -26,275 +26,29 @@ namespace MetadataServer
         private Dictionary<string, MetadataInfo> queueMetadata = new Dictionary<string, MetadataInfo>();
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
 
-        private Dictionary<string, IDataServerMetadataServer> dataServersList = new Dictionary<string, IDataServerMetadataServer>();
-        private static Dictionary<string, IMetadataServer> backupReplicas = new Dictionary<string, IMetadataServer>();
-
-        private bool ignoringMessages = false;
-
+        private Dictionary<int, IDataServerMetadataServer> dataServersList = new Dictionary<int, IDataServerMetadataServer>();
+        private static Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
+        
         //TODO: pass metadatalist on process create
-        private static string[] metadataLocations = { "8081", "8082", "8083" };
+        private static int[] metadataLocations;
 
         private static List<string> log = new List<string>();
 
-        public static string primaryServerLocation;
+        public static int primaryServerLocation;
         private static IMetadataServer primaryServer;
 
         static void Main(string[] args)
         {
-            port = args[0];
-            metadataID = Convert.ToInt32(port) - 8081;
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(args[0]), true);
+            port = Convert.ToInt32(args[0]);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(port, true);
             ChannelServices.RegisterChannel(channel, true);
-
-            fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
-            metadataState = Path.Combine(Application.StartupPath, "State_" + port);
-            Utils.createFolderFile(fileFolder);
-            Utils.createFolderFile(metadataState);
-            metadataState = Path.Combine(metadataState, "metadata_state");
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(MetadataServer),
                 "MetadataServer",
                 WellKnownObjectMode.Singleton);
 
-            if (findAvailableMetadatas(port))
-            {
-                System.Console.WriteLine("I'm not the primary...");
-                notifyPrimaryMetadata(port);
-                timer.Change(tickerPeriod, tickerPeriod);
-            }
-
-            System.Console.WriteLine("Metadata " + metadataID + " was launched!...");
-
-            while (true)
-            {
-                System.Console.ReadLine();
-                System.Console.WriteLine("Metadata " + metadataID);
-            }
-        }
-
-        /**************************
-         ********* CLIENT *********
-         **************************/
-
-        public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
-        {
-            isAlive();
-
-            string path = Path.Combine(fileFolder, filename);
-            MetadataInfo metadata;
-
-            string instruction = "CREATE" + "," + filename + "," + numDataServers + "," + readQuorum + "," + writeQuorum;
-            sendInstruction(instruction);
-            log.Add(instruction);
-
-
-            if (!metadataTable.ContainsKey(filename) && !File.Exists(path))
-            {
-                System.Console.WriteLine("Creating file: " + filename);
-
-                int tempNumServers = (numDataServers > dataServersList.Count) ? dataServersList.Count : numDataServers;
-                ArrayList dataServersArray = new ArrayList(dataServersList.Keys);
-                List<string> locations = new List<string>();
-
-                //TODO: Distribution algorithm
-                for (int i = 0; i < tempNumServers; i++)
-                {
-                    locations.Add((string)dataServersArray[i] + "," + generateLocalFileName());
-                }
-
-                metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
-                if (numDataServers > dataServersList.Count)
-                {
-                    System.Console.WriteLine("Adding to data server queue: " + filename);
-                    queueMetadata.Add(filename, metadata);
-                }
-
-                metadataTable.Add(filename, metadata);
-                Utils.serializeObject<MetadataInfo>(metadata, path);
-
-                return metadata;
-            }
-            else
-            {
-                System.Console.WriteLine("File already exists:" + filename);
-                throw new FileAlreadyExistsException();
-            }
-        }
-
-        public void delete(string filename)
-        {
-            isAlive();
-
-            string path = Path.Combine(fileFolder, filename);
-            string instruction = "DELETE" + "," + filename;
-            sendInstruction(instruction);
-            log.Add(instruction);
-
-            if (File.Exists(path))
-            {
-                if (!openedFiles.ContainsKey(filename))
-                {
-                    System.Console.WriteLine("Deleting file:" + filename);
-                    metadataTable.Remove(filename);
-                    File.Delete(path);
-                }
-                else
-                {
-                    throw new CannotDeleteFileException();
-                }
-            }
-            else
-            {
-                throw new FileDoesNotExistException();
-            }
-        }
-
-        public MetadataInfo open(string filename, int location)
-        {
-            isAlive();
-
-            string path = Path.Combine(fileFolder, filename);
-            MetadataInfo metadata;
-            string instruction = "OPEN" + "," + filename + "," + location;
-
-            if (openedFiles.ContainsKey(filename) && openedFiles[filename].Contains(location))
-                throw new FileAlreadyOpenedException();
-
-            sendInstruction(instruction);
-            log.Add(instruction);
-
-            if (metadataTable.ContainsKey(filename))
-            {
-                System.Console.WriteLine("File in cache:" + filename);
-                metadata = metadataTable[filename];
-            }
-            else
-            {
-                if (File.Exists(path))
-                {
-                    System.Console.WriteLine("Opening file from disk:" + filename);
-                    metadata = Utils.deserializeObject<MetadataInfo>(path);
-                    metadataTable.Add(filename, metadata);
-                }
-
-                else
-                {
-                    System.Console.WriteLine("File doesn't exist:" + filename);
-                    throw new FileDoesNotExistException();
-                }
-            }
-
-            if (!openedFiles.ContainsKey(filename))
-            {
-                List<int> clientList = new List<int>();
-                clientList.Add(location);
-                openedFiles.Add(filename, clientList);
-            }
-            else
-                openedFiles[filename].Add(location);
-
-            return metadata;
-        }
-
-        public void close(string filename, int location)
-        {
-            isAlive();
-
-            string instruction = "CLOSE" + "," + filename;
-            sendInstruction(instruction);
-            log.Add(instruction);
-
-            if (!openedFiles.ContainsKey(filename) || !openedFiles[filename].Contains(location))
-                throw new FileNotOpenedException();
-
-            if (openedFiles[filename].Count == 1)
-                openedFiles.Remove(filename);
-        }
-
-        /*******************************
-         ********* DATA SERVER *********
-         *******************************/
-
-        public void register(string location)
-        {
-            isAlive();
-
-            System.Console.WriteLine("Registering new data server at tcp://localhost:" + location + "/DataServer");
-            string instruction = "REGISTER" + "," + location;
-            sendInstruction(instruction);
-            log.Add(instruction);
-
-            dataServersList.Add(location, (IDataServerMetadataServer)Activator.GetObject(
-               typeof(IDataServerMetadataServer),
-               "tcp://localhost:" + location + "/DataServer"));
-
-            processMetadataQueue(location);
-        }
-
-        private void processMetadataQueue(string location)
-        {
-            string pair = location + "," + generateLocalFileName();
-            ArrayList fileList = new ArrayList(queueMetadata.Keys);
-            foreach (string filename in fileList)
-            {
-                System.Console.WriteLine("processing files in the queue: " + filename);
-                List<int> clientIDs = openedFiles[filename];
-
-                string path = Path.Combine(fileFolder, filename);
-                MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
-                metadata.dataServers.Add(pair);
-                Utils.serializeObject<MetadataInfo>(metadata, path);
-
-                //TODO: Inneficient, store objects at registering
-                foreach (int clientID in clientIDs)
-                {
-                    int loc = clientID + 8000;
-                    System.Console.WriteLine("updating client at port :" + loc);
-                    IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
-                           typeof(IClientMetadataServer), "tcp://localhost:" + loc + "/Client");
-
-                    client.updateMetadata(filename, metadata);
-                }
-
-                if (queueMetadata[filename].numDataServers == dataServersList.Count)
-                    queueMetadata.Remove(filename);
-            }
-        }
-
-        /********************************
-        ********* PUPPET MASTER *********
-        *********************************/
-
-        public void fail()
-        {
-            System.Console.WriteLine("Now ignoring messages.");
-            ignoringMessages = true;
-            backupReplicas.Clear();
-            timer.Change(Timeout.Infinite, Timeout.Infinite);
-        }
-
-        public void recover()
-        {
-            System.Console.WriteLine("Accepting messages again");
-
-            ignoringMessages = false;
-
-            if (findAvailableMetadatas(port))
-            {
-                System.Console.WriteLine("I'm not the primary...");
-                notifyPrimaryMetadata(port);
-                timer.Change(tickerPeriod, tickerPeriod);
-            }
-
-        }
-
-        public void isAlive()
-        {
-            System.Console.WriteLine("Checking for failure... It is " + ignoringMessages);
-
-            if (ignoringMessages)
-                throw new SocketException();
+            System.Console.ReadLine();
         }
 
         public string dump()
@@ -304,7 +58,7 @@ namespace MetadataServer
 
             contents += "Primary metadata @ " + primaryServerLocation + "\r\n";
             contents += "Known active replicas \r\n";
-            foreach (KeyValuePair<string, IMetadataServer> entry in backupReplicas)
+            foreach (KeyValuePair<int, IMetadataServer> entry in backupReplicas)
             {
                 contents += entry.Key + "\r\n";
             }
@@ -334,10 +88,25 @@ namespace MetadataServer
             return contents;
         }
 
-        /****************************
-         ********* METADATA *********
-         ****************************/
+        public void init(int[] metadataList)
+        {
+            metadataID = port - 8081;
+            fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
+            metadataState = Path.Combine(Application.StartupPath, "State_" + port);
+            Utils.createFolderFile(fileFolder);
+            Utils.createFolderFile(metadataState);
+            metadataState = Path.Combine(metadataState, "metadata_state");
+            metadataLocations = metadataList; 
 
+            if (findAvailableMetadatas(port))
+            {
+                System.Console.WriteLine("I'm not the primary...");
+                notifyPrimaryMetadata(port);
+                timer.Change(tickerPeriod, tickerPeriod);
+            }
+
+            System.Console.WriteLine("Metadata " + metadataID + " was launched!...");
+        }
 
         private static void Tick(object state)
         {
@@ -356,7 +125,7 @@ namespace MetadataServer
 
                 if (backupReplicas.Count > 0)
                 {
-                    List<string> list = new List<string>(backupReplicas.Keys);
+                    List<int> list = new List<int>(backupReplicas.Keys);
                     try
                     {
 
@@ -404,12 +173,12 @@ namespace MetadataServer
          * If there aren't metadata servers available, it sets the caller as 
          * the primary metadata server.
          */
-        private static bool findAvailableMetadatas(string port)
+        private static bool findAvailableMetadatas(int port)
         {
             System.Console.WriteLine("Finding available metadatas...");
             primaryServerLocation = port;
 
-            foreach (string location in metadataLocations)
+            foreach (int location in metadataLocations)
             {
                 if (!port.Equals(location))
                 {
@@ -442,7 +211,7 @@ namespace MetadataServer
             }
         }
 
-        private static IMetadataServer getMetadataServer(string location)
+        private static IMetadataServer getMetadataServer(int location)
         {
             IMetadataServer replica = (IMetadataServer)Activator.GetObject(
                 typeof(IMetadataServer),
@@ -454,7 +223,7 @@ namespace MetadataServer
          * Returns the primaryServerLocation, and adds the caller to the
          * list of backup replicas.
          */
-        public string notifyMetadataServers(string location)
+        public int notifyMetadataServers(int location)
         {
             isAlive();
             System.Console.WriteLine("Received notification from ms @ " + location);
@@ -462,7 +231,7 @@ namespace MetadataServer
             return primaryServerLocation;
         }
 
-        private static void notifyPrimaryMetadata(string notifier)
+        private static void notifyPrimaryMetadata(int notifier)
         {
             System.Console.WriteLine("Notifying the primary metadata that I'm up!");
             primaryServer.requestLog(notifier);
@@ -473,7 +242,7 @@ namespace MetadataServer
          * to the primary metadata, telling that it is online. The primary data
          * sends a log to the notifier, in order to maintain consistency.
          */
-        public void requestLog(string notifier)
+        public void requestLog(int notifier)
         {
             isAlive();
 
@@ -506,8 +275,8 @@ namespace MetadataServer
 
             if (port.Equals(primaryServerLocation))
             {
-                List<string> toRemoval = new List<string>();
-                foreach (KeyValuePair<string, IMetadataServer> entry in backupReplicas)
+                List<int> toRemoval = new List<int>();
+                foreach (KeyValuePair<int, IMetadataServer> entry in backupReplicas)
                 {
                     try
                     {
@@ -520,7 +289,7 @@ namespace MetadataServer
                     }
                 }
 
-                foreach (string remove in toRemoval)
+                foreach (int remove in toRemoval)
                 {
                     backupReplicas.Remove(remove);
                 }
@@ -557,13 +326,24 @@ namespace MetadataServer
                     close(parameters[1], Convert.ToInt32(parameters[2]));
                     break;
                 case "CREATE":
-                    create(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]));
+                    if (parameters.Length > 5)
+                    {
+                        List<string> locations = new List<string>();
+                        string[] allLocations = parameters[5].Split('\n');
+
+                        foreach (string location in allLocations)
+                            locations.Add(location);
+
+                        create(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]), locations);
+                    }
+                    else
+                        create(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]));
                     break;
                 case "DELETE":
                     delete(parameters[1]);
                     break;
                 case "REGISTER":
-                    register(parameters[1]);
+                    register(Convert.ToInt32(parameters[1]));
                     break;
             }
         }
@@ -581,7 +361,7 @@ namespace MetadataServer
         }
 
 
-        public string getPrimaryMetadataLocation()
+        public int getPrimaryMetadataLocation()
         {
             isAlive();
             return primaryServerLocation;

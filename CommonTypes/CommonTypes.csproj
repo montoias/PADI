@@ -41,7 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Exceptions\CannotDeleteFileException.cs" />
     <Compile Include="Exceptions\MetadataFileDoesNotExistException.cs" />
     <Compile Include="Exceptions\FileDoesNotExistException.cs" />
     <Compile Include="Exceptions\FileNotOpenedException.cs" />

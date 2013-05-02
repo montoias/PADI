@@ -9,6 +9,7 @@ namespace CommonTypes
 {
     public interface IClientPuppet
     {
+        void init(int[] metadataList);
         MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum);
         MetadataInfo open(string filename);
         void close(string filename);

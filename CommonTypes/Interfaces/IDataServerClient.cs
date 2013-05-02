@@ -9,6 +9,6 @@ namespace CommonTypes
     public interface IDataServerClient
     {
         FileData read(string filename);
-        void write(string filename, byte[]file);
+        void write(string filename, FileData file);
     }
 }

@@ -11,9 +11,8 @@ using System.Runtime.Remoting.Messaging;
 
 namespace PuppetMaster
 {
-    public class PuppetMaster
+    public partial class PuppetMaster
     {
-
         private Form1 form;
 
         private string projectFolder = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
@@ -24,18 +23,12 @@ namespace PuppetMaster
         private List<string> scriptInstructions = new List<string>();
         private int currentInstruction;
 
-        private List<IClientPuppet> clientsList = new List<IClientPuppet>();
-        private List<IDataServerPuppet> dataServersList = new List<IDataServerPuppet>();
-
-        private IMetadataServerPuppet[] metadataList = new IMetadataServerPuppet[3];
-        private string[] metadataLocation = { "8081", "8082", "8083" };
+        private int[] metadataLocations = { 8081, 8082, 8083 };
         private BitArray metadataLaunched = new BitArray(3);
 
         private int clientPort = 8000;
         private int dataServerPort = 9000;
-
-        public delegate void ExescriptDelegate(int selectedClient, string filename);
-
+        
         /*
          * Class constructor. Used to initialize its tcp channel, which is used to 
          * communicate with other entities.
@@ -46,128 +39,6 @@ namespace PuppetMaster
             ChannelServices.RegisterChannel(channel, true);
         }
 
-        /**************************
-         ********* CLIENT *********
-         **************************/
-
-        public void openFile(string filename, int selectedClient)
-        {
-            clientsList[selectedClient].open(filename);
-        }
-
-        public void closeFile(string filename, int selectedClient)
-        {
-            clientsList[selectedClient].close(filename);
-        }
-
-        public void createFile(string filename, int nServers, int readQuorum, int writeQuorum, int selectedClient)
-        {
-            clientsList[selectedClient].create(filename, nServers, readQuorum, writeQuorum);
-        }
-
-        public void deleteFile(string filename, int selectedClient)
-        {
-            clientsList[selectedClient].delete(filename);
-        }
-
-        public void writeFile(int fileRegister, string file, int selectedClient)
-        {
-            clientsList[selectedClient].write(fileRegister, file);
-        }
-
-        public void writeFile(int fileRegister, int byteRegister, int selectedClient)
-        {
-            clientsList[selectedClient].write(fileRegister, byteRegister);
-        }
-
-        public void readFile(int fileRegister, string semantics, int byteRegister, int selectedClient)
-        {
-            FileData fileData = clientsList[selectedClient].read(fileRegister, semantics, byteRegister);
-
-            if (fileData != null)
-                form.updateFileText(Utils.byteArrayToString(fileData.file), fileData.version);
-        }
-
-        public void copy(int selectedClient, int fileRegister1, string semantics, int fileRegister2, string salt)
-        {
-            clientsList[selectedClient].copy(fileRegister1, semantics, fileRegister2, salt);
-        }
-
-        public void dumpClient(int selectedClient)
-        {
-            clientsList[selectedClient].dump();
-        }
-
-        public void executeExescript(int processNumber, string filename)
-        {
-            ExescriptDelegate exescriptDelegate = new ExescriptDelegate(exescriptAsync);
-            AsyncCallback exescriptCallback = new AsyncCallback(exescriptAsyncCallBack);
-            exescriptDelegate.BeginInvoke(processNumber, filename, exescriptCallback, null);
-        }
-
-        private void exescriptAsync(int selectedClient, string filename)
-        {
-            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
-            string[] fileText = File.ReadAllLines(path);
-            clientsList[selectedClient].exescript(fileText);
-        }
-
-        private void exescriptAsyncCallBack(IAsyncResult ar)
-        {
-            ExescriptDelegate exescriptDelegate = (ExescriptDelegate)((AsyncResult)ar).AsyncDelegate;
-            exescriptDelegate.EndInvoke(ar);
-        }
-        
-        /****************************
-         ********* METADATA *********
-         ****************************/
-        public void failMetadata(int selectedMetadata)
-        {
-            metadataList[selectedMetadata].fail();
-        }
-
-        public void recoverMetadata(int selectedMetadata)
-        {
-            metadataList[selectedMetadata].recover();
-        }
-
-        public void dumpMetadataServer(int selectedMetadata)
-        {
-            metadataList[selectedMetadata].dump();
-        }
-
-        /*******************************
-         ********* DATA SERVER *********
-         *******************************/
-        public void freezeDataServer(int selectedDataServer)
-        {
-            dataServersList[selectedDataServer].freeze();
-        }
-
-        public void unfreezeDataServer(int selectedDataServer)
-        {
-            dataServersList[selectedDataServer].unfreeze();
-        }
-
-        public void failDataServer(int selectedDataServer)
-        {
-            dataServersList[selectedDataServer].fail();
-        }
-
-        public void recoverDataServer(int selectedDataServer)
-        {
-            dataServersList[selectedDataServer].recover();
-        }
-
-        public void dumpDataServer(int selectedDataServer)
-        {
-            dataServersList[selectedDataServer].dump();
-        }
-
-        /*********************************
-         ********* PUPPET MASTER *********
-         *********************************/
-
         /*
          * This method launches a client in a determined port, which begins at 8000
          * and increments for each new client. The locations of the metadataServers are passed
@@ -175,14 +46,13 @@ namespace PuppetMaster
          */
         public void launchClient()
         {
-            string args = clientPort + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
 
-            Process.Start(Path.Combine(projectFolder, clientExec), args);
+            Process.Start(Path.Combine(projectFolder, clientExec), clientPort.ToString());
 
             IClientPuppet newClient = (IClientPuppet)Activator.GetObject(
                 typeof(IClientPuppet),
                 "tcp://localhost:" + clientPort + "/Client");
-
+            newClient.init(metadataLocations);
             clientsList.Add(newClient);
             form.addClient();
             clientPort++;
@@ -190,12 +60,14 @@ namespace PuppetMaster
 
         public void launchMetadata(int selectedMetadata)
         {
-            string location = metadataLocation[selectedMetadata];
+            int location = metadataLocations[selectedMetadata];
 
-            Process.Start(Path.Combine(projectFolder, metadataExec), location);
+            Process.Start(Path.Combine(projectFolder, metadataExec), location.ToString());
             IMetadataServerPuppet newMetadata = (IMetadataServerPuppet)Activator.GetObject(
                typeof(IMetadataServerPuppet),
                "tcp://localhost:" + location + "/MetadataServer");
+
+            newMetadata.init(metadataLocations);
             metadataList[selectedMetadata] = newMetadata;
             metadataLaunched[selectedMetadata] = true;
             form.addMetadataServer();
@@ -208,13 +80,12 @@ namespace PuppetMaster
          */
         public void launchDataServer()
         {
-            string args = dataServerPort + " " + metadataLocation[0] + " " + metadataLocation[1] + " " + metadataLocation[2];
-
-            Process.Start(Path.Combine(projectFolder, dataServerExec), args);
+            Process.Start(Path.Combine(projectFolder, dataServerExec), dataServerPort.ToString());
             IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
                 typeof(IDataServerPuppet),
                 "tcp://localhost:" + dataServerPort + "/DataServer");
 
+            newDataServer.init(metadataLocations);
             dataServersList.Add(newDataServer);
             form.addDataServer();
             dataServerPort++;

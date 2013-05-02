@@ -8,7 +8,7 @@ namespace CommonTypes
 {
     public interface IMetadataServerDataServer
     {
-        string getPrimaryMetadataLocation();
-        void register(string location);
+        int getPrimaryMetadataLocation();
+        void register(int location);
     }
 }

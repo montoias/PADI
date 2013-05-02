@@ -12,13 +12,15 @@ namespace CommonTypes
     {
         public byte[] file;
         public int version;
+        public int clientID;
 
         private FileData(){}
 
-        public FileData(byte[] file, int version)
+        public FileData(byte[] file, int version, int clientID)
         {
             this.file = file;
             this.version = version;
+            this.clientID = clientID;
         }
     }
 }
