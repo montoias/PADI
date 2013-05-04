@@ -1,22 +1,22 @@
 ﻿using CommonTypes;
 using System;
 using System.IO;
+using System.Net.Sockets;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Threading;
 using System.Windows.Forms;
-using System.Net.Sockets;
 
 namespace DataServer
 {
     public partial class DataServer : MarshalByRefObject, IDataServerClient, IDataServerPuppet, IDataServerMetadataServer
     {
-        private static string fileFolder;
-        private static int dataServerId;
-        private static int[] metadataLocations = new int[3];
-        private static IMetadataServerDataServer[] metadataServer = new IMetadataServerDataServer[3];
-        private static IMetadataServerDataServer primaryMetadata;
+        private string fileFolder;
+        private int dataServerId;
+        private int[] metadataLocations = new int[3];
+        private IMetadataServerDataServer[] metadataServer = new IMetadataServerDataServer[3];
+        private IMetadataServerDataServer primaryMetadata;
         private bool ignoringMessages = false;
         private bool isFrozen = false;
         private static int port;
@@ -36,8 +36,7 @@ namespace DataServer
             System.Console.ReadLine();
         }
 
-        //TODO: call this method recursively if no metadata is found!!
-        private static void findPrimaryMetadata()
+        private void findPrimaryMetadata()
         {
             System.Console.WriteLine("Finding available metadatas...");
 
@@ -46,21 +45,20 @@ namespace DataServer
                 try
                 {
                     IMetadataServerDataServer replica = getMetadataServer(location);
-                    System.Console.WriteLine("Checking replica @ " + location);
                     int primaryServerLocation = replica.getPrimaryMetadataLocation(); //hack : triggering an exception
-                    System.Console.WriteLine("Primary @ " + primaryServerLocation);
                     primaryMetadata = primaryServerLocation.Equals(location) ? replica : getMetadataServer(primaryServerLocation);
-                    System.Console.WriteLine("Object:" + primaryMetadata.GetHashCode());
+                    Thread.Sleep(1000);
                     return;
                 }
                 catch (SocketException)
                 {
                     //ignore, means the server is down
-                    System.Console.WriteLine("Replica down @ "+  location);
+                }
+                catch (IOException)
+                {
+                    //ignore, means the server is down
                 }
             }
-
-            Thread.Sleep(1000);
         }
 
         private static IMetadataServerDataServer getMetadataServer(int location)
@@ -70,7 +68,7 @@ namespace DataServer
                 "tcp://localhost:" + location + "/MetadataServer");
         }
 
-        private static void setMetadataLocation(int[] metadataList)
+        private void setMetadataLocation(int[] metadataList)
         {
             metadataLocations = metadataList;
         }
@@ -89,6 +87,10 @@ namespace DataServer
             {
                 contents += "Undetermined location \r\n";
             }
+            catch (IOException)
+            {
+                contents += "Undetermined location \r\n";
+            }
 
 
             contents += "DATA SERVER FOLDER\r\n";
@@ -97,11 +99,6 @@ namespace DataServer
 
             System.Console.WriteLine(contents);
             return contents;
-        }
-
-        public override object InitializeLifetimeService()
-        {
-            return null;
         }
 
         public void init(int[] metadataList)
@@ -117,6 +114,11 @@ namespace DataServer
             registerDataServer(port);
 
             System.Console.WriteLine("Data Server " + dataServerId + " was launched!...");
+        }
+
+        public override object InitializeLifetimeService()
+        {
+            return null;
         }
     }
 }

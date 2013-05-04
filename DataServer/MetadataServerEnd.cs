@@ -5,27 +5,33 @@ using System.Text;
 using CommonTypes;
 using System.Net.Sockets;
 using System.Threading;
+using System.IO;
 
 namespace DataServer
 {
-    public partial class DataServer : MarshalByRefObject, IDataServerClient, IDataServerPuppet, IDataServerMetadataServer
+    public partial class DataServer
     {
 
-        private static void registerDataServer(int port)
+        private void registerDataServer(int port)
         {
             try
             {
-                System.Console.WriteLine("Object:" + primaryMetadata.GetHashCode());
                 primaryMetadata.register(port);
-
             }
             catch (SocketException)
             {
-                findPrimaryMetadata();
-                System.Console.WriteLine("Object:" + primaryMetadata.GetHashCode());
-                Thread.Sleep(1000);
-                registerDataServer(port);
+                retryRegister(port);
             }
+            catch (IOException)
+            {
+                retryRegister(port);
+            }
+        }
+
+        private void retryRegister(int port)
+        {
+            findPrimaryMetadata();
+            registerDataServer(port);
         }
     }
 }

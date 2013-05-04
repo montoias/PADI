@@ -1,31 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CommonTypes;
+﻿using System.Net.Sockets;
 using System.Threading;
-using System.Net.Sockets;
 
 namespace MetadataServer
 {
-    public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
+    public partial class MetadataServer
     {
         private bool ignoringMessages = false;
 
         public void fail()
         {
-            System.Console.WriteLine("Now ignoring messages.");
-            ignoringMessages = true;
-            backupReplicas.Clear();
-            timer.Change(Timeout.Infinite, Timeout.Infinite);
+            if (!ignoringMessages)
+            {
+                System.Console.WriteLine("Now ignoring messages.");
+                ignoringMessages = true;
+                backupReplicas.Clear();
+                timer.Change(Timeout.Infinite, Timeout.Infinite);
+            }
         }
 
         public void recover()
         {
-            System.Console.WriteLine("Accepting messages again");
-
             if (ignoringMessages)
             {
+                System.Console.WriteLine("Accepting messages again");
                 ignoringMessages = false;
                 if (findAvailableMetadatas(port))
                 {

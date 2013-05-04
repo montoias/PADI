@@ -14,28 +14,27 @@ namespace MetadataServer
 {
     public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
     {
-        private static string fileFolder;
-        private static string metadataState;
+        private string fileFolder;
+        private string stateFolder, stateFile;
         private static int port;
-        private static int metadataID;
+        private int metadataID;
 
-        private static System.Threading.Timer timer = new System.Threading.Timer(Tick, null, Timeout.Infinite, Timeout.Infinite);
-        private static long tickerPeriod = 10 * 1000;
+        private System.Threading.Timer timer;
+        private long tickerPeriod = 10 * 1000;
 
         private Dictionary<string, List<int>> openedFiles = new Dictionary<string, List<int>>();
         private Dictionary<string, MetadataInfo> queueMetadata = new Dictionary<string, MetadataInfo>();
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
 
         private Dictionary<int, IDataServerMetadataServer> dataServersList = new Dictionary<int, IDataServerMetadataServer>();
-        private static Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
+        private Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
         
-        //TODO: pass metadatalist on process create
-        private static int[] metadataLocations;
+        private int[] metadataLocations;
 
-        private static List<string> log = new List<string>();
+        private List<string> log = new List<string>();
 
-        public static int primaryServerLocation;
-        private static IMetadataServer primaryServer;
+        public int primaryServerLocation;
+        private IMetadataServer primaryServer;
 
         static void Main(string[] args)
         {
@@ -92,11 +91,12 @@ namespace MetadataServer
         {
             metadataID = port - 8081;
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
-            metadataState = Path.Combine(Application.StartupPath, "State_" + port);
+            stateFolder = Path.Combine(Application.StartupPath, "State_" + port);
             Utils.createFolderFile(fileFolder);
-            Utils.createFolderFile(metadataState);
-            metadataState = Path.Combine(metadataState, "metadata_state");
+            Utils.createFolderFile(stateFolder);
+            stateFile = Path.Combine(stateFolder, "metadata_state");
             metadataLocations = metadataList; 
+            timer = new System.Threading.Timer(Tick, null, Timeout.Infinite, Timeout.Infinite);
 
             if (findAvailableMetadatas(port))
             {
@@ -108,7 +108,7 @@ namespace MetadataServer
             System.Console.WriteLine("Metadata " + metadataID + " was launched!...");
         }
 
-        private static void Tick(object state)
+        private void Tick(object state)
         {
             try
             {
@@ -117,42 +117,57 @@ namespace MetadataServer
             }
             catch (SocketException)
             {
-                System.Console.WriteLine("Primary metadata is down. Determining a new one");
-                timer.Change(Timeout.Infinite, Timeout.Infinite);
-                backupReplicas.Remove(primaryServerLocation);
+                retryTick();
+            }
+            catch (IOException)
+            {
+                retryTick();
+            }
+        }
 
-                System.Console.WriteLine("BR Available: " + backupReplicas.Count);
+        private void retryTick()
+        {
+            System.Console.WriteLine("Primary metadata is down. Determining a new one");
+            timer.Change(Timeout.Infinite, Timeout.Infinite);
+            backupReplicas.Remove(primaryServerLocation);
 
-                if (backupReplicas.Count > 0)
+            System.Console.WriteLine("BR Available: " + backupReplicas.Count);
+
+            if (backupReplicas.Count > 0)
+            {
+                List<int> list = new List<int>(backupReplicas.Keys);
+                try
                 {
-                    List<int> list = new List<int>(backupReplicas.Keys);
-                    try
-                    {
 
-                        if (metadataID > backupReplicas[list[0]].getMetadataID())
-                        {
-                            primaryServer = backupReplicas[list[0]];
-                            primaryServerLocation = list[0];
-                            timer.Change(tickerPeriod, tickerPeriod);
-                        }
-                        else
-                        {
-                            System.Console.WriteLine("I'm the new primary metadata.");
-                            primaryServerLocation = port;
-                        }
+                    if (metadataID > backupReplicas[list[0]].getMetadataID())
+                    {
+                        primaryServer = backupReplicas[list[0]];
+                        primaryServerLocation = list[0];
+                        timer.Change(tickerPeriod, tickerPeriod);
                     }
-                    catch (SocketException)
+                    else
                     {
                         System.Console.WriteLine("I'm the new primary metadata.");
-                        backupReplicas.Clear();
                         primaryServerLocation = port;
                     }
                 }
-                else
+                catch (SocketException)
                 {
                     System.Console.WriteLine("I'm the new primary metadata.");
+                    backupReplicas.Clear();
                     primaryServerLocation = port;
                 }
+                catch (IOException)
+                {
+                    System.Console.WriteLine("I'm the new primary metadata.");
+                    backupReplicas.Clear();
+                    primaryServerLocation = port;
+                }
+            }
+            else
+            {
+                System.Console.WriteLine("I'm the new primary metadata.");
+                primaryServerLocation = port;
             }
         }
 
@@ -161,9 +176,7 @@ namespace MetadataServer
             long i = 1;
 
             foreach (byte b in Guid.NewGuid().ToByteArray())
-            {
                 i *= ((int)b + 1);
-            }
 
             return string.Format("{0:x}", i - DateTime.Now.Ticks);
         }
@@ -173,7 +186,7 @@ namespace MetadataServer
          * If there aren't metadata servers available, it sets the caller as 
          * the primary metadata server.
          */
-        private static bool findAvailableMetadatas(int port)
+        private bool findAvailableMetadatas(int port)
         {
             System.Console.WriteLine("Finding available metadatas...");
             primaryServerLocation = port;
@@ -190,6 +203,10 @@ namespace MetadataServer
                         backupReplicas[location] = replica;
                     }
                     catch (SocketException)
+                    {
+                        //ignore, means the server is down
+                    }
+                    catch (IOException)
                     {
                         //ignore, means the server is down
                     }
@@ -231,7 +248,7 @@ namespace MetadataServer
             return primaryServerLocation;
         }
 
-        private static void notifyPrimaryMetadata(int notifier)
+        private void notifyPrimaryMetadata(int notifier)
         {
             System.Console.WriteLine("Notifying the primary metadata that I'm up!");
             primaryServer.requestLog(notifier);
@@ -283,6 +300,11 @@ namespace MetadataServer
                         entry.Value.receiveInstruction(instruction);
                     }
                     catch (SocketException)
+                    {
+                        //If replica isn't available, we should remove it from the list!
+                        toRemoval.Add(entry.Key);
+                    }
+                    catch (IOException)
                     {
                         //If replica isn't available, we should remove it from the list!
                         toRemoval.Add(entry.Key);

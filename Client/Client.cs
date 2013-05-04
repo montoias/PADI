@@ -1,11 +1,11 @@
 ﻿using CommonTypes;
 using System;
-using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Net.Sockets;
 using System.Threading;
+using System.IO;
 
 namespace Client
 {
@@ -67,7 +67,7 @@ namespace Client
 
             toReturn += "\r\n\r\nByteRegisters\r\n";
 
-            for(int i = 0; i < byteRegisters.Length; i++)
+            for (int i = 0; i < byteRegisters.Length; i++)
             {
                 if (byteRegisters[i] != null)
                 {
@@ -100,6 +100,10 @@ namespace Client
                 {
                     //ignore, means the server is down
                 }
+                catch (IOException)
+                {
+                    //ignore, means the server is down
+                }
             }
         }
 
@@ -124,7 +128,7 @@ namespace Client
             if (fileIndexer.ContainsKey(filename))
             {
                 Object key = fileRegisters[fileIndexer[filename]];
-                System.Console.WriteLine("Updating metadata of " + filename + " @ object " + key.GetHashCode());
+                System.Console.WriteLine("Received an updated message for: " + filename);
                 lock (key)
                 {
                     fileRegisters[fileIndexer[filename]] = m;

@@ -1,21 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Net.Sockets;
 using CommonTypes;
 
 namespace DataServer
 {
-    public partial class DataServer : MarshalByRefObject, IDataServerClient, IDataServerPuppet, IDataServerMetadataServer
+    public partial class DataServer
     {
         public void freeze()
         {
             lock (this)
             {
-                System.Console.WriteLine("Now delaying messages.");
-                isFrozen = true;
+                if (!isFrozen && !ignoringMessages)
+                {
+                    System.Console.WriteLine("Now delaying messages.");
+                    isFrozen = true;
+                }
             }
         }
 
@@ -34,14 +34,21 @@ namespace DataServer
 
         public void fail()
         {
-            System.Console.WriteLine("Now ignoring messages.");
-            ignoringMessages = true;
+            if (!ignoringMessages)
+            {
+                System.Console.WriteLine("Now ignoring messages.");
+                ignoringMessages = true;
+                isFrozen = false;
+            }
         }
 
         public void recover()
         {
-            System.Console.WriteLine("Accepting messages again");
-            ignoringMessages = false;
+            if (ignoringMessages)
+            {
+                System.Console.WriteLine("Accepting messages again");
+                ignoringMessages = false;
+            }
         }
 
         private void checkFailure()

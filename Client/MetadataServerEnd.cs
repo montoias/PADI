@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using CommonTypes;
 using System.Net.Sockets;
+using System.IO;
 
 namespace Client
 {
-    public partial class Client : MarshalByRefObject, IClientPuppet, IClientMetadataServer
+    public partial class Client
     {
         MetadataInfo[] fileRegisters = new MetadataInfo[10];
         FileData[] byteRegisters = new FileData[10];
@@ -28,11 +29,21 @@ namespace Client
             }
             catch (SocketException)
             {
-                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
-                findPrimaryMetadata();
-                return create(filename, numDataServers, readQuorum, writeQuorum);
+                return retryCreate(filename, numDataServers, readQuorum, writeQuorum);
             }
+            catch (IOException)
+            {
+                return retryCreate(filename, numDataServers, readQuorum, writeQuorum);
+            }
+
             return info;
+        }
+
+        private MetadataInfo retryCreate(string filename, int numDataServers, int readQuorum, int writeQuorum)
+        {
+            System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+            findPrimaryMetadata();
+            return create(filename, numDataServers, readQuorum, writeQuorum);
         }
 
         public void delete(string filename)
@@ -48,10 +59,19 @@ namespace Client
             }
             catch (SocketException)
             {
-                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
-                findPrimaryMetadata();
-                delete(filename);
+                retryDelete(filename);
             }
+            catch (IOException)
+            {
+                retryDelete(filename);
+            }
+        }
+
+        private void retryDelete(string filename)
+        {
+            System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+            findPrimaryMetadata();
+            delete(filename);
         }
 
         public MetadataInfo open(string filename)
@@ -77,31 +97,19 @@ namespace Client
             }
             catch (SocketException)
             {
-                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
-                findPrimaryMetadata();
-                return open(filename);
+                return retryOpen(filename);
+            }
+            catch (IOException)
+            {
+                return retryOpen(filename);
             }
         }
 
-        /* 
-         * Removes the unused mapping of filename to index, when the index
-         * picks up from the beginning,
-         */
-        private void removeByValue(int currentFileRegister)
+        private MetadataInfo retryOpen(string filename)
         {
-            string toRemove = null;
-
-            foreach (KeyValuePair<string, int> entry in fileIndexer)
-            {
-                if (entry.Value.Equals(currentFileRegister))
-                {
-                    toRemove = entry.Key;
-                    break;
-                }
-            }
-
-            if (toRemove != null)
-                fileIndexer.Remove(toRemove);
+            System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+            findPrimaryMetadata();
+            return open(filename);
         }
 
         public void close(string filename)
@@ -129,10 +137,40 @@ namespace Client
             }
             catch (SocketException)
             {
-                System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
-                findPrimaryMetadata();
-                close(filename);
+                retryClose(filename);
             }
+            catch (IOException)
+            {
+                retryClose(filename);
+            }
+        }
+
+        private void retryClose(string filename)
+        {
+            System.Console.WriteLine("Primary metadata was down. Looking for a new one.");
+            findPrimaryMetadata();
+            close(filename);
+        }
+
+        /* 
+         * Removes the unused mapping of filename to index, when the index
+         * goes round and begins at zero again.
+         */
+        private void removeByValue(int currentFileRegister)
+        {
+            string toRemove = null;
+
+            foreach (KeyValuePair<string, int> entry in fileIndexer)
+            {
+                if (entry.Value.Equals(currentFileRegister))
+                {
+                    toRemove = entry.Key;
+                    break;
+                }
+            }
+
+            if (toRemove != null)
+                fileIndexer.Remove(toRemove);
         }
     }
 }

@@ -8,7 +8,7 @@ using System.IO;
 
 namespace MetadataServer
 {
-    public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
+    public partial class MetadataServer
     {
         public void register(int location)
         {
@@ -23,7 +23,9 @@ namespace MetadataServer
                typeof(IDataServerMetadataServer),
                "tcp://localhost:" + location + "/DataServer"));
 
-            processMetadataQueue(location);
+            //TODO: Update other replicas with this info.
+            if (port.Equals(primaryServerLocation))
+                processMetadataQueue(location);
         }
 
         private void processMetadataQueue(int location)

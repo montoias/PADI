@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CommonTypes;
 using System.Threading;
 using System.IO;
 
 namespace DataServer
 {
-    public partial class DataServer : MarshalByRefObject, IDataServerClient, IDataServerPuppet, IDataServerMetadataServer
+    public partial class DataServer
     {
         public FileData read(string filename)
         {
@@ -48,14 +45,8 @@ namespace DataServer
                 string path = Path.Combine(fileFolder, filename);
                 FileData prev = read(filename);
 
-                if( f.version > prev.version)
+                if ((f.version == prev.version && f.clientID < prev.clientID) || f.version > prev.version)
                     Utils.serializeObject<FileData>(f, path);
-                else if (f.version == prev.version)
-                {
-                    if(f.clientID < prev.clientID)
-                        Utils.serializeObject<FileData>(f, path);
-                }
-                
             }
         }
     }

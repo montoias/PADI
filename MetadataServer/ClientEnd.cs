@@ -8,7 +8,7 @@ using System.Collections;
 
 namespace MetadataServer
 {
-    public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
+    public partial class MetadataServer
     {
         public MetadataInfo create(string filename, int numDataServers, int readQuorum, int writeQuorum)
         {

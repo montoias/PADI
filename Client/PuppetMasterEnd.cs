@@ -4,7 +4,7 @@ using CommonTypes;
 
 namespace Client
 {
-    public partial class Client : MarshalByRefObject, IClientPuppet, IClientMetadataServer
+    public partial class Client
     {
 
         public void copy(int fileRegister1, string semantics, int fileRegister2, string salt)

@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using CommonTypes;
 using System.Threading;
 using System.Runtime.Remoting.Messaging;
+using System.Net.Sockets;
+using System.IO;
+using System.Collections;
 
 namespace Client
 {
-    public partial class Client : MarshalByRefObject, IClientPuppet, IClientMetadataServer
+    public partial class Client
     {
         public delegate void WriteDelegate(IDataServerClient dataServer, string localFilename, FileData file);
         public delegate FileData ReadDelegate(IDataServerClient dataServer, string localFilename);
@@ -36,34 +39,13 @@ namespace Client
          */
         private FileData readOnly(int fileRegister, string semantics)
         {
-            ReadDelegate readDelegate = new ReadDelegate(readAsync);
-            List<IAsyncResult> results = new List<IAsyncResult>();
-            FileData fileData;
-
-            MetadataInfo metadata = checkMetadata(fileRegister);
-
-            foreach (string dsInfo in metadata.dataServers)
-            {
-                string serverLocation = metadata.getDataServerLocation(dsInfo);
-                string localFilename = metadata.getLocalFilename(dsInfo);
-
-                System.Console.WriteLine("Reading from dataServer " + (Convert.ToInt32(serverLocation) - 9000));
-
-                IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(
-                typeof(IDataServerClient),
-                "tcp://localhost:" + serverLocation + "/DataServer");
-
-                results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
-            }
-
-            fileData = readQuorum(metadata, results, semantics);
-            if (fileData == null)
-                return null;
+            MetadataInfo metadata = checkMetadata(fileRegister); 
+            FileData fileData = readQuorum(metadata, metadata.readQuorum);
 
             if (semantics.Equals("monotonic") && fileVersions.ContainsKey(metadata.filename) && (fileVersions[metadata.filename] >= fileData.version))
             {
-                System.Console.WriteLine("Monotonic read was requested: The file obtained was older than the one read before!");
-                return null;
+                System.Console.WriteLine("Monotonic read was requested: The file obtained was older than the one read before! Retrying...");
+                return readOnly(fileRegister, semantics);
             }
 
             fileVersions[metadata.filename] = fileData.version;
@@ -71,39 +53,35 @@ namespace Client
             return fileData;
         }
 
-
-        private MetadataInfo checkMetadata(int fileRegister)
+        private FileData readQuorum(MetadataInfo metadata, int quorumNum)
         {
-            Object key = fileRegisters[fileRegister];
-            lock (key)
-            {
-                MetadataInfo metadata = fileRegisters[fileRegister];
-                if (metadata.dataServers.Count < metadata.numDataServers)
-                {
-                    System.Console.WriteLine("Locking object " + key.GetHashCode());
-                    Monitor.Wait(key);
-                }
-            }
-
-            return fileRegisters[fileRegister];
-        }
-
-
-        private FileData readQuorum(MetadataInfo metadata, List<IAsyncResult> results, string semantics)
-        {
+            ReadDelegate readDelegate = new ReadDelegate(readAsync);
             Dictionary<int, FileData> versionResults = new Dictionary<int, FileData>();
             Dictionary<int, int> versionCounter = new Dictionary<int, int>();
-            int numResults = 0;
-            int maxResults = 0;
-            int maxVersion = 0;
+            Queue<string> availableServers = new Queue<string>();
+            List<IAsyncResult> results = new List<IAsyncResult>();
+            BitArray completed = new BitArray(metadata.numDataServers);
+            int numResults = 0, maxResults = 0, maxVersion = 0;
+            int j;
 
-            while (numResults < metadata.writeQuorum && results.Count > 0)
+            for (j = 0; j < metadata.readQuorum; j++)
             {
-                Thread.Sleep(1000);
+                string localFilename = metadata.getLocalFilename(metadata.dataServers[j]);
+                IDataServerClient dataServer = getDataServer(metadata, metadata.dataServers[j]);
+
+                results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
+            }
+            for (; j < metadata.dataServers.Count; j++)
+            {
+                availableServers.Enqueue(metadata.dataServers[j]);
+            }
+
+            while (numResults < quorumNum)
+            {
                 System.Console.WriteLine("Waiting for quorum");
-                for (int i = results.Count - 1; i > -1; i--)
+                for (int i = 0; i < results.Count; i++)
                 {
-                    if (results[i].IsCompleted)
+                    if (results[i].IsCompleted && !completed[i])
                     {
                         try
                         {
@@ -112,24 +90,33 @@ namespace Client
                                 versionCounter[tempFile.version]++;
                             else
                             {
-                                versionResults.Add(tempFile.version, tempFile);
-                                versionCounter.Add(tempFile.version, 1);
+                                versionResults[tempFile.version] = tempFile;
+                                versionCounter[tempFile.version] = 1;
                             }
                             numResults++;
+                            completed[i] = true;
                         }
-                        catch (Exception)
+                        catch (SocketException)
                         {
-                            //Possibly send request to next available server
+                            string dsLocation = availableServers.Dequeue();
+                            string localFilename = metadata.getLocalFilename(dsLocation);
+                            IDataServerClient dataServer = getDataServer(metadata, dsLocation);
+                            results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
+
+                            availableServers.Enqueue(metadata.dataServers[i]);
                         }
-                        results.RemoveAt(i);
+                        catch (IOException)
+                        {
+                            string dsLocation = availableServers.Dequeue();
+                            string localFilename = metadata.getLocalFilename(dsLocation);
+                            IDataServerClient dataServer = getDataServer(metadata, dsLocation);
+                            results.Add(readDelegate.BeginInvoke(dataServer, localFilename, null, null));
+
+                            availableServers.Enqueue(metadata.dataServers[i]);
+                        }
                     }
                 }
-            }
-
-            if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
-            {
-                System.Console.WriteLine("Error in writeQuorum: not enough results");
-                return null;
+                Thread.Sleep(1000);
             }
 
             foreach (int version in versionCounter.Keys)
@@ -147,33 +134,27 @@ namespace Client
             return versionResults[maxVersion];
         }
 
-
-
+        /*
+         * This write method is called when the contents being written
+         * are passed as string.
+         * Note that in order to obtain the most recent version, a read is performed,
+         * until the writeQuorum is reached (not the readQuorum).
+         */
         public void write(int fileRegister, string textFile)
         {
             System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
 
             MetadataInfo metadata = checkMetadata(fileRegister);
-            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
-            List<IAsyncResult> results = new List<IAsyncResult>();
-
-            foreach (string dsInfo in metadata.dataServers)
-            {
-                string serverLocation = metadata.getDataServerLocation(dsInfo);
-                string localFilename = metadata.getLocalFilename(dsInfo);
-
-                System.Console.WriteLine("Writing to dataServer " + (Convert.ToInt32(serverLocation) - 9000));
-
-                IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(typeof(IDataServerClient),
-                    "tcp://localhost:" + serverLocation + "/DataServer");
-
-                //TODO: Obter a versão mais recente -> com quorum de escrita!!!!
-                results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, new FileData(Utils.stringToByteArray(textFile), 0, clientID), null, null));
-            }
-
-            writeQuorum(metadata, results);
+            
+            writeQuorum(metadata, new FileData(Utils.stringToByteArray(textFile), readQuorum(metadata, metadata.writeQuorum).version, clientID));
         }
 
+        /*
+         * This write method is called when the contents being written
+         * are passed by a byteRegister.
+         * Note that in order to obtain the most recent version, a read is performed,
+         * until the writeQuorum is reached (not the readQuorum).
+         */
         public void write(int fileRegister, int byteRegister)
         {
             System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
@@ -181,57 +162,98 @@ namespace Client
 
             MetadataInfo metadata = checkMetadata(fileRegister);
             FileData fileData = byteRegisters[byteRegister];
-            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
-            List<IAsyncResult> results = new List<IAsyncResult>();
-
-            foreach (string dsInfo in metadata.dataServers)
-            {
-                string serverLocation = metadata.getDataServerLocation(dsInfo);
-                string localFilename = metadata.getLocalFilename(dsInfo);
-
-                System.Console.WriteLine("Writing to dataServer " + (Convert.ToInt32(serverLocation) - 9000));
-
-                IDataServerClient dataServer = (IDataServerClient)Activator.GetObject(
-                typeof(IDataServerClient),
-                "tcp://localhost:" + serverLocation + "/DataServer");
-
-                //TODO: Leitura para obter a versão
-                results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, fileData, null, null));
-            }
-
-            writeQuorum(metadata, results);
+            fileData.version = readQuorum(metadata, metadata.writeQuorum).version;
+            fileData.clientID = clientID;
+            writeQuorum(metadata, fileData);
         }
 
-        private void writeQuorum(MetadataInfo metadata, List<IAsyncResult> results)
+        private void writeQuorum(MetadataInfo metadata, FileData fileData)
         {
+            WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
+            Queue<string> availableServers = new Queue<string>();
+            List<IAsyncResult> results = new List<IAsyncResult>();
+            BitArray completed = new BitArray(metadata.numDataServers);
             int numResults = 0;
+            int j;
+
+            for (j = 0; j < metadata.readQuorum; j++)
+            {
+                string localFilename = metadata.getLocalFilename(metadata.dataServers[j]);
+                IDataServerClient dataServer = getDataServer(metadata, metadata.dataServers[j]);
+
+                results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, fileData, null, null));
+            }
+            for (; j < metadata.dataServers.Count; j++)
+            {
+                availableServers.Enqueue(metadata.dataServers[j]);
+            }
 
             while (numResults < metadata.writeQuorum)
             {
                 Thread.Sleep(1000);
                 System.Console.WriteLine("Waiting for quorum");
-                for (int i = results.Count - 1; i > -1; i--)
+                for (int i = 0; i < results.Count; i++)
                 {
-                    if (results[i].IsCompleted)
+                    if (results[i].IsCompleted && !completed[i])
                     {
                         try
                         {
                             ((WriteDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
                             results.RemoveAt(i);
                             numResults++;
+                            completed[i] = true;
                         }
-                        catch (Exception) //Specify exception
+                        catch (SocketException) 
                         {
-                            //Possibly send request to next available server
+                            string dsLocation = availableServers.Dequeue();
+                            string localFilename = metadata.getLocalFilename(dsLocation);
+                            IDataServerClient dataServer = getDataServer(metadata, dsLocation);
+                            results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, fileData, null, null));
+
+                            availableServers.Enqueue(metadata.dataServers[i]);
+                        }
+                        catch (IOException) 
+                        {
+                            string dsLocation = availableServers.Dequeue();
+                            string localFilename = metadata.getLocalFilename(dsLocation);
+                            IDataServerClient dataServer = getDataServer(metadata, dsLocation);
+                            results.Add(writeDelegate.BeginInvoke(dataServer, localFilename, fileData, null, null));
+
+                            availableServers.Enqueue(metadata.dataServers[i]);
                         }
                     }
                 }
-
-                if (numResults < metadata.writeQuorum) //TODO: Print error message -> No servers available (retry?)
-                    System.Console.WriteLine("Error in writeQuorum: not enough results");
             }
 
             System.Console.WriteLine("File " + metadata.filename + " written.");
+        }
+
+        private IDataServerClient getDataServer(MetadataInfo metadata, string location)
+        {
+            return (IDataServerClient)Activator.GetObject(
+                        typeof(IDataServerClient),
+                        "tcp://localhost:" + metadata.getDataServerLocation(location) + "/DataServer");
+        }
+
+        /*
+         * Checks if there are enough servers to perform the requested operation.
+         * If there aren't, it locks the thread for that object, waiting for the 
+         * requested dataservers to come up.
+         */
+        private MetadataInfo checkMetadata(int fileRegister)
+        {
+            Object key = fileRegisters[fileRegister];
+            lock (key)
+            {
+                MetadataInfo metadata = fileRegisters[fileRegister];
+                if (metadata.dataServers.Count < metadata.numDataServers)
+                {
+                    System.Console.WriteLine("Locking object " + key.GetHashCode());
+                    Monitor.Wait(key);
+                }
+            }
+
+            return fileRegisters[fileRegister];
         }
     }
 }
