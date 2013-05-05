@@ -50,14 +50,9 @@ namespace DataServer
                     Thread.Sleep(1000);
                     return;
                 }
-                catch (SocketException)
-                {
-                    //ignore, means the server is down
-                }
-                catch (IOException)
-                {
-                    //ignore, means the server is down
-                }
+                //ignore, means the server is down
+                catch (SocketException) { }
+                catch (IOException) { }
             }
         }
 
@@ -75,9 +70,7 @@ namespace DataServer
 
         public string dump()
         {
-            string contents = "";
-            
-            contents += "Primary metadata @: ";
+            string contents = "Primary metadata @: ";
 
             try
             {
@@ -95,7 +88,7 @@ namespace DataServer
 
             contents += "DATA SERVER FOLDER\r\n";
             foreach (string filename in Directory.GetFiles(fileFolder))
-                contents += filename + "\r\n";
+                contents += "File: " + filename + "\r\n" + "Contents: " + Utils.deserializeObject<FileData>(Path.Combine(fileFolder, filename)) + "\r\n";
 
             System.Console.WriteLine(contents);
             return contents;
