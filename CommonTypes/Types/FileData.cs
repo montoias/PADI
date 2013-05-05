@@ -22,5 +22,10 @@ namespace CommonTypes
             this.version = version;
             this.clientID = clientID;
         }
+
+        public override string ToString()
+        {
+            return "File: " + Utils.byteArrayToString(file) + " \r\n Version: " + version + "  ClientID: " + clientID;
+        }
     }
 }
