@@ -96,14 +96,10 @@ namespace Client
                     Thread.Sleep(1000);
                     return;
                 }
-                catch (SocketException)
-                {
+
                     //ignore, means the server is down
-                }
-                catch (IOException)
-                {
-                    //ignore, means the server is down
-                }
+                catch (SocketException) { }
+                catch (IOException) { }
             }
         }
 
@@ -117,24 +113,6 @@ namespace Client
         private void setMetadataLocation(int[] args)
         {
             metadataLocations = args;
-        }
-
-        /*
-         * This function is invoked by the metadata server, when a new data server becomes available 
-         * and the client requested for a file that didn't have enough servers.
-         */
-        public void updateMetadata(string filename, MetadataInfo m)
-        {
-            if (fileIndexer.ContainsKey(filename))
-            {
-                Object key = fileRegisters[fileIndexer[filename]];
-                System.Console.WriteLine("Received an updated message for: " + filename);
-                lock (key)
-                {
-                    fileRegisters[fileIndexer[filename]] = m;
-                    Monitor.PulseAll(key);
-                }
-            }
         }
 
         public override object InitializeLifetimeService()
