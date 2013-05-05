@@ -47,9 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClientEnd.cs" />
-    <Compile Include="DataServerEnd.cs" />
-    <Compile Include="MetadataEnd.cs" />
+    <Compile Include="ClientServices.cs" />
+    <Compile Include="DataServerServices.cs" />
+    <Compile Include="MetadataServices.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
