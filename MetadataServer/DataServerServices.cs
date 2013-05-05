@@ -41,33 +41,37 @@ namespace MetadataServer
 
                 string path = Path.Combine(fileFolder, filename);
                 MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
-                metadata.dataServers.Add(dataServerInfo);
-                Utils.serializeObject<MetadataInfo>(metadata, path);
-                metadataTable[filename] = metadata;
-                metadataState.queueFiles[filename] = metadata;
 
-                UpdateMetadataDTO update = new UpdateMetadataDTO(metadata);
-                metadataState.log.Add(update);
-                metadataState.currentInstruction++;
-
-                if (metadataState.queueFiles[filename].numDataServers == metadataState.dataServersList.Count)
+                if (!metadata.dataServers.Contains(dataServerInfo))
                 {
-                    metadataState.queueFiles.Remove(filename);
+                    metadata.dataServers.Add(dataServerInfo);
+                    Utils.serializeObject<MetadataInfo>(metadata, path);
+                    metadataTable[filename] = metadata;
+                    metadataState.queueFiles[filename] = metadata;
 
-                    if (metadataState.openedFiles.ContainsKey(filename))
+                    UpdateMetadataDTO update = new UpdateMetadataDTO(metadata);
+                    metadataState.log.Add(update);
+                    metadataState.currentInstruction++;
+
+                    if (metadataState.queueFiles[filename].numDataServers == metadataState.dataServersList.Count)
                     {
-                        foreach (int clientID in metadataState.openedFiles[filename])
-                        {
-                            int clientLocation = clientID + 8000;
-                            System.Console.WriteLine("updating client at port :" + clientLocation);
-                            IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
-                                   typeof(IClientMetadataServer), "tcp://localhost:" + clientLocation + "/Client");
+                        metadataState.queueFiles.Remove(filename);
 
-                            client.updateMetadata(filename, metadata);
+                        if (metadataState.openedFiles.ContainsKey(filename))
+                        {
+                            foreach (int clientID in metadataState.openedFiles[filename])
+                            {
+                                int clientLocation = clientID + 8000;
+                                System.Console.WriteLine("updating client at port :" + clientLocation);
+                                IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
+                                       typeof(IClientMetadataServer), "tcp://localhost:" + clientLocation + "/Client");
+
+                                client.updateMetadata(filename, metadata);
+                            }
                         }
                     }
+                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
                 }
-                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
             }
         }
     }
