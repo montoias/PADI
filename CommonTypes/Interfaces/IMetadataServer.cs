@@ -13,9 +13,9 @@ namespace CommonTypes
         void isAlive();
         int notifyMetadataServers(int location);
         int getMetadataID();
-        void sendInstruction(string instruction);
-        void receiveInstruction(string instruction);
-        void receiveLog(List<string> log);
-        void requestLog(int notifier);
+        void sendInstruction(InstructionDTO instruction);
+        void receiveInstruction(InstructionDTO instruction);
+        void receiveState(MetadataServerState statelog);
+        void requestState(int notifier);
     }
 }
