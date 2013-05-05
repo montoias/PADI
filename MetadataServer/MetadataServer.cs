@@ -19,19 +19,13 @@ namespace MetadataServer
         private static int port;
         private int metadataID;
 
-        private System.Threading.Timer timer;
+        private System.Threading.Timer heartbeatTimer, checkpointTimer;
         private long tickerPeriod = 10 * 1000;
 
-        private Dictionary<string, List<int>> openedFiles = new Dictionary<string, List<int>>();
-        private Dictionary<string, MetadataInfo> queueMetadata = new Dictionary<string, MetadataInfo>();
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
-
-        private Dictionary<int, IDataServerMetadataServer> dataServersList = new Dictionary<int, IDataServerMetadataServer>();
         private Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
-        
+        private MetadataServerState metadataState = new MetadataServerState();
         private int[] metadataLocations;
-
-        private List<string> log = new List<string>();
 
         public int primaryServerLocation;
         private IMetadataServer primaryServer;
@@ -51,9 +45,11 @@ namespace MetadataServer
         }
 
         public string dump()
-        {
+        {            
+            System.Console.WriteLine("Dumping metadata table");
             int numCacheFiles = metadataTable.Count;
-            string contents = "";
+            string contents = "METADATA STATE\r\n";
+            contents += metadataState + "\r\n";
 
             contents += "Primary metadata @ " + primaryServerLocation + "\r\n";
             contents += "Known active replicas \r\n";
@@ -62,7 +58,6 @@ namespace MetadataServer
                 contents += entry.Key + "\r\n";
             }
 
-            System.Console.WriteLine("Dumping metadata table");
             contents += "METADATA CACHE\r\n";
 
             if (numCacheFiles != 0)
@@ -95,80 +90,94 @@ namespace MetadataServer
             Utils.createFolderFile(fileFolder);
             Utils.createFolderFile(stateFolder);
             stateFile = Path.Combine(stateFolder, "metadata_state");
-            metadataLocations = metadataList; 
-            timer = new System.Threading.Timer(Tick, null, Timeout.Infinite, Timeout.Infinite);
+            metadataLocations = metadataList;
+            heartbeatTimer = new System.Threading.Timer(heartbeatTick, null, Timeout.Infinite, Timeout.Infinite);
+            checkpointTimer = new System.Threading.Timer(checkpointTick, null, Timeout.Infinite, Timeout.Infinite);
+            int currentInstruction = 0;
+
+            if (File.Exists(stateFile))
+            {
+                metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
+                currentInstruction = metadataState.currentInstruction;
+            }
 
             if (findAvailableMetadatas(port))
             {
                 System.Console.WriteLine("I'm not the primary...");
-                notifyPrimaryMetadata(port);
-                timer.Change(tickerPeriod, tickerPeriod);
+                System.Console.WriteLine("Notifying the primary metadata that I'm up!");
+                primaryServer.requestState(port);
+                heartbeatTimer.Change(tickerPeriod, tickerPeriod);
+                executeInstructions(metadataState.log, currentInstruction);
             }
 
             System.Console.WriteLine("Metadata " + metadataID + " was launched!...");
         }
 
-        private void Tick(object state)
+        private void checkpointTick(object state)
+        {
+            if (backupReplicas.Count == 2)
+            {
+                try
+                {
+                    System.Console.WriteLine("Marking checkpoint...");
+                    foreach (IMetadataServer server in backupReplicas.Values)
+                    {
+                        System.Console.WriteLine("Check @ " + server.getMetadataID());
+                    }
+
+                    foreach (IMetadataServer server in backupReplicas.Values)
+                    {
+                        server.checkpoint();
+                    }
+
+                    checkpoint();
+                }
+                catch (SocketException) { }
+                catch (IOException) { }
+            }
+        }
+
+        private void heartbeatTick(object state)
         {
             try
             {
                 System.Console.WriteLine("Sending an heartbeat to the primary metadata.");
                 primaryServer.isAlive();
+                return;
             }
-            catch (SocketException)
-            {
-                retryTick();
-            }
-            catch (IOException)
-            {
-                retryTick();
-            }
+            catch (SocketException) { }
+            catch (IOException) { }
+
+            retryTick();
         }
 
         private void retryTick()
         {
             System.Console.WriteLine("Primary metadata is down. Determining a new one");
-            timer.Change(Timeout.Infinite, Timeout.Infinite);
+            heartbeatTimer.Change(Timeout.Infinite, Timeout.Infinite);
             backupReplicas.Remove(primaryServerLocation);
-
-            System.Console.WriteLine("BR Available: " + backupReplicas.Count);
 
             if (backupReplicas.Count > 0)
             {
-                List<int> list = new List<int>(backupReplicas.Keys);
+                List<int> locations = new List<int>(backupReplicas.Keys);
                 try
                 {
+                    if (metadataID > backupReplicas[locations[0]].getMetadataID())
+                    {
+                        primaryServer = backupReplicas[locations[0]];
+                        primaryServerLocation = locations[0];
+                        heartbeatTimer.Change(tickerPeriod, tickerPeriod);
+                        return;
+                    }
+                }
+                catch (SocketException) { }
+                catch (IOException) { }
+            }
 
-                    if (metadataID > backupReplicas[list[0]].getMetadataID())
-                    {
-                        primaryServer = backupReplicas[list[0]];
-                        primaryServerLocation = list[0];
-                        timer.Change(tickerPeriod, tickerPeriod);
-                    }
-                    else
-                    {
-                        System.Console.WriteLine("I'm the new primary metadata.");
-                        primaryServerLocation = port;
-                    }
-                }
-                catch (SocketException)
-                {
-                    System.Console.WriteLine("I'm the new primary metadata.");
-                    backupReplicas.Clear();
-                    primaryServerLocation = port;
-                }
-                catch (IOException)
-                {
-                    System.Console.WriteLine("I'm the new primary metadata.");
-                    backupReplicas.Clear();
-                    primaryServerLocation = port;
-                }
-            }
-            else
-            {
-                System.Console.WriteLine("I'm the new primary metadata.");
-                primaryServerLocation = port;
-            }
+            System.Console.WriteLine("I'm the new primary metadata.");
+            checkpointTimer.Change(tickerPeriod * 2, tickerPeriod * 2);
+            backupReplicas.Clear();
+            primaryServerLocation = port;
         }
 
         private string generateLocalFileName()
@@ -202,28 +211,21 @@ namespace MetadataServer
                         primaryServerLocation = replica.notifyMetadataServers(port); //hack : triggering an exception
                         backupReplicas[location] = replica;
                     }
-                    catch (SocketException)
-                    {
-                        //ignore, means the server is down
-                    }
-                    catch (IOException)
-                    {
-                        //ignore, means the server is down
-                    }
+                    //ignore, means the server is down
+                    catch (SocketException) { }
+                    catch (IOException) { }
                 }
             }
 
             if (!primaryServerLocation.Equals(port))
             {
-                primaryServer = (IMetadataServer)Activator.GetObject(
-                    typeof(IMetadataServer),
-                    "tcp://localhost:" + primaryServerLocation + "/MetadataServer");
-
+                primaryServer = getMetadataServer(primaryServerLocation);
                 return true;
             }
             else
             {
                 System.Console.WriteLine("I'm the primary!!");
+                checkpointTimer.Change(tickerPeriod * 2, tickerPeriod * 2);
                 return false;
             }
         }
@@ -248,45 +250,40 @@ namespace MetadataServer
             return primaryServerLocation;
         }
 
-        private void notifyPrimaryMetadata(int notifier)
-        {
-            System.Console.WriteLine("Notifying the primary metadata that I'm up!");
-            primaryServer.requestLog(notifier);
-        }
-
         /*
          * The metadata which is specified by "notifier" sends a notification
          * to the primary metadata, telling that it is online. The primary data
          * sends a log to the notifier, in order to maintain consistency.
          */
-        public void requestLog(int notifier)
+        public void requestState(int notifier)
         {
             isAlive();
 
             System.Console.WriteLine("Receiving a request from metadata @ " + notifier);
 
-            backupReplicas[notifier].receiveLog(log);
+            backupReplicas[notifier].receiveState(metadataState);
         }
 
         /*
          * Upon a request, the primary metadata sends a log, that is immediately
          * executed.
          */
-        public void receiveLog(List<string> log)
+        public void receiveState(MetadataServerState metadataState)
         {
             isAlive();
-
-            executeInstructions(log);
+            this.metadataState = metadataState;
+            executeInstructions(metadataState.log, metadataState.currentInstruction);
         }
 
         public void checkpoint()
         {
             isAlive();
-
-            throw new NotImplementedException();
+            System.Console.WriteLine("CHECKPOINT!");
+            metadataState.log.Clear();
+            metadataState.currentInstruction = 0;
         }
 
-        public void sendInstruction(string instruction)
+        public void sendInstruction(InstructionDTO instruction)
         {
             isAlive();
 
@@ -298,17 +295,13 @@ namespace MetadataServer
                     try
                     {
                         entry.Value.receiveInstruction(instruction);
+                        continue;
                     }
-                    catch (SocketException)
-                    {
-                        //If replica isn't available, we should remove it from the list!
-                        toRemoval.Add(entry.Key);
-                    }
-                    catch (IOException)
-                    {
-                        //If replica isn't available, we should remove it from the list!
-                        toRemoval.Add(entry.Key);
-                    }
+                    catch (SocketException) { }
+                    catch (IOException) { }
+
+                    //If replica isn't available, we should remove it from the list!
+                    toRemoval.Add(entry.Key);
                 }
 
                 foreach (int remove in toRemoval)
@@ -317,64 +310,70 @@ namespace MetadataServer
                 }
             }
         }
-        private void executeInstructions(List<string> log)
+
+        private void executeInstructions(List<InstructionDTO> log, int currentInstruction)
         {
-            foreach (string instruction in log)
+            for (int i = currentInstruction; i < log.Count; i++)
             {
                 try
                 {
-                    interpretInstruction(instruction);
+                    interpretInstruction(log[i]);
                 }
-                catch (Exception) { }//ignore
+                //ignore
+                catch (SocketException) { }
+                catch (IOException) { }
             }
         }
 
-        public void receiveInstruction(string instruction)
+        public void receiveInstruction(InstructionDTO instruction)
         {
             isAlive();
             interpretInstruction(instruction);
         }
 
-        private void interpretInstruction(string command)
+        private void interpretInstruction(InstructionDTO instruction)
         {
-            string[] parameters = command.Split(',');
-
-            switch (parameters[0])
+            switch (instruction.type)
             {
                 case "OPEN":
-                    open(parameters[1], Convert.ToInt32(parameters[2]));
+                    OpenDTO openDTO = (OpenDTO)instruction;
+                    open(openDTO.filename, openDTO.location);
                     break;
                 case "CLOSE":
-                    close(parameters[1], Convert.ToInt32(parameters[2]));
+                    CloseDTO closeDTO = (CloseDTO)instruction;
+                    close(closeDTO.filename, closeDTO.location);
                     break;
                 case "CREATE":
-                    if (parameters.Length > 5)
-                    {
-                        List<string> locations = new List<string>();
-                        string[] allLocations = parameters[5].Split('\n');
-
-                        foreach (string location in allLocations)
-                            locations.Add(location);
-
-                        create(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]), locations);
-                    }
-                    else
-                        create(parameters[1], Convert.ToInt32(parameters[2]), Convert.ToInt32(parameters[3]), Convert.ToInt32(parameters[4]));
+                    CreateDTO createDTO = (CreateDTO)instruction;
+                    create(createDTO.metadataInfo.filename, createDTO.metadataInfo.numDataServers, 
+                        createDTO.metadataInfo.readQuorum, createDTO.metadataInfo.writeQuorum, createDTO.metadataInfo.dataServers);
                     break;
                 case "DELETE":
-                    delete(parameters[1]);
+                    DeleteDTO deleteDTO = (DeleteDTO)instruction;
+                    delete(deleteDTO.filename);
                     break;
                 case "REGISTER":
-                    register(Convert.ToInt32(parameters[1]));
+                    RegisterDTO registerDTO = (RegisterDTO)instruction;
+                    register(registerDTO.location);
+                    break;
+                case "QUEUE":
+                    QueueFileDTO queueFileDTO = (QueueFileDTO)instruction;
+                    processMetadataQueue(queueFileDTO.localFilenameInfo);
+                    break;
+                case "UPDATE":
+                    UpdateMetadataDTO updateMetadataDTO = (UpdateMetadataDTO)instruction;
+                    updateMetadata(updateMetadataDTO.metadataInfo);
                     break;
             }
         }
 
-        public override object InitializeLifetimeService()
+        private void updateMetadata(MetadataInfo metadataInfo)
         {
-            return null;
+            System.Console.WriteLine("Updating file:" + metadataInfo.filename);
+            Utils.serializeObject<MetadataInfo>(metadataInfo, Path.Combine(fileFolder, metadataInfo.filename));
+            metadataTable[metadataInfo.filename] = metadataInfo;
+            
         }
-
 
         public int getMetadataID()
         {
@@ -382,11 +381,15 @@ namespace MetadataServer
             return metadataID;
         }
 
-
         public int getPrimaryMetadataLocation()
         {
             isAlive();
             return primaryServerLocation;
+        }
+
+        public override object InitializeLifetimeService()
+        {
+            return null;
         }
     }
 }
