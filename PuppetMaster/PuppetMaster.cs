@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace PuppetMaster
 {
@@ -21,6 +22,7 @@ namespace PuppetMaster
 
         private List<string> scriptInstructions = new List<string>();
         private int currentInstruction;
+        private string currentPath = "";
 
         private int[] metadataLocations = { 8081, 8082, 8083 };
         private BitArray metadataLaunched = new BitArray(3);
@@ -34,8 +36,8 @@ namespace PuppetMaster
          */
         public PuppetMaster()
         {
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(8080, true);
-            ChannelServices.RegisterChannel(channel, true);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(8080);
+            ChannelServices.RegisterChannel(channel, false);
         }
 
         /*
@@ -51,9 +53,9 @@ namespace PuppetMaster
             IClientPuppet newClient = (IClientPuppet)Activator.GetObject(
                 typeof(IClientPuppet),
                 "tcp://localhost:" + clientPort + "/Client");
+
             newClient.init(metadataLocations);
             clientsList.Add(newClient);
-            form.addClient();
             clientPort++;
         }
 
@@ -69,7 +71,6 @@ namespace PuppetMaster
             newMetadata.init(metadataLocations);
             metadataList[selectedMetadata] = newMetadata;
             metadataLaunched[selectedMetadata] = true;
-            form.addMetadataServer();
         }
 
         /*
@@ -86,29 +87,29 @@ namespace PuppetMaster
 
             newDataServer.init(metadataLocations);
             dataServersList.Add(newDataServer);
-            form.addDataServer();
             dataServerPort++;
         }
 
         /*
          * The script is loaded from the "PADI/PuppetMaster" directory.
          */
-        public void loadScript(string scriptFile)
+        public void loadScript(string path)
         {
-            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, scriptFile);
             string scriptText = "";
-            int i = 0;
+            int j = 0;
             string[] scriptLines = File.ReadAllLines(path);
-            currentInstruction = 0;
+            currentInstruction = 0; 
+            currentPath = Directory.GetParent(path).FullName;
 
             foreach (string instruction in scriptLines)
                 if (!instruction[0].Equals('#'))
                 {
                     scriptInstructions.Add(instruction);
-                    scriptText += i++ + ": " + instruction + "\r\n";
+                    scriptText += j++ + ": " + instruction + "\r\n";
                 }
 
-            form.updateScriptText(scriptText, i);
+            form.updateScriptText(scriptText, j);
+            form.updateMessageBox("Loaded Script.");
         }
 
         /*
@@ -132,15 +133,26 @@ namespace PuppetMaster
             return currentInstruction++;
         }
 
-        private void interpretInstruction(string command)
+        public void interpretInstruction(string command)
         {
-            string[] parameters = Regex.Split(command, ", ");
+            string[] parameters = command.Split(',');
             string[] processInst = parameters[0].Split(' ');
             string instruction = processInst[0];
             string[] processInfo = processInst[1].Split('-');
             int processNumber = Convert.ToInt32(processInfo[1]) - 1;
-
             launchProcessIfNeeded(processInfo[0], processNumber);
+            string textFile = "";
+
+            //Removing whitespaces
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (i == 2)
+                {
+                    textFile = parameters[2].Replace("\"", "");
+                }
+
+                parameters[i] = parameters[i].Replace(" ", "");
+            }
 
             switch (instruction)
             {
@@ -152,7 +164,6 @@ namespace PuppetMaster
                     }
                     catch (FormatException)
                     {
-                        string textFile = parameters[2].Replace("\"", "");
                         writeFile(Convert.ToInt32(parameters[1]), textFile, processNumber);
                     }
 

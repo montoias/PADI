@@ -19,13 +19,15 @@ namespace Client
         static void Main(string[] args)
         {
             port = Convert.ToInt32(args[0]);
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(port, true);
-            ChannelServices.RegisterChannel(channel, true);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(port);
+            ChannelServices.RegisterChannel(channel, false);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(Client),
                 "Client",
                 WellKnownObjectMode.Singleton);
+
+            System.Console.WriteLine("Registering server object @ port : " + port);
 
             System.Console.ReadLine();
         }

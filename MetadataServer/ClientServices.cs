@@ -49,7 +49,11 @@ namespace MetadataServer
 
                 metadataTable.Add(filename, metadata);
                 Utils.serializeObject<MetadataInfo>(metadata, path);
-                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                object key = stateFile;
+                lock (key)
+                {
+                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                }
 
                 return metadata;
             }
@@ -86,7 +90,11 @@ namespace MetadataServer
 
                 metadataTable.Add(filename, metadata);
                 Utils.serializeObject<MetadataInfo>(metadata, path);
-                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                object key = stateFile;
+                lock (key)
+                {
+                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                }
 
                 return metadata;
             }
@@ -118,7 +126,11 @@ namespace MetadataServer
                 if (metadataState.queueFiles.ContainsKey(filename))
                     metadataState.queueFiles.Remove(filename);
 
-                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                object key = stateFile;
+                lock (key)
+                {
+                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                }
                 File.Delete(path);
             }
             else
@@ -133,11 +145,11 @@ namespace MetadataServer
 
             string path = Path.Combine(fileFolder, filename);
             MetadataInfo metadata;
-            OpenDTO instruction = new OpenDTO(filename, location);
 
             if (metadataState.openedFiles.ContainsKey(filename) && metadataState.openedFiles[filename].Contains(location))
                 throw new FileAlreadyOpenedException();
 
+            OpenDTO instruction = new OpenDTO(filename, location);
             sendInstruction(instruction);
 
             if (metadataTable.ContainsKey(filename))
@@ -170,7 +182,11 @@ namespace MetadataServer
             else
                 metadataState.openedFiles[filename].Add(location);
 
-            Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            object key = stateFile;
+            lock (key)
+            {
+                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            }
             return metadata;
         }
 
@@ -189,7 +205,11 @@ namespace MetadataServer
             else
                 metadataState.openedFiles[filename].Remove(location);
 
-            Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            object key = stateFile;
+            lock (key)
+            {
+                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            }
         }
     }
 }

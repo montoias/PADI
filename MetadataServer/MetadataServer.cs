@@ -21,10 +21,10 @@ namespace MetadataServer
 
         private System.Threading.Timer heartbeatTimer, checkpointTimer, updateStatsTimer;
 
-        private long heartbeatPeriod = 3600 * 1000;
+        private long heartbeatPeriod = 10 * 1000;
         private long checkpointPeriod = 3600 * 1000;
-        private long updateStatsPeriod = 3600 * 1000;
-        private const int DISTRIBUTION_FILES = 3;
+        private long updateStatsPeriod = 30 * 1000;
+        private const int DISTRIBUTION_FILES = 1;
 
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
         private Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
@@ -40,13 +40,15 @@ namespace MetadataServer
         static void Main(string[] args)
         {
             port = Convert.ToInt32(args[0]);
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(port, true);
-            ChannelServices.RegisterChannel(channel, true);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(port);
+            ChannelServices.RegisterChannel(channel, false);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(MetadataServer),
                 "MetadataServer",
                 WellKnownObjectMode.Singleton);
+
+            System.Console.WriteLine("Registering server object @ port : " + port);
 
             System.Console.ReadLine();
         }
@@ -111,7 +113,11 @@ namespace MetadataServer
             //Obtains previous state
             if (File.Exists(stateFile))
             {
-                metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
+                object key = stateFile;
+                lock (key)
+                {
+                    metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
+                }
                 currentInstruction = metadataState.currentInstruction;
             }
 
@@ -151,7 +157,6 @@ namespace MetadataServer
                     checkpoint();
                 }
                 catch (SocketException) { }
-                catch (IOException) { }
             }
         }
 
@@ -164,7 +169,6 @@ namespace MetadataServer
                 return;
             }
             catch (SocketException) { }
-            catch (IOException) { }
 
             retryTick();
         }
@@ -192,7 +196,6 @@ namespace MetadataServer
                     }
                 }
                 catch (SocketException) { }
-                catch (IOException) { }
             }
 
             System.Console.WriteLine("I'm the new primary metadata.");
@@ -303,7 +306,6 @@ namespace MetadataServer
                         continue;
                     }
                     catch (SocketException) { }
-                    catch (IOException) { }
 
                     //If replica isn't available, we should remove it from the list!
                     toRemoval.Add(entry.Key);
@@ -387,12 +389,14 @@ namespace MetadataServer
         private void updateStatsTick(object state)
         {
             Dictionary<int, DataServerStats> dataServerStats = new Dictionary<int, DataServerStats>();
+            System.Console.WriteLine("Gathering stats information.");
             foreach (int location in metadataState.dataServersList)
             {
                 try
                 {
                     IDataServerMetadataServer dataServer = getDataServer(location);
                     dataServerStats[location] = dataServer.getStats();
+                    System.Console.WriteLine(location + " load: " + dataServerStats[location].serverLoad); 
                     dataServer.restartStats();
                 }
                 catch (SocketException)
@@ -407,6 +411,7 @@ namespace MetadataServer
                 }
             }
 
+            System.Console.WriteLine("Applying distribution function.");
             distributionFunction(dataServerStats);
         }
 
@@ -458,13 +463,14 @@ namespace MetadataServer
                 if (!updated)
                     break;
             }
+            System.Console.WriteLine("Finished distribution");
         }
 
         private void migrateFile(int oldLocation, int newLocation, string localFilename)
         {
             FileData fileData = getDataServer(oldLocation).read(localFilename);
             getDataServer(newLocation).create(localFilename, fileData.file, fileData.version, fileData.clientID, fileData.filename);
-
+            System.Console.WriteLine("Migrating " + fileData.filename + " from " + oldLocation + " to " + newLocation);
             string path = Path.Combine(fileFolder, fileData.filename);
             MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
 
@@ -483,6 +489,7 @@ namespace MetadataServer
             metadataState.currentInstruction++;
 
             updateMetadata(metadata);
+            getDataServer(oldLocation).delete(localFilename);
         }
 
         public int getMetadataID()

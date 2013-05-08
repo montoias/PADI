@@ -33,7 +33,11 @@ namespace MetadataServer
 
                 if (File.Exists(stateFile))
                 {
-                    metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
+                    object key = stateFile;
+                    lock (key)
+                    {
+                        metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
+                    }
                     currentInstruction = metadataState.currentInstruction;
                 }
 

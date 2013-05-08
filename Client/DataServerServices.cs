@@ -40,12 +40,13 @@ namespace Client
          */
         private FileData readOnly(int fileRegister, string semantics)
         {
-            MetadataInfo metadata = checkMetadata(fileRegister);
+            MetadataInfo metadata = checkMetadata(fileRegister, "readQuorum");
             FileData fileData = readQuorum(metadata, metadata.readQuorum);
 
-            if (semantics.Equals("monotonic") && fileVersions.ContainsKey(metadata.filename) && (fileVersions[metadata.filename] >= fileData.version))
+            if (semantics.Equals("monotonic") && fileVersions.ContainsKey(metadata.filename) && (fileVersions[metadata.filename] > fileData.version))
             {
                 System.Console.WriteLine("Monotonic read was requested: The file obtained was older than the one read before! Retrying...");
+                Thread.Sleep(1000);
                 return readOnly(fileRegister, semantics);
             }
 
@@ -57,12 +58,12 @@ namespace Client
         private FileData readQuorum(MetadataInfo metadata, int quorumNum)
         {
             ReadDelegate readDelegate = new ReadDelegate(readAsync);
-            Dictionary<int, FileData> versionResults = new Dictionary<int, FileData>();
             Dictionary<int, int> versionCounter = new Dictionary<int, int>();
-            Queue<LocalFilenameInfo> availableServers = new Queue<LocalFilenameInfo>();
+            Queue<KeyValuePair<int, LocalFilenameInfo>> availableServers = new Queue<KeyValuePair<int, LocalFilenameInfo>>();
             List<IAsyncResult> results = new List<IAsyncResult>();
+            FileData result = null;
             BitArray completed = new BitArray(metadata.numDataServers);
-            int numResults = 0, maxResults = 0, maxVersion = 0;
+            int numResults = 0, maxVersion = -1;
             int j;
 
             for (j = 0; j < quorumNum; j++)
@@ -73,7 +74,7 @@ namespace Client
             for (; j < metadata.dataServers.Count; j++)
             {
                 System.Console.WriteLine("Enqueued server @ " + metadata.dataServers[j].location);
-                availableServers.Enqueue(metadata.dataServers[j]);
+                availableServers.Enqueue(new KeyValuePair<int, LocalFilenameInfo>(j, metadata.dataServers[j]));
             }
 
             while (numResults < quorumNum)
@@ -88,49 +89,45 @@ namespace Client
                         {
                             completed[i] = true;
                             FileData tempFile = ((ReadDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
-                            if (versionCounter.ContainsKey(tempFile.version))
-                                versionCounter[tempFile.version]++;
-                            else
+                            System.Console.WriteLine("Version:" + tempFile.version);
+                            if (maxVersion < tempFile.version)
                             {
-                                versionResults[tempFile.version] = tempFile;
-                                versionCounter[tempFile.version] = 1;
+                                result = tempFile;
+                                maxVersion = tempFile.version;
                             }
                             numResults++;
                         }
                         else
-                        {
-                            completed[i] = true;
-                            throw new SocketException();
-                        }
+                            throw new TimeoutException();
+                    }
+                    catch (TimeoutException)
+                    {
+                        availableServers.Enqueue(new KeyValuePair<int, LocalFilenameInfo>(i, metadata.dataServers[i]));
+                        KeyValuePair<int, LocalFilenameInfo> dataServerInfo = availableServers.Dequeue();
+                        if (results.Count - 1 < dataServerInfo.Key)
+                            results.Add(readDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location), dataServerInfo.Value.localFilename, null, null));
+                        else
+                            results[dataServerInfo.Key] = readDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location), dataServerInfo.Value.localFilename, null, null);
+                        completed[dataServerInfo.Key] = false;
                     }
                     catch (SocketException)
                     {
-                        availableServers.Enqueue(metadata.dataServers[i]);
-                        LocalFilenameInfo dataServerInfo = availableServers.Dequeue();
-                        results.Add(readDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.location), dataServerInfo.localFilename, null, null));
-                    }
-                    catch (IOException)
-                    {
-                        availableServers.Enqueue(metadata.dataServers[i]);
-                        LocalFilenameInfo dataServerInfo = availableServers.Dequeue();
-                        results.Add(readDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.location), dataServerInfo.localFilename, null, null));
-                    }
-                }
-            }
+                        availableServers.Enqueue(new KeyValuePair<int, LocalFilenameInfo>(i, metadata.dataServers[i]));
+                        KeyValuePair<int, LocalFilenameInfo> dataServerInfo = availableServers.Dequeue();
+                        if (results.Count - 1 < dataServerInfo.Key)
+                            results.Add(readDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location), dataServerInfo.Value.localFilename, null, null));
+                        else
+                            results[dataServerInfo.Key] = readDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location), dataServerInfo.Value.localFilename, null, null);
 
-            foreach (int version in versionCounter.Keys)
-            {
-                System.Console.WriteLine("Version:" + version);
-                if (versionCounter[version] > maxResults)
-                {
-                    maxResults = versionCounter[version];
-                    maxVersion = version;
+                        completed[i] = true;
+                        completed[dataServerInfo.Key] = false;
+                    }
                 }
             }
 
             System.Console.WriteLine("Max Version is: " + maxVersion);
 
-            return versionResults[maxVersion];
+            return result;
         }
 
         /*
@@ -143,7 +140,7 @@ namespace Client
         {
             System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
 
-            MetadataInfo metadata = checkMetadata(fileRegister);
+            MetadataInfo metadata = checkMetadata(fileRegister, "writeQuorum");
             System.Console.WriteLine(metadata);
 
             writeQuorum(metadata, new FileData(Utils.stringToByteArray(textFile), readQuorum(metadata, metadata.writeQuorum).version + 1, clientID, metadata.filename));
@@ -160,7 +157,7 @@ namespace Client
             System.Console.WriteLine("Writing to DS where metadata is from file register " + fileRegister);
             System.Console.WriteLine("Contents to write were from byte register " + byteRegister);
 
-            MetadataInfo metadata = checkMetadata(fileRegister);
+            MetadataInfo metadata = checkMetadata(fileRegister, "writeQuorum");
             FileData fileData = byteRegisters[byteRegister];
             fileData.version = readQuorum(metadata, metadata.writeQuorum).version + 1;
             fileData.clientID = clientID;
@@ -170,7 +167,7 @@ namespace Client
         private void writeQuorum(MetadataInfo metadata, FileData fileData)
         {
             WriteDelegate writeDelegate = new WriteDelegate(writeAsync);
-            Queue<LocalFilenameInfo> availableServers = new Queue<LocalFilenameInfo>();
+            Queue<KeyValuePair<int, LocalFilenameInfo>> availableServers = new Queue<KeyValuePair<int, LocalFilenameInfo>>();
             List<IAsyncResult> results = new List<IAsyncResult>();
             BitArray completed = new BitArray(metadata.numDataServers);
             int numResults = 0;
@@ -183,7 +180,7 @@ namespace Client
             }
             for (; j < metadata.dataServers.Count; j++)
             {
-                availableServers.Enqueue(metadata.dataServers[j]);
+                availableServers.Enqueue(new KeyValuePair<int, LocalFilenameInfo>(j, metadata.dataServers[j]));
             }
 
             while (numResults < metadata.writeQuorum)
@@ -196,29 +193,41 @@ namespace Client
                     {
                         if (results[i].AsyncWaitHandle.WaitOne(TIMEOUT) && !completed[i])
                         {
-                            completed[i] = true;
                             ((WriteDelegate)((AsyncResult)results[i]).AsyncDelegate).EndInvoke(results[i]);
                             results.RemoveAt(i);
                             numResults++;
-                            System.Console.WriteLine("Result " + i + "is completed.");
+                            System.Console.WriteLine("Result " + i + " is completed.");
+                            completed[i] = true;
                         }
                         else
-                        {
-                            completed[i] = true;
-                            throw new SocketException();
-                        }
+                            throw new TimeoutException();
+
+                    }
+                    catch (TimeoutException)
+                    {
+                        availableServers.Enqueue(new KeyValuePair<int, LocalFilenameInfo>(i, metadata.dataServers[i]));
+                        KeyValuePair<int, LocalFilenameInfo> dataServerInfo = availableServers.Dequeue();
+                        if (results.Count - 1 < dataServerInfo.Key)
+                            results.Add(writeDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location),
+                                                        dataServerInfo.Value.localFilename, fileData, null, null));
+                        else
+                            results[dataServerInfo.Key] = writeDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location),
+                                                        dataServerInfo.Value.localFilename, fileData, null, null);
+                        completed[dataServerInfo.Key] = false;
                     }
                     catch (SocketException)
                     {
-                        LocalFilenameInfo dataServerInfo = availableServers.Dequeue();
-                        results.Add(writeDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.location), dataServerInfo.localFilename, fileData, null, null));
-                        availableServers.Enqueue(metadata.dataServers[i]);
-                    }
-                    catch (IOException)
-                    {
-                        LocalFilenameInfo dataServerInfo = availableServers.Dequeue();
-                        results.Add(writeDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.location), dataServerInfo.localFilename, fileData, null, null));
-                        availableServers.Enqueue(metadata.dataServers[i]);
+                        availableServers.Enqueue(new KeyValuePair<int, LocalFilenameInfo>(i, metadata.dataServers[i]));
+                        KeyValuePair<int, LocalFilenameInfo> dataServerInfo = availableServers.Dequeue();
+                        if (results.Count - 1 < dataServerInfo.Key)
+                            results.Add(writeDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location),
+                                                            dataServerInfo.Value.localFilename, fileData, null, null));
+                        else
+                            results[dataServerInfo.Key] = writeDelegate.BeginInvoke(getDataServer(metadata, dataServerInfo.Value.location),
+                                                        dataServerInfo.Value.localFilename, fileData, null, null);
+
+                        completed[i] = true;
+                        completed[dataServerInfo.Key] = false;
                     }
                 }
             }
@@ -238,13 +247,14 @@ namespace Client
          * If there aren't, it locks the thread for that object, waiting for the 
          * requested dataservers to come up.
          */
-        private MetadataInfo checkMetadata(int fileRegister)
+        private MetadataInfo checkMetadata(int fileRegister, string type)
         {
             Object key = fileRegisters[fileRegister];
             lock (key)
             {
                 MetadataInfo metadata = fileRegisters[fileRegister];
-                if (metadata.dataServers.Count < metadata.numDataServers)
+                int numQuorum = type.Equals("readQuorum") ? metadata.readQuorum : metadata.writeQuorum;
+                if (metadata.dataServers.Count < numQuorum)
                 {
                     Monitor.Wait(key);
                 }

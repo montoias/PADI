@@ -1,0 +1,8 @@
+RECOVER m-0
+UNFREEZE d-1
+UNFREEZE d-2
+CREATE c-1,a,1,1,1
+CREATE c-1,b,1,1,1
+CREATE c-2,c,1,1,1
+EXESCRIPT c-1 exe1.txt
+EXESCRIPT c-2 exe2.txt

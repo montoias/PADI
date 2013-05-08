@@ -30,6 +30,7 @@ namespace PuppetMaster
         public void dumpDataServer(int selectedDataServer)
         {
             dataServersList[selectedDataServer].dump();
+            //TODO: Launch new window
         }
     }
 }

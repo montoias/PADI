@@ -1,0 +1,7 @@
+OPEN c-1, c
+READ c-1, 0, default, 0
+READ c-1, 0, default, 0
+READ c-1, 0, default, 0
+READ c-1, 0, default, 0
+READ c-1, 0, default, 0
+READ c-1, 0, default, 0

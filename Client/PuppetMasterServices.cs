@@ -9,6 +9,7 @@ namespace Client
 
         public void copy(int fileRegister1, string semantics, int fileRegister2, string salt)
         {
+            System.Console.WriteLine(fileRegister1 + " to " + fileRegister2 + " (" + semantics + ") : " + salt);
             FileData fileData = readOnly(fileRegister1, semantics);
             write(fileRegister2, Utils.byteArrayToString(fileData.file) + salt);
         }
@@ -22,11 +23,23 @@ namespace Client
 
         private void interpretInstruction(string command)
         {
-            string[] parameters = Regex.Split(command, ", ");
+            string[] parameters = command.Split(',');
             string[] processInst = parameters[0].Split(' ');
             string instruction = processInst[0];
             string[] processInfo = processInst[1].Split('-');
             int processNumber = Convert.ToInt32(processInfo[1]) - 1;
+            string textFile = "";
+
+            //Removing whitespaces
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (i == 2)
+                {
+                    textFile = parameters[2].Replace("\"", "");
+                }
+
+                parameters[i] = parameters[i].Replace(" ", "");
+            }
 
             switch (instruction)
             {
@@ -38,7 +51,6 @@ namespace Client
                     }
                     catch (FormatException)
                     {
-                        string textFile = parameters[2].Replace("\"", "");
                         write(Convert.ToInt32(parameters[1]), textFile);
                     }
 
@@ -61,6 +73,9 @@ namespace Client
                 case "COPY":
                     string salt = parameters[4].Replace("\"", "");
                     copy(Convert.ToInt32(parameters[1]), parameters[2], Convert.ToInt32(parameters[3]), salt);
+                    break;
+                case "DUMP":
+                    dump();
                     break;
             }
         }

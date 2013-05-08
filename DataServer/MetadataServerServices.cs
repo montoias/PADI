@@ -22,10 +22,6 @@ namespace DataServer
             {
                 retryRegister(port);
             }
-            catch (IOException)
-            {
-                retryRegister(port);
-            }
         }
 
         private void retryRegister(int port)

@@ -24,14 +24,15 @@ namespace DataServer
         static void Main(string[] args)
         {
             port = Convert.ToInt32(args[0]);
-            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port), true);
-            ChannelServices.RegisterChannel(channel, true);
+            TcpChannel channel = (TcpChannel)Helper.GetChannel(Convert.ToInt32(port));
+            ChannelServices.RegisterChannel(channel, false);
 
             RemotingConfiguration.RegisterWellKnownServiceType(
                 typeof(DataServer),
                 "DataServer",
                 WellKnownObjectMode.Singleton);
 
+            System.Console.WriteLine("Registering server object @ port : " + port);
             
             System.Console.ReadLine();
         }
@@ -77,10 +78,6 @@ namespace DataServer
                 contents += primaryMetadata.getPrimaryMetadataLocation() + "\r\n";
             }
             catch (SocketException)
-            {
-                contents += "Undetermined location \r\n";
-            }
-            catch (IOException)
             {
                 contents += "Undetermined location \r\n";
             }

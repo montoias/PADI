@@ -8,6 +8,7 @@ namespace CommonTypes
         void create(string localFilename, byte[] file, int version, int clientID, string filename);
         FileData read(string localFilename);
         void write(string localFilename, FileData file);
+        void delete(string localFilename);
 
     }
 }

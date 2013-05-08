@@ -67,7 +67,7 @@ namespace PuppetMaster
 
         private void exescriptAsync(int selectedClient, string filename)
         {
-            string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName, filename);
+            string path = Path.Combine(currentPath, filename);
             string[] fileText = File.ReadAllLines(path);
             clientsList[selectedClient].exescript(fileText);
         }

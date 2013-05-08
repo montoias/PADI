@@ -8,7 +8,7 @@ namespace CommonTypes
 {
     public class Helper
     {
-        public static IChannel GetChannel(int tcpPort, bool isSecure)
+        public static IChannel GetChannel(int tcpPort)
         {
             BinaryServerFormatterSinkProvider serverProv =
                 new BinaryServerFormatterSinkProvider();
@@ -18,11 +18,6 @@ namespace CommonTypes
             propBag["typeFilterLevel"] = TypeFilterLevel.Full;
             propBag["name"] = Guid.NewGuid().ToString();
 
-            if (isSecure)
-            {
-                propBag["secure"] = isSecure;
-                propBag["impersonate"] = false;
-            }
             return new TcpChannel(
                 propBag, null, serverProv);
         }

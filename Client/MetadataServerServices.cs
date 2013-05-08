@@ -32,11 +32,6 @@ namespace Client
             {
                 return retryCreate(filename, numDataServers, readQuorum, writeQuorum);
             }
-            catch (IOException)
-            {
-                return retryCreate(filename, numDataServers, readQuorum, writeQuorum);
-            }
-
             return info;
         }
 
@@ -62,10 +57,6 @@ namespace Client
             {
                 retryDelete(filename);
             }
-            catch (IOException)
-            {
-                retryDelete(filename);
-            }
         }
 
         private void retryDelete(string filename)
@@ -77,7 +68,7 @@ namespace Client
 
         public MetadataInfo open(string filename)
         {
-            System.Console.WriteLine("Opening the file: " + filename);
+            System.Console.WriteLine("Opening the file: " + filename + " @ " + primaryMetadata.getPrimaryMetadataLocation());
             try
             {
                 MetadataInfo info = primaryMetadata.open(filename, clientID);
@@ -100,10 +91,6 @@ namespace Client
             {
                 return retryOpen(filename);
             }
-            catch (IOException)
-            {
-                return retryOpen(filename);
-            }
         }
 
         private MetadataInfo retryOpen(string filename)
@@ -118,8 +105,6 @@ namespace Client
             System.Console.WriteLine("Closing the file: " + filename);
             try
             {
-                primaryMetadata.close(filename, clientID);
-
                 //It may happen that the currentRegister has turn around, so
                 //we need to perform this verification.
                 if (fileIndexer.ContainsKey(filename))
@@ -127,6 +112,8 @@ namespace Client
                     fileRegisters[fileIndexer[filename]] = null;
                     fileIndexer.Remove(filename);
                 }
+
+                primaryMetadata.close(filename, clientID);                
             }
             catch (FileNotOpenedException)
             {
@@ -137,10 +124,6 @@ namespace Client
                 System.Console.WriteLine("The file " + filename + " does not exist!");
             }
             catch (SocketException)
-            {
-                retryClose(filename);
-            }
-            catch (IOException)
             {
                 retryClose(filename);
             }

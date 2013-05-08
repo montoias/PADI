@@ -19,6 +19,7 @@ namespace PuppetMaster
         public void dumpMetadataServer(int selectedMetadata)
         {
             metadataList[selectedMetadata].dump();
+            //TODO: Launch separate window
         }
     }
 }

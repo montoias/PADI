@@ -84,6 +84,8 @@ namespace DataServer
         public void restartStats()
         {
             dataServerStats.fileLoad.Clear();
+            dataServerStats.filesAccessed.Clear();
+            dataServerStats.serverLoad = 0;
         }
 
         public void create(string localFilename, byte[] file, int version, int clientID, string filename)
@@ -92,6 +94,16 @@ namespace DataServer
             System.Console.WriteLine("Creating file:" + localFilename);
             FileData fileData = new FileData(file, version, clientID, filename);
             Utils.serializeObject<FileData>(fileData, path);
+        }
+
+        public void delete(string localFilename)
+        {
+            lock (this)
+            {
+                string path = Path.Combine(fileFolder, localFilename);
+                System.Console.WriteLine("Deleting file:" + localFilename);
+                File.Delete(path);
+            }
         }
     }
 }

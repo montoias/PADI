@@ -17,7 +17,11 @@ namespace MetadataServer
 
             metadataState.dataServersList.Add(location);
             dataServerLoad.Add(new KeyValuePair<int, DataServerStats>(location, new DataServerStats()));
-            Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            object key = stateFile;
+            lock (key)
+            {
+                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            }
 
             if (port.Equals(primaryServerLocation) && metadataState.queueFiles.Count > 0)
             {
@@ -66,7 +70,11 @@ namespace MetadataServer
                     if (port.Equals(primaryServerLocation) && metadataState.openedFiles.ContainsKey(filename))
                             notifyClients(metadata);
                 }
-                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                object key = stateFile;
+                lock (key)
+                {
+                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                }
             }
         }
 
