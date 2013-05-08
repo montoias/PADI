@@ -7,7 +7,6 @@ using System.IO;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Text.RegularExpressions;
-using System.Runtime.Remoting.Messaging;
 
 namespace PuppetMaster
 {
@@ -28,7 +27,7 @@ namespace PuppetMaster
 
         private int clientPort = 8000;
         private int dataServerPort = 9000;
-        
+
         /*
          * Class constructor. Used to initialize its tcp channel, which is used to 
          * communicate with other entities.
@@ -120,7 +119,7 @@ namespace PuppetMaster
             if (line <= currentInstruction)
                 return currentInstruction;
 
-            for (int i = currentInstruction; i <= line; i++) 
+            for (int i = currentInstruction; i <= line; i++)
                 interpretInstruction(scriptInstructions[i]);
 
             currentInstruction = line;
@@ -237,22 +236,6 @@ namespace PuppetMaster
         public void setForm(Form1 form)
         {
             this.form = form;
-        }
-
-        public void killProcesses()
-        {
-            foreach (Process proc in Process.GetProcessesByName("DataServer"))
-                proc.Kill();
-
-            foreach (Process proc in Process.GetProcessesByName("Client"))
-                proc.Kill();
-
-            foreach (Process proc in Process.GetProcessesByName("MetadataServer"))
-                proc.Kill();
-
-            clientPort = 8000;
-            dataServerPort = 9000;
-            metadataLaunched.SetAll(false);
         }
     }
 }

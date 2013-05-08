@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace CommonTypes
 {
@@ -39,7 +38,12 @@ namespace CommonTypes
             }
 
             // Return true if the fields match:
-            return (location.Equals(localFilenameInfo.location) && (localFilename.Equals(localFilenameInfo.localFilename);
+            return location.Equals(localFilenameInfo.location) && localFilename.Equals(localFilenameInfo.localFilename);
+        }
+
+        public override int GetHashCode()
+        {
+            return location.GetHashCode() ^ localFilename.GetHashCode();
         }
     }
 }

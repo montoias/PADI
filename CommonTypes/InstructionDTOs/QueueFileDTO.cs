@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CommonTypes
 {
@@ -9,18 +6,20 @@ namespace CommonTypes
     public class QueueFileDTO : InstructionDTO
     {
         public LocalFilenameInfo localFilenameInfo;
-        
+        public string filename;
+
         private QueueFileDTO() { }
 
-        public QueueFileDTO(LocalFilenameInfo dataServerInfo)
+        public QueueFileDTO(string filename, LocalFilenameInfo dataServerInfo)
         {
             base.type = "QUEUE";
+            this.filename = filename;
             this.localFilenameInfo = dataServerInfo;
         }
 
         public override string ToString()
         {
-            return "QUEUE " + localFilenameInfo;
+            return type + " " + localFilenameInfo;
         }
     }
 }

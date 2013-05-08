@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows.Forms;
 
 namespace PuppetMaster
@@ -12,6 +14,7 @@ namespace PuppetMaster
 
         private const int NUM_REGISTERS = 10;
         private const int MAX_ITEMS = 10;
+        private string currentFile;
 
         /*
          * Class constructor. Passes a puppetMaster as an argument, which is the one used
@@ -142,17 +145,6 @@ namespace PuppetMaster
             puppetMaster.dumpMetadataServer(MetadataBox.SelectedIndex);
         }
 
-        private void KillProcessesButton_Click(object sender, EventArgs e)
-        {
-            clientCounter = 0;
-            dataServerCounter = 0;
-            metadataServerCounter = 0;
-            ClientBox.Items.Clear();
-            DataServerBox.Items.Clear();
-            MetadataBox.Items.Clear();
-            puppetMaster.killProcesses();
-        }
-
         private void FailDataServerButton_Click(object sender, EventArgs e)
         {
             puppetMaster.failDataServer(DataServerBox.SelectedIndex);
@@ -180,7 +172,7 @@ namespace PuppetMaster
 
         private void LoadScriptButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.loadScript(ScriptFileBox.Text);
+            puppetMaster.loadScript(currentFile);
         }
 
         private void RunScriptButton_Click(object sender, EventArgs e)
@@ -195,7 +187,7 @@ namespace PuppetMaster
 
         private void ExescriptButton_Click(object sender, EventArgs e)
         {
-            puppetMaster.executeExescript(ClientBox.SelectedIndex, ScriptFileBox.Text);
+            puppetMaster.executeExescript(ClientBox.SelectedIndex, currentFile);
         }
 
         /***********************
@@ -218,6 +210,29 @@ namespace PuppetMaster
                 RunInstructionLineBox.Items.Add(i);
 
             RunInstructionLineBox.SelectedIndex = i-1;
+        }
+
+        private void BrowseButton_Click(object sender, EventArgs e)
+        {
+            DialogResult result = openFileDialog.ShowDialog(); // Show the dialog.
+            if (result == DialogResult.OK) // Test result.
+            {
+                currentFile = openFileDialog.FileName;
+                string[] paths = currentFile.Split('\\');
+                ScriptLabel.Text = "File: " + paths[paths.Length-1];
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            foreach (Process proc in Process.GetProcessesByName("DataServer"))
+                proc.Kill();
+
+            foreach (Process proc in Process.GetProcessesByName("Client"))
+                proc.Kill();
+
+            foreach (Process proc in Process.GetProcessesByName("MetadataServer"))
+                proc.Kill();
         }
     }
 }

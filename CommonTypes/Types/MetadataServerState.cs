@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace CommonTypes
@@ -35,20 +33,20 @@ namespace CommonTypes
         public override string ToString()
         {
             string toReturn = "QUEUE FILES\r\n";
-            foreach(KeyValuePair<string, MetadataInfo> entry in queueFiles)
+            foreach (KeyValuePair<string, MetadataInfo> entry in queueFiles)
             {
-                toReturn += "Filename : " + entry.Key;
+                toReturn += "Filename : " + entry.Key + "\r\n";
                 toReturn += "Contents: \r\n" + entry.Value + "\r\n";
             }
 
             toReturn += "DATA SERVERS AVAILABLE\r\n";
-            foreach(int dataServer in dataServersList)
+            foreach (int dataServer in dataServersList)
             {
                 toReturn += dataServer + "\r\n";
             }
 
             toReturn += "LOG\r\n";
-            for(int i = 0; i < log.Count; i++)
+            for (int i = 0; i < log.Count; i++)
             {
                 toReturn += "[" + i + "] " + log[i] + "\r\n";
             }

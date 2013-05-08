@@ -1,7 +1,7 @@
-﻿
+﻿using System;
 using System.IO;
 using System.Xml.Serialization;
-using System;
+
 namespace CommonTypes
 {
     public static class Utils
@@ -47,6 +47,5 @@ namespace CommonTypes
 
             Directory.CreateDirectory(fileFolder);
         }
-
     }
 }

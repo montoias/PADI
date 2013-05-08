@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CommonTypes
 {
@@ -10,7 +7,7 @@ namespace CommonTypes
     {
         public string filename;
         public int location;
-        
+
         private CloseDTO() { }
 
         public CloseDTO(string filename, int location)

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CommonTypes
 {
@@ -9,7 +6,7 @@ namespace CommonTypes
     public class CreateDTO : InstructionDTO
     {
         public MetadataInfo metadataInfo;
-        
+
         private CreateDTO() { }
 
         public CreateDTO(MetadataInfo metadataInfo)

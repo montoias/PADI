@@ -56,16 +56,14 @@
             this.FreezeDataServerButton = new System.Windows.Forms.Button();
             this.RecoverDataServerButton = new System.Windows.Forms.Button();
             this.FailDataServerButton = new System.Windows.Forms.Button();
-            this.KillProcessesbutton = new System.Windows.Forms.Button();
             this.ScriptBox = new System.Windows.Forms.GroupBox();
+            this.ExescriptButton = new System.Windows.Forms.Button();
             this.CurrentInstructionBox = new System.Windows.Forms.TextBox();
             this.RunInstructionLineBox = new System.Windows.Forms.ComboBox();
             this.GoToLabel = new System.Windows.Forms.Label();
             this.CurrentInstructionLabel = new System.Windows.Forms.Label();
             this.NextStepButton = new System.Windows.Forms.Button();
             this.RunScriptButton = new System.Windows.Forms.Button();
-            this.ScriptFileBox = new System.Windows.Forms.TextBox();
-            this.ScriptFileLabel = new System.Windows.Forms.Label();
             this.LoadScriptButton = new System.Windows.Forms.Button();
             this.SemanticsBox = new System.Windows.Forms.ComboBox();
             this.ByteRegisterLabel = new System.Windows.Forms.Label();
@@ -86,7 +84,9 @@
             this.WriteModeLabel = new System.Windows.Forms.Label();
             this.FileRegisterBox = new System.Windows.Forms.ComboBox();
             this.ByteRegisterBox = new System.Windows.Forms.ComboBox();
-            this.ExescriptButton = new System.Windows.Forms.Button();
+            this.BrowseButton = new System.Windows.Forms.Button();
+            this.ScriptLabel = new System.Windows.Forms.Label();
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.ClientGroupBox.SuspendLayout();
             this.MetadataServerGroupBox.SuspendLayout();
             this.DataServerGroupBox.SuspendLayout();
@@ -390,18 +390,10 @@
             this.FailDataServerButton.UseVisualStyleBackColor = true;
             this.FailDataServerButton.Click += new System.EventHandler(this.FailDataServerButton_Click);
             // 
-            // KillProcessesbutton
-            // 
-            this.KillProcessesbutton.Location = new System.Drawing.Point(227, 206);
-            this.KillProcessesbutton.Name = "KillProcessesbutton";
-            this.KillProcessesbutton.Size = new System.Drawing.Size(96, 35);
-            this.KillProcessesbutton.TabIndex = 22;
-            this.KillProcessesbutton.Text = "Kill Processes";
-            this.KillProcessesbutton.UseVisualStyleBackColor = true;
-            this.KillProcessesbutton.Click += new System.EventHandler(this.KillProcessesButton_Click);
-            // 
             // ScriptBox
             // 
+            this.ScriptBox.Controls.Add(this.ScriptLabel);
+            this.ScriptBox.Controls.Add(this.BrowseButton);
             this.ScriptBox.Controls.Add(this.ExescriptButton);
             this.ScriptBox.Controls.Add(this.CurrentInstructionBox);
             this.ScriptBox.Controls.Add(this.RunInstructionLineBox);
@@ -409,9 +401,7 @@
             this.ScriptBox.Controls.Add(this.CurrentInstructionLabel);
             this.ScriptBox.Controls.Add(this.NextStepButton);
             this.ScriptBox.Controls.Add(this.RunScriptButton);
-            this.ScriptBox.Controls.Add(this.ScriptFileBox);
             this.ScriptBox.Controls.Add(this.EventBox);
-            this.ScriptBox.Controls.Add(this.ScriptFileLabel);
             this.ScriptBox.Controls.Add(this.LoadScriptButton);
             this.ScriptBox.Location = new System.Drawing.Point(12, 247);
             this.ScriptBox.Name = "ScriptBox";
@@ -419,6 +409,16 @@
             this.ScriptBox.TabIndex = 23;
             this.ScriptBox.TabStop = false;
             this.ScriptBox.Text = "Script Options";
+            // 
+            // ExescriptButton
+            // 
+            this.ExescriptButton.Location = new System.Drawing.Point(84, 57);
+            this.ExescriptButton.Name = "ExescriptButton";
+            this.ExescriptButton.Size = new System.Drawing.Size(67, 29);
+            this.ExescriptButton.TabIndex = 65;
+            this.ExescriptButton.Text = "Exescript";
+            this.ExescriptButton.UseVisualStyleBackColor = true;
+            this.ExescriptButton.Click += new System.EventHandler(this.ExescriptButton_Click);
             // 
             // CurrentInstructionBox
             // 
@@ -474,22 +474,6 @@
             this.RunScriptButton.Text = "Run ";
             this.RunScriptButton.UseVisualStyleBackColor = true;
             this.RunScriptButton.Click += new System.EventHandler(this.RunScriptButton_Click);
-            // 
-            // ScriptFileBox
-            // 
-            this.ScriptFileBox.Location = new System.Drawing.Point(71, 102);
-            this.ScriptFileBox.Name = "ScriptFileBox";
-            this.ScriptFileBox.Size = new System.Drawing.Size(77, 20);
-            this.ScriptFileBox.TabIndex = 2;
-            // 
-            // ScriptFileLabel
-            // 
-            this.ScriptFileLabel.AutoSize = true;
-            this.ScriptFileLabel.Location = new System.Drawing.Point(7, 104);
-            this.ScriptFileLabel.Name = "ScriptFileLabel";
-            this.ScriptFileLabel.Size = new System.Drawing.Size(53, 13);
-            this.ScriptFileLabel.TabIndex = 1;
-            this.ScriptFileLabel.Text = "Script File";
             // 
             // LoadScriptButton
             // 
@@ -692,15 +676,28 @@
             this.ByteRegisterBox.Size = new System.Drawing.Size(43, 21);
             this.ByteRegisterBox.TabIndex = 65;
             // 
-            // ExescriptButton
+            // BrowseButton
             // 
-            this.ExescriptButton.Location = new System.Drawing.Point(84, 57);
-            this.ExescriptButton.Name = "ExescriptButton";
-            this.ExescriptButton.Size = new System.Drawing.Size(67, 29);
-            this.ExescriptButton.TabIndex = 65;
-            this.ExescriptButton.Text = "Exescript";
-            this.ExescriptButton.UseVisualStyleBackColor = true;
-            this.ExescriptButton.Click += new System.EventHandler(this.ExescriptButton_Click);
+            this.BrowseButton.Location = new System.Drawing.Point(215, 96);
+            this.BrowseButton.Name = "BrowseButton";
+            this.BrowseButton.Size = new System.Drawing.Size(65, 29);
+            this.BrowseButton.TabIndex = 66;
+            this.BrowseButton.Text = "Browse";
+            this.BrowseButton.UseVisualStyleBackColor = true;
+            this.BrowseButton.Click += new System.EventHandler(this.BrowseButton_Click);
+            // 
+            // ScriptLabel
+            // 
+            this.ScriptLabel.AutoSize = true;
+            this.ScriptLabel.Location = new System.Drawing.Point(10, 104);
+            this.ScriptLabel.Name = "ScriptLabel";
+            this.ScriptLabel.Size = new System.Drawing.Size(68, 13);
+            this.ScriptLabel.TabIndex = 67;
+            this.ScriptLabel.Text = "Choose a file";
+            // 
+            // openFileDialog
+            // 
+            this.openFileDialog.FileName = "openFileDialog";
             // 
             // Form1
             // 
@@ -710,7 +707,6 @@
             this.Controls.Add(this.FileInfoGroupBox);
             this.Controls.Add(this.MetadataInfoGroupBox);
             this.Controls.Add(this.ScriptBox);
-            this.Controls.Add(this.KillProcessesbutton);
             this.Controls.Add(this.DataServerGroupBox);
             this.Controls.Add(this.MetadataServerGroupBox);
             this.Controls.Add(this.ClientGroupBox);
@@ -747,12 +743,9 @@
         private System.Windows.Forms.Button RecoverDataServerButton;
         private System.Windows.Forms.Button FailDataServerButton;
         private System.Windows.Forms.Button LaunchDataServerButton;
-        private System.Windows.Forms.Button KillProcessesbutton;
         private System.Windows.Forms.GroupBox ScriptBox;
         private System.Windows.Forms.Button NextStepButton;
         private System.Windows.Forms.Button RunScriptButton;
-        private System.Windows.Forms.TextBox ScriptFileBox;
-        private System.Windows.Forms.Label ScriptFileLabel;
         private System.Windows.Forms.Button LoadScriptButton;
         private System.Windows.Forms.Button DumpDataServerButton;
         private System.Windows.Forms.Label GoToLabel;
@@ -793,6 +786,9 @@
         private System.Windows.Forms.Button CreateFileButton;
         private System.Windows.Forms.TextBox CurrentInstructionBox;
         private System.Windows.Forms.Button ExescriptButton;
+        private System.Windows.Forms.Label ScriptLabel;
+        private System.Windows.Forms.Button BrowseButton;
+        private System.Windows.Forms.OpenFileDialog openFileDialog;
     }
 }
 

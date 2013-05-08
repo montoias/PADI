@@ -58,6 +58,7 @@
     <Compile Include="Interfaces\IClientServerMetadataServer.cs" />
     <Compile Include="Interfaces\IMetadataServer.cs" />
     <Compile Include="Interfaces\IDataServerMetadataServer.cs" />
+    <Compile Include="Types\DataServerStats.cs" />
     <Compile Include="Types\LocalFilenameInfo.cs" />
     <Compile Include="Types\FileData.cs" />
     <Compile Include="Types\Helper.cs" />

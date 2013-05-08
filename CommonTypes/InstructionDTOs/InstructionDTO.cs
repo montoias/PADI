@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace CommonTypes
@@ -19,7 +16,7 @@ namespace CommonTypes
         public string type = "GENERAL";
 
         public InstructionDTO() { }
-        public InstructionDTO(string type) 
+        public InstructionDTO(string type)
         {
             this.type = type;
         }

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -15,7 +13,7 @@ namespace CommonTypes
         #region IXmlSerializable Members
 
         public SerializableDictionary() { }
-        protected SerializableDictionary (SerializationInfo info, StreamingContext ctx) : base(info, ctx) {}
+        protected SerializableDictionary(SerializationInfo info, StreamingContext ctx) : base(info, ctx) { }
 
         public XmlSchema GetSchema()
         {
