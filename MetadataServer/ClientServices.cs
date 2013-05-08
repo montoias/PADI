@@ -23,11 +23,15 @@ namespace MetadataServer
 
                 int tempNumServers = (numDataServers > metadataState.dataServersList.Count) ? metadataState.dataServersList.Count : numDataServers;
                 List<LocalFilenameInfo> locations = new List<LocalFilenameInfo>();
+                List<KeyValuePair<int, DataServerStats>> sortedServers = sortedServers = (from entry in dataServerLoad
+                                                                               orderby entry.Value.serverLoad ascending
+                                                                               select entry).ToList();
 
-                //TODO: Distribution algorithm
                 for (int i = 0; i < tempNumServers; i++)
                 {
-                    locations.Add(new LocalFilenameInfo (metadataState.dataServersList[i], generateLocalFileName()));
+                    string localFilename = generateLocalFileName();
+                    locations.Add(new LocalFilenameInfo (sortedServers[i].Key, localFilename));
+                    getDataServer(sortedServers[i].Key).create(localFilename, Utils.stringToByteArray(""), 0, -1, filename);
                 }
 
                 metadata = new MetadataInfo(filename, numDataServers, readQuorum, writeQuorum, locations);
@@ -170,7 +174,6 @@ namespace MetadataServer
             return metadata;
         }
 
-        /* TODO: Not closing in opened files! -> Removing the client. */
         public void close(string filename, int location)
         {
             isAlive();
@@ -183,6 +186,8 @@ namespace MetadataServer
 
             if (metadataState.openedFiles[filename].Count == 1)
                 metadataState.openedFiles.Remove(filename);
+            else
+                metadataState.openedFiles[filename].Remove(location);
 
             Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
         }

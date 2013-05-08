@@ -1,34 +1,41 @@
 ﻿using CommonTypes;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net.Sockets;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.Net.Sockets;
-using System.Windows.Forms;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace MetadataServer
 {
     public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
     {
+        private static int port;
         private string fileFolder;
         private string stateFolder, stateFile;
-        private static int port;
         private int metadataID;
 
-        private System.Threading.Timer heartbeatTimer, checkpointTimer;
-        private long tickerPeriod = 10 * 1000;
+        private System.Threading.Timer heartbeatTimer, checkpointTimer, updateStatsTimer;
+
+        private long heartbeatPeriod = 3600 * 1000;
+        private long checkpointPeriod = 3600 * 1000;
+        private long updateStatsPeriod = 3600 * 1000;
+        private const int DISTRIBUTION_FILES = 3;
 
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
         private Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
         private MetadataServerState metadataState = new MetadataServerState();
         private int[] metadataLocations;
 
-        public int primaryServerLocation;
         private IMetadataServer primaryServer;
+        public int primaryServerLocation;
+
+        //Maintains the load on each server at a given time
+        List<KeyValuePair<int, DataServerStats>> dataServerLoad = new List<KeyValuePair<int,DataServerStats>>();
 
         static void Main(string[] args)
         {
@@ -45,7 +52,7 @@ namespace MetadataServer
         }
 
         public string dump()
-        {            
+        {
             System.Console.WriteLine("Dumping metadata table");
             int numCacheFiles = metadataTable.Count;
             string contents = "METADATA STATE\r\n";
@@ -85,34 +92,45 @@ namespace MetadataServer
         public void init(int[] metadataList)
         {
             metadataID = port - 8081;
+
+            //Creates folders if they don't exist
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             stateFolder = Path.Combine(Application.StartupPath, "State_" + port);
+            stateFile = Path.Combine(stateFolder, "metadata_state");
             Utils.createFolderFile(fileFolder);
             Utils.createFolderFile(stateFolder);
-            stateFile = Path.Combine(stateFolder, "metadata_state");
+
             metadataLocations = metadataList;
+
+            //Creates timers
             heartbeatTimer = new System.Threading.Timer(heartbeatTick, null, Timeout.Infinite, Timeout.Infinite);
             checkpointTimer = new System.Threading.Timer(checkpointTick, null, Timeout.Infinite, Timeout.Infinite);
+            updateStatsTimer = new System.Threading.Timer(updateStatsTick, null, Timeout.Infinite, Timeout.Infinite);
             int currentInstruction = 0;
 
+            //Obtains previous state
             if (File.Exists(stateFile))
             {
                 metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
                 currentInstruction = metadataState.currentInstruction;
             }
 
+            //Determines which is the primary server
             if (findAvailableMetadatas(port))
             {
                 System.Console.WriteLine("I'm not the primary...");
                 System.Console.WriteLine("Notifying the primary metadata that I'm up!");
                 primaryServer.requestState(port);
-                heartbeatTimer.Change(tickerPeriod, tickerPeriod);
                 executeInstructions(metadataState.log, currentInstruction);
             }
 
             System.Console.WriteLine("Metadata " + metadataID + " was launched!...");
         }
 
+        /* 
+         * This function applies a checkpoint on each replica.
+         * It only runs when all the replicas are up.
+         */
         private void checkpointTick(object state)
         {
             if (backupReplicas.Count == 2)
@@ -122,7 +140,7 @@ namespace MetadataServer
                     System.Console.WriteLine("Marking checkpoint...");
                     foreach (IMetadataServer server in backupReplicas.Values)
                     {
-                        System.Console.WriteLine("Check @ " + server.getMetadataID());
+                        System.Console.WriteLine("Checkpointing metadata " + server.getMetadataID());
                     }
 
                     foreach (IMetadataServer server in backupReplicas.Values)
@@ -150,7 +168,10 @@ namespace MetadataServer
 
             retryTick();
         }
-
+        
+        /*
+         * Function to detect the new metadata server upon primary server failing.
+         */
         private void retryTick()
         {
             System.Console.WriteLine("Primary metadata is down. Determining a new one");
@@ -166,7 +187,7 @@ namespace MetadataServer
                     {
                         primaryServer = backupReplicas[locations[0]];
                         primaryServerLocation = locations[0];
-                        heartbeatTimer.Change(tickerPeriod, tickerPeriod);
+                        heartbeatTimer.Change(heartbeatPeriod, heartbeatPeriod);
                         return;
                     }
                 }
@@ -175,19 +196,10 @@ namespace MetadataServer
             }
 
             System.Console.WriteLine("I'm the new primary metadata.");
-            checkpointTimer.Change(tickerPeriod * 2, tickerPeriod * 2);
+            checkpointTimer.Change(checkpointPeriod, checkpointPeriod);
+            updateStatsTimer.Change(updateStatsPeriod, updateStatsPeriod);
             backupReplicas.Clear();
             primaryServerLocation = port;
-        }
-
-        private string generateLocalFileName()
-        {
-            long i = 1;
-
-            foreach (byte b in Guid.NewGuid().ToByteArray())
-                i *= ((int)b + 1);
-
-            return string.Format("{0:x}", i - DateTime.Now.Ticks);
         }
 
         /*
@@ -220,22 +232,16 @@ namespace MetadataServer
             if (!primaryServerLocation.Equals(port))
             {
                 primaryServer = getMetadataServer(primaryServerLocation);
+                heartbeatTimer.Change(heartbeatPeriod, heartbeatPeriod);
                 return true;
             }
             else
             {
                 System.Console.WriteLine("I'm the primary!!");
-                checkpointTimer.Change(tickerPeriod * 2, tickerPeriod * 2);
+                checkpointTimer.Change(checkpointPeriod, checkpointPeriod);
+                updateStatsTimer.Change(updateStatsPeriod, updateStatsPeriod);
                 return false;
             }
-        }
-
-        private static IMetadataServer getMetadataServer(int location)
-        {
-            IMetadataServer replica = (IMetadataServer)Activator.GetObject(
-                typeof(IMetadataServer),
-                "tcp://localhost:" + location + "/MetadataServer");
-            return replica;
         }
 
         /*
@@ -260,7 +266,6 @@ namespace MetadataServer
             isAlive();
 
             System.Console.WriteLine("Receiving a request from metadata @ " + notifier);
-
             backupReplicas[notifier].receiveState(metadataState);
         }
 
@@ -320,8 +325,7 @@ namespace MetadataServer
                     interpretInstruction(log[i]);
                 }
                 //ignore
-                catch (SocketException) { }
-                catch (IOException) { }
+                catch (Exception) { }
             }
         }
 
@@ -345,7 +349,7 @@ namespace MetadataServer
                     break;
                 case "CREATE":
                     CreateDTO createDTO = (CreateDTO)instruction;
-                    create(createDTO.metadataInfo.filename, createDTO.metadataInfo.numDataServers, 
+                    create(createDTO.metadataInfo.filename, createDTO.metadataInfo.numDataServers,
                         createDTO.metadataInfo.readQuorum, createDTO.metadataInfo.writeQuorum, createDTO.metadataInfo.dataServers);
                     break;
                 case "DELETE":
@@ -358,7 +362,7 @@ namespace MetadataServer
                     break;
                 case "QUEUE":
                     QueueFileDTO queueFileDTO = (QueueFileDTO)instruction;
-                    processMetadataQueue(queueFileDTO.localFilenameInfo);
+                    processMetadataQueue(queueFileDTO.filename, queueFileDTO.localFilenameInfo);
                     break;
                 case "UPDATE":
                     UpdateMetadataDTO updateMetadataDTO = (UpdateMetadataDTO)instruction;
@@ -372,7 +376,113 @@ namespace MetadataServer
             System.Console.WriteLine("Updating file:" + metadataInfo.filename);
             Utils.serializeObject<MetadataInfo>(metadataInfo, Path.Combine(fileFolder, metadataInfo.filename));
             metadataTable[metadataInfo.filename] = metadataInfo;
-            
+
+            if (metadataState.queueFiles.ContainsKey(metadataInfo.filename))
+            {
+                metadataState.queueFiles[metadataInfo.filename] = metadataInfo;
+            }
+
+        }
+
+        private void updateStatsTick(object state)
+        {
+            Dictionary<int, DataServerStats> dataServerStats = new Dictionary<int, DataServerStats>();
+            foreach (int location in metadataState.dataServersList)
+            {
+                try
+                {
+                    IDataServerMetadataServer dataServer = getDataServer(location);
+                    dataServerStats[location] = dataServer.getStats();
+                    dataServer.restartStats();
+                }
+                catch (SocketException)
+                {
+                    dataServerStats[location] = new DataServerStats();
+                    dataServerStats[location].serverLoad = int.MaxValue;
+                }
+                catch (IOException)
+                {
+                    dataServerStats[location] = new DataServerStats();
+                    dataServerStats[location].serverLoad = int.MaxValue;
+                }
+            }
+
+            distributionFunction(dataServerStats);
+        }
+
+        private void distributionFunction(Dictionary<int, DataServerStats> dataServerStats)
+        {
+            int counter = 0;
+            List<KeyValuePair<int, DataServerStats>> sortedServers = dataServerLoad = dataServerStats.ToList();
+
+            while (counter < DISTRIBUTION_FILES)
+            {
+                bool updated = false;
+                //Sorting servers by load
+                sortedServers = (from entry in sortedServers
+                                 orderby entry.Value.serverLoad descending
+                                 select entry).ToList();
+
+                //Ordering files by load in each server
+                foreach (KeyValuePair<int, DataServerStats> serverStats in sortedServers)
+                {
+                    List<KeyValuePair<string, int>> sortedFiles = (from entry in serverStats.Value.fileLoad
+                                                                   orderby entry.Value descending
+                                                                   select entry).ToList();
+
+                    foreach (KeyValuePair<string, int> fileStats in sortedFiles)
+                    {
+
+                        for (int i = 1; i < sortedServers.Count + 1; i++)
+                        {
+                            //Checks if pays off to trade files between servers
+                            if (!sortedServers[sortedServers.Count - i].Value.filesAccessed.ContainsValue(serverStats.Value.filesAccessed[fileStats.Key]) &&
+                                sortedServers[sortedServers.Count - i].Value.serverLoad + fileStats.Value < serverStats.Value.serverLoad - fileStats.Value)
+                            {
+                                Thread thread = new Thread(() => migrateFile(serverStats.Key, sortedServers[sortedServers.Count - i].Key, fileStats.Key));
+                                thread.Start();
+
+                                serverStats.Value.serverLoad -= fileStats.Value;
+                                sortedServers[sortedServers.Count - 1].Value.serverLoad += fileStats.Value;
+                                updated = true;
+                                counter++;
+                                break;
+                            }
+                        }
+                        if (updated)
+                            break;
+                    }
+                    if (updated)
+                        break;
+                }
+                if (!updated)
+                    break;
+            }
+        }
+
+        private void migrateFile(int oldLocation, int newLocation, string localFilename)
+        {
+            FileData fileData = getDataServer(oldLocation).read(localFilename);
+            getDataServer(newLocation).create(localFilename, fileData.file, fileData.version, fileData.clientID, fileData.filename);
+
+            string path = Path.Combine(fileFolder, fileData.filename);
+            MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
+
+            for (int i = 0; i < metadata.dataServers.Count; i++)
+            {
+                if (metadata.dataServers[i].location == oldLocation)
+                {
+                    metadata.dataServers[i].location = newLocation;
+                    break;
+                }
+            }
+
+            notifyClients(metadata);
+            UpdateMetadataDTO update = new UpdateMetadataDTO(metadata);
+            metadataState.log.Add(update);
+            metadataState.currentInstruction++;
+
+            updateMetadata(metadata);
         }
 
         public int getMetadataID()
@@ -385,6 +495,32 @@ namespace MetadataServer
         {
             isAlive();
             return primaryServerLocation;
+        }
+
+        private IMetadataServer getMetadataServer(int location)
+        {
+            IMetadataServer replica = (IMetadataServer)Activator.GetObject(
+                typeof(IMetadataServer),
+                "tcp://localhost:" + location + "/MetadataServer");
+            return replica;
+        }
+
+        private IDataServerMetadataServer getDataServer(int location)
+        {
+            IDataServerMetadataServer replica = (IDataServerMetadataServer)Activator.GetObject(
+                typeof(IDataServerMetadataServer),
+                "tcp://localhost:" + location + "/DataServer");
+            return replica;
+        }
+
+        private string generateLocalFileName()
+        {
+            long i = 1;
+
+            foreach (byte b in Guid.NewGuid().ToByteArray())
+                i *= ((int)b + 1);
+
+            return string.Format("{0:x}", i - DateTime.Now.Ticks);
         }
 
         public override object InitializeLifetimeService()

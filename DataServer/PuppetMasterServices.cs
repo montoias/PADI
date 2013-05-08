@@ -46,6 +46,7 @@ namespace DataServer
         {
             if (ignoringMessages)
             {
+                restartStats();
                 System.Console.WriteLine("Accepting messages again");
                 ignoringMessages = false;
             }

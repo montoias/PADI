@@ -1,9 +1,6 @@
-﻿using System;
+﻿using CommonTypes;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CommonTypes;
-using System.Collections;
 using System.IO;
 
 namespace MetadataServer
@@ -19,18 +16,19 @@ namespace MetadataServer
             sendInstruction(instruction);
 
             metadataState.dataServersList.Add(location);
+            dataServerLoad.Add(new KeyValuePair<int, DataServerStats>(location, new DataServerStats()));
             Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
 
             if (port.Equals(primaryServerLocation) && metadataState.queueFiles.Count > 0)
             {
-                processMetadataQueue(new LocalFilenameInfo(location, generateLocalFileName()));
+                processQueue(location);
             }
         }
 
-        private void processMetadataQueue(LocalFilenameInfo dataServerInfo)
+
+
+        private void processQueue(int location)
         {
-            QueueFileDTO instruction = new QueueFileDTO(dataServerInfo);
-            sendInstruction(instruction);
 
             //Used to modify the queue without throwing an exception
             List<string> fileList = new List<string>(metadataState.queueFiles.Keys);
@@ -39,39 +37,51 @@ namespace MetadataServer
             {
                 System.Console.WriteLine("processing files in the queue: " + filename);
 
-                string path = Path.Combine(fileFolder, filename);
-                MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
+                LocalFilenameInfo dataServerInfo = new LocalFilenameInfo(location, generateLocalFileName());
 
-                if (!metadata.dataServers.Contains(dataServerInfo))
+                processMetadataQueue(filename, dataServerInfo);
+            }
+        }
+
+        private void processMetadataQueue(string filename, LocalFilenameInfo dataServerInfo)
+        {
+            QueueFileDTO instruction = new QueueFileDTO(filename, dataServerInfo);
+            sendInstruction(instruction);
+
+            string path = Path.Combine(fileFolder, filename);
+            MetadataInfo metadata = Utils.deserializeObject<MetadataInfo>(path);
+
+            if (!metadata.dataServers.Contains(dataServerInfo))
+            {
+                metadata.dataServers.Add(dataServerInfo);
+                updateMetadata(metadata);
+
+                if (port.Equals(primaryServerLocation))
+                    getDataServer(dataServerInfo.location).create(dataServerInfo.localFilename, Utils.stringToByteArray(""), 0, -1, filename);
+
+                if (metadataState.queueFiles[filename].numDataServers == metadataState.dataServersList.Count)
                 {
-                    metadata.dataServers.Add(dataServerInfo);
-                    Utils.serializeObject<MetadataInfo>(metadata, path);
-                    metadataTable[filename] = metadata;
-                    metadataState.queueFiles[filename] = metadata;
+                    metadataState.queueFiles.Remove(filename);
 
-                    UpdateMetadataDTO update = new UpdateMetadataDTO(metadata);
-                    metadataState.log.Add(update);
-                    metadataState.currentInstruction++;
-
-                    if (metadataState.queueFiles[filename].numDataServers == metadataState.dataServersList.Count)
-                    {
-                        metadataState.queueFiles.Remove(filename);
-
-                        if (metadataState.openedFiles.ContainsKey(filename))
-                        {
-                            foreach (int clientID in metadataState.openedFiles[filename])
-                            {
-                                int clientLocation = clientID + 8000;
-                                System.Console.WriteLine("updating client at port :" + clientLocation);
-                                IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
-                                       typeof(IClientMetadataServer), "tcp://localhost:" + clientLocation + "/Client");
-
-                                client.updateMetadata(filename, metadata);
-                            }
-                        }
-                    }
-                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                    if (port.Equals(primaryServerLocation) && metadataState.openedFiles.ContainsKey(filename))
+                            notifyClients(metadata);
                 }
+                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+            }
+        }
+
+        private void notifyClients(MetadataInfo metadata)
+        {
+            string filename = metadata.filename;
+
+            foreach (int clientID in metadataState.openedFiles[filename])
+            {
+                int clientLocation = clientID + 8000;
+                System.Console.WriteLine("updating client at port :" + clientLocation);
+                IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
+                       typeof(IClientMetadataServer), "tcp://localhost:" + clientLocation + "/Client");
+
+                client.updateMetadata(filename, metadata);
             }
         }
     }

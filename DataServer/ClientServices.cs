@@ -2,12 +2,17 @@
 using CommonTypes;
 using System.Threading;
 using System.IO;
+using System.Net.Sockets;
 
 namespace DataServer
 {
     public partial class DataServer
     {
-        public FileData read(string filename)
+        private DataServerStats dataServerStats = new DataServerStats(port);
+        private const int WRITE_LOAD = 10;
+        private const int READ_LOAD = 1;
+
+        public FileData read(string localFilename)
         {
             lock (this)
             {
@@ -16,24 +21,34 @@ namespace DataServer
                 else
                     checkFailure();
 
-                string path = Path.Combine(fileFolder, filename);
+                System.Console.WriteLine("Opening file:" + localFilename);
+                string path = Path.Combine(fileFolder, localFilename);
+                FileData fileData;
 
                 if (File.Exists(path))
                 {
-                    System.Console.WriteLine("Opening file:" + filename);
-                    return Utils.deserializeObject<FileData>(path);
+                    fileData = Utils.deserializeObject<FileData>(path);
+                    dataServerStats.filesAccessed[localFilename] = fileData.filename;
+
+                    dataServerStats.serverLoad += READ_LOAD;
+
+                    if (dataServerStats.fileLoad.ContainsKey(localFilename))
+                        dataServerStats.fileLoad[localFilename] += READ_LOAD;
+                    else
+                        dataServerStats.fileLoad[localFilename] = READ_LOAD;
                 }
                 else
                 {
-                    System.Console.WriteLine("Creating file:" + filename);
-                    FileData f = new FileData(Utils.stringToByteArray(""), 0, -1);
-                    Utils.serializeObject<FileData>(f, path);
-                    return f;
+                    fileData = new FileData(Utils.stringToByteArray(""), 0, -1, "");
+                    Utils.serializeObject<FileData>(fileData, path);
                 }
+
+                System.Console.WriteLine("Returning from read.");
+                return fileData;
             }
         }
 
-        public void write(string filename, FileData f)
+        public void write(string localFilename, FileData fileData)
         {
             lock (this)
             {
@@ -42,15 +57,41 @@ namespace DataServer
                 else
                     checkFailure();
 
-                System.Console.WriteLine("Writing the file:" + filename);
-                string path = Path.Combine(fileFolder, filename);
-                FileData prev = read(filename);
+                System.Console.WriteLine("Writing the file:" + localFilename);
+                string path = Path.Combine(fileFolder, localFilename);
+                FileData prev = read(localFilename);
 
-                System.Console.WriteLine("FileData received:" + f);
-                System.Console.WriteLine("FileData kept:" + prev);
-                if ((f.version == prev.version && f.clientID < prev.clientID) || f.version > prev.version)
-                    Utils.serializeObject<FileData>(f, path);
+                dataServerStats.filesAccessed[localFilename] = fileData.filename;
+
+                if ((fileData.version == prev.version && fileData.clientID < prev.clientID) || fileData.version > prev.version)
+                    Utils.serializeObject<FileData>(fileData, path);
+
+                dataServerStats.serverLoad += WRITE_LOAD;
+
+                if (dataServerStats.fileLoad.ContainsKey(localFilename))
+                    dataServerStats.fileLoad[localFilename] += WRITE_LOAD;
+                else
+                    dataServerStats.fileLoad[localFilename] = WRITE_LOAD;
             }
+        }
+
+        public DataServerStats getStats()
+        {
+            checkFailure();
+            return dataServerStats;
+        }
+
+        public void restartStats()
+        {
+            dataServerStats.fileLoad.Clear();
+        }
+
+        public void create(string localFilename, byte[] file, int version, int clientID, string filename)
+        {
+            string path = Path.Combine(fileFolder, localFilename);
+            System.Console.WriteLine("Creating file:" + localFilename);
+            FileData fileData = new FileData(file, version, clientID, filename);
+            Utils.serializeObject<FileData>(fileData, path);
         }
     }
 }

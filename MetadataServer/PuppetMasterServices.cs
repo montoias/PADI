@@ -17,6 +17,8 @@ namespace MetadataServer
                 ignoringMessages = true;
                 backupReplicas.Clear();
                 heartbeatTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                checkpointTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                updateStatsTimer.Change(Timeout.Infinite, Timeout.Infinite);
             }
         }
 
@@ -40,8 +42,6 @@ namespace MetadataServer
                     System.Console.WriteLine("I'm not the primary...");
                     System.Console.WriteLine("Notifying the primary metadata that I'm up!");
                     primaryServer.requestState(port);
-                    heartbeatTimer.Change(tickerPeriod, tickerPeriod);
-
                     executeInstructions(metadataState.log, currentInstruction);
                 }
             }
@@ -49,8 +49,6 @@ namespace MetadataServer
 
         public void isAlive()
         {
-            System.Console.WriteLine("Checking for failure... It is " + ignoringMessages);
-
             if (ignoringMessages)
                 throw new SocketException();
         }
