@@ -35,7 +35,7 @@ namespace Client
          */
         public void init(int[] metadataList)
         {
-            clientID = 8000 - Convert.ToInt32(port);
+            clientID =  Convert.ToInt32(port) - 8000;
 
             setMetadataLocation(metadataList);
             findPrimaryMetadata();
