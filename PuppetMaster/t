@@ -1,2 +1,0 @@
-WRITE c-1, 0, "Text from the EXESCRIPT."
-DUMP c-1
