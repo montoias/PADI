@@ -91,10 +91,22 @@ namespace PuppetMaster
         {
             if (e.KeyChar == (char)13)
             {
-                puppetMaster.interpretInstruction(CommandBox.Text);
-                MessageBox.Items.Add(CommandBox.Text);
-                CommandBox.Clear();
+                try
+                {
+                    puppetMaster.interpretInstruction(CommandBox.Text);
+                    updateMessageBox(CommandBox.Text);
+                }
+                catch (Exception)
+                {
+                    updateMessageBox(CommandBox.Text + " is not a valid instruction.");
+                }
+                CommandBox.Text = string.Empty;
             }
+        }
+
+        public void showDumpMessage(string dump)
+        {
+            System.Windows.Forms.MessageBox.Show("-----DUMPING MESSAGE-----\r\n" + dump);
         }
     }
 }

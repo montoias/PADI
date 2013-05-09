@@ -222,6 +222,8 @@ namespace PuppetMaster
                 case "EXESCRIPT":
                     executeExescript(processNumber, processInst[2]);
                     break;
+                default:
+                    throw new IOException();
             }
         }
 

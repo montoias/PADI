@@ -21,6 +21,11 @@ namespace DataServer
         private bool isFrozen = false;
         private static int port;
 
+        private int WRITE_LOAD;
+        private int READ_LOAD;
+
+        private string projectFolder = Directory.GetParent(Application.StartupPath).Parent.FullName;
+
         static void Main(string[] args)
         {
             port = Convert.ToInt32(args[0]);
@@ -96,6 +101,10 @@ namespace DataServer
 
             dataServerId = Convert.ToInt32(port) - 9000;
             setMetadataLocation(metadataList);
+
+            string[] scriptLines = File.ReadAllLines(Path.Combine(projectFolder, "config.ini"));
+            WRITE_LOAD = Convert.ToInt32((scriptLines[0].Split('='))[1]);
+            READ_LOAD = Convert.ToInt32((scriptLines[1].Split('='))[1]);
 
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             Utils.createFolderFile(fileFolder);

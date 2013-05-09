@@ -13,7 +13,7 @@ namespace Client
     {
         public delegate void WriteDelegate(IDataServerClient dataServer, string localFilename, FileData file);
         public delegate FileData ReadDelegate(IDataServerClient dataServer, string localFilename);
-        private TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
+        private TimeSpan TIMEOUT;
 
         private void writeAsync(IDataServerClient dataServer, string localFilename, FileData file)
         {

@@ -29,8 +29,8 @@ namespace PuppetMaster
 
         public void dumpDataServer(int selectedDataServer)
         {
+            //form.showDumpMessage("DataServer " + selectedDataServer + "\r\n" + dataServersList[selectedDataServer].dump());
             dataServersList[selectedDataServer].dump();
-            //TODO: Launch new window
         }
     }
 }

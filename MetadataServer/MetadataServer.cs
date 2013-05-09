@@ -14,6 +14,7 @@ namespace MetadataServer
 {
     public partial class MetadataServer : MarshalByRefObject, IMetadataServerClient, IMetadataServerPuppet, IMetadataServerDataServer, IMetadataServer
     {
+        private string projectFolder = Directory.GetParent(Application.StartupPath).Parent.FullName;
         private static int port;
         private string fileFolder;
         private string stateFolder, stateFile;
@@ -21,10 +22,10 @@ namespace MetadataServer
 
         private System.Threading.Timer heartbeatTimer, checkpointTimer, updateStatsTimer;
 
-        private long heartbeatPeriod = 10 * 1000;
-        private long checkpointPeriod = 3600 * 1000;
-        private long updateStatsPeriod = 30 * 1000;
-        private const int DISTRIBUTION_FILES = 1;
+        private long HEARTBEAT_PERIOD;
+        private long CHECKPOINT_PERIOD;
+        private long UPDATE_STATS_PERIOD;
+        private int DISTRIBUTION_FILES;
 
         private Dictionary<string, MetadataInfo> metadataTable = new Dictionary<string, MetadataInfo>();
         private Dictionary<int, IMetadataServer> backupReplicas = new Dictionary<int, IMetadataServer>();
@@ -95,6 +96,13 @@ namespace MetadataServer
         {
             metadataID = port - 8081;
 
+            //Loads constant values from config.ini file
+            string[] scriptLines = File.ReadAllLines(Path.Combine(projectFolder, "config.ini"));
+            HEARTBEAT_PERIOD = (long)Convert.ToDouble((scriptLines[0].Split('='))[1]);
+            CHECKPOINT_PERIOD = (long)Convert.ToDouble((scriptLines[1].Split('='))[1]);
+            UPDATE_STATS_PERIOD = (long)Convert.ToDouble((scriptLines[2].Split('='))[1]);
+            DISTRIBUTION_FILES = Convert.ToInt32((scriptLines[3].Split('='))[1]);
+
             //Creates folders if they don't exist
             fileFolder = Path.Combine(Application.StartupPath, "Files_" + port);
             stateFolder = Path.Combine(Application.StartupPath, "State_" + port);
@@ -119,6 +127,9 @@ namespace MetadataServer
                     metadataState = Utils.deserializeObject<MetadataServerState>(stateFile);
                 }
                 currentInstruction = metadataState.currentInstruction;
+
+                foreach(int location in metadataState.dataServersList)
+                    dataServerLoad.Add(new KeyValuePair<int, DataServerStats>(location, new DataServerStats()));
             }
 
             //Determines which is the primary server
@@ -191,7 +202,7 @@ namespace MetadataServer
                     {
                         primaryServer = backupReplicas[locations[0]];
                         primaryServerLocation = locations[0];
-                        heartbeatTimer.Change(heartbeatPeriod, heartbeatPeriod);
+                        heartbeatTimer.Change(HEARTBEAT_PERIOD, HEARTBEAT_PERIOD);
                         return;
                     }
                 }
@@ -199,8 +210,8 @@ namespace MetadataServer
             }
 
             System.Console.WriteLine("I'm the new primary metadata.");
-            checkpointTimer.Change(checkpointPeriod, checkpointPeriod);
-            updateStatsTimer.Change(updateStatsPeriod, updateStatsPeriod);
+            checkpointTimer.Change(CHECKPOINT_PERIOD, CHECKPOINT_PERIOD);
+            updateStatsTimer.Change(UPDATE_STATS_PERIOD, UPDATE_STATS_PERIOD);
             backupReplicas.Clear();
             primaryServerLocation = port;
         }
@@ -235,14 +246,14 @@ namespace MetadataServer
             if (!primaryServerLocation.Equals(port))
             {
                 primaryServer = getMetadataServer(primaryServerLocation);
-                heartbeatTimer.Change(heartbeatPeriod, heartbeatPeriod);
+                heartbeatTimer.Change(HEARTBEAT_PERIOD, HEARTBEAT_PERIOD);
                 return true;
             }
             else
             {
                 System.Console.WriteLine("I'm the primary!!");
-                checkpointTimer.Change(checkpointPeriod, checkpointPeriod);
-                updateStatsTimer.Change(updateStatsPeriod, updateStatsPeriod);
+                checkpointTimer.Change(CHECKPOINT_PERIOD, CHECKPOINT_PERIOD);
+                updateStatsTimer.Change(UPDATE_STATS_PERIOD, UPDATE_STATS_PERIOD);
                 return false;
             }
         }

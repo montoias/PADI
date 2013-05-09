@@ -164,10 +164,10 @@
             // 
             // CommandBox
             // 
+            this.CommandBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.CommandBox.Location = new System.Drawing.Point(12, 243);
-            this.CommandBox.Multiline = true;
             this.CommandBox.Name = "CommandBox";
-            this.CommandBox.Size = new System.Drawing.Size(561, 28);
+            this.CommandBox.Size = new System.Drawing.Size(561, 23);
             this.CommandBox.TabIndex = 24;
             this.CommandBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.CommandBoxKeyPressed);
             // 

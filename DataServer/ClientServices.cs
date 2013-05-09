@@ -9,8 +9,6 @@ namespace DataServer
     public partial class DataServer
     {
         private DataServerStats dataServerStats = new DataServerStats(port);
-        private const int WRITE_LOAD = 10;
-        private const int READ_LOAD = 1;
 
         public FileData read(string localFilename)
         {
@@ -102,6 +100,12 @@ namespace DataServer
             {
                 string path = Path.Combine(fileFolder, localFilename);
                 System.Console.WriteLine("Deleting file:" + localFilename);
+                if (dataServerStats.filesAccessed.ContainsKey(localFilename))
+                {
+                    dataServerStats.filesAccessed.Remove(localFilename);
+                    dataServerStats.serverLoad -= dataServerStats.fileLoad[localFilename];
+                    dataServerStats.fileLoad.Remove(localFilename);
+                }
                 File.Delete(path);
             }
         }

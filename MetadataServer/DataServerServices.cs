@@ -15,17 +15,21 @@ namespace MetadataServer
             RegisterDTO instruction = new RegisterDTO(location);
             sendInstruction(instruction);
 
-            metadataState.dataServersList.Add(location);
-            dataServerLoad.Add(new KeyValuePair<int, DataServerStats>(location, new DataServerStats()));
-            object key = stateFile;
-            lock (key)
+            if (!metadataState.dataServersList.Contains(location))
             {
-                Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
-            }
+                dataServerLoad.Add(new KeyValuePair<int, DataServerStats>(location, new DataServerStats()));
+                metadataState.dataServersList.Add(location);
 
-            if (port.Equals(primaryServerLocation) && metadataState.queueFiles.Count > 0)
-            {
-                processQueue(location);
+                object key = stateFile;
+                lock (key)
+                {
+                    Utils.serializeObject<MetadataServerState>(metadataState, stateFile);
+                }
+
+                if (port.Equals(primaryServerLocation) && metadataState.queueFiles.Count > 0)
+                {
+                    processQueue(location);
+                }
             }
         }
 
@@ -89,7 +93,11 @@ namespace MetadataServer
                 IClientMetadataServer client = (IClientMetadataServer)Activator.GetObject(
                        typeof(IClientMetadataServer), "tcp://localhost:" + clientLocation + "/Client");
 
-                client.updateMetadata(filename, metadata);
+                try
+                {
+                    client.updateMetadata(filename, metadata);
+                }
+                catch (IOException) { }//Ignore
             }
         }
     }

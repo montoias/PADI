@@ -18,8 +18,8 @@ namespace PuppetMaster
 
         public void dumpMetadataServer(int selectedMetadata)
         {
+            //form.showDumpMessage("Metadata " + selectedMetadata + "\r\n" + metadataList[selectedMetadata].dump());
             metadataList[selectedMetadata].dump();
-            //TODO: Launch separate window
         }
     }
 }

@@ -55,6 +55,7 @@ namespace PuppetMaster
 
         public void dumpClient(int selectedClient)
         {
+            //form.showDumpMessage("Client " + selectedClient + "\r\n" + clientsList[selectedClient].dump());
             clientsList[selectedClient].dump();
         }
 

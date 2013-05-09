@@ -13,6 +13,7 @@ namespace Client
     {
         private int[] metadataLocations = new int[3];
         private IMetadataServerClient primaryMetadata;
+        private string projectFolder = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName;
         private static int port;
         private int clientID;
 
@@ -38,6 +39,9 @@ namespace Client
         public void init(int[] metadataList)
         {
             clientID =  Convert.ToInt32(port) - 8000;
+
+            string[] scriptLines = File.ReadAllLines(Path.Combine(projectFolder, "config.ini"));
+            TIMEOUT = TimeSpan.FromSeconds(Convert.ToInt32((scriptLines[0].Split('='))[1]));
 
             setMetadataLocation(metadataList);
             findPrimaryMetadata();
