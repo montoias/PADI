@@ -53,7 +53,7 @@ namespace PuppetMaster
             IClientPuppet newClient = (IClientPuppet)Activator.GetObject(
                 typeof(IClientPuppet),
                 "tcp://localhost:" + clientPort + "/Client");
-
+            Thread.Sleep(1000);
             newClient.init(metadataLocations);
             clientsList.Add(newClient);
             clientPort++;
@@ -64,6 +64,7 @@ namespace PuppetMaster
             int location = metadataLocations[selectedMetadata];
 
             Process.Start(Path.Combine(projectFolder, metadataExec), location.ToString());
+            Thread.Sleep(1000);
             IMetadataServerPuppet newMetadata = (IMetadataServerPuppet)Activator.GetObject(
                typeof(IMetadataServerPuppet),
                "tcp://localhost:" + location + "/MetadataServer");
@@ -81,6 +82,7 @@ namespace PuppetMaster
         public void launchDataServer()
         {
             Process.Start(Path.Combine(projectFolder, dataServerExec), dataServerPort.ToString());
+            Thread.Sleep(1000);
             IDataServerPuppet newDataServer = (IDataServerPuppet)Activator.GetObject(
                 typeof(IDataServerPuppet),
                 "tcp://localhost:" + dataServerPort + "/DataServer");
